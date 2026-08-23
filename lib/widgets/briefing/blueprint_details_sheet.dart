@@ -1,0 +1,440 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:provider/provider.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_typography.dart';
+import '../../models/daily_blueprint.dart';
+import '../../providers/simulator_provider.dart';
+import '../common/responsive_badge.dart';
+import '../common/tactile_card.dart';
+import 'thumbnail_concept_box.dart';
+
+/// Comprehensive Production Brief & Runbook BottomSheet
+class BlueprintDetailsSheet extends StatelessWidget {
+  final DailyBlueprint blueprint;
+  final VoidCallback? onSimulatePressed;
+
+  const BlueprintDetailsSheet({
+    super.key,
+    required this.blueprint,
+    this.onSimulatePressed,
+  });
+
+  static Future<void> show(
+    BuildContext context, {
+    required DailyBlueprint blueprint,
+    VoidCallback? onSimulatePressed,
+  }) {
+    return showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => BlueprintDetailsSheet(
+        blueprint: blueprint,
+        onSimulatePressed: onSimulatePressed,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 720.h,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.15),
+            blurRadius: 30,
+            offset: const Offset(0, -10),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Column(
+          children: [
+            // Handle Bar
+            Container(
+              margin: EdgeInsets.only(top: 10.h, bottom: 8.h),
+              width: 36.w,
+              height: 4.h,
+              decoration: BoxDecoration(
+                color: AppColors.borderLight,
+                borderRadius: BorderRadius.circular(2.r),
+              ),
+            ),
+            // Header Row
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.w),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.video_library_rounded,
+                          color: AppColors.primary, size: 18.sp),
+                      SizedBox(width: 6.w),
+                      Text(
+                        'PRODUCTION RUNBOOK',
+                        style: AppTypography.labelSmall.copyWith(
+                          color: AppColors.primaryDark,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.6,
+                        ),
+                      ),
+                    ],
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: Icon(Icons.close_rounded,
+                        size: 20.sp, color: AppColors.textMuted),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(),
+
+            Expanded(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Badges
+                    Wrap(
+                      spacing: 6.w,
+                      runSpacing: 4.h,
+                      children: [
+                        ResponsiveBadge(
+                          text: blueprint.formatLabel,
+                          icon: blueprint.format == BlueprintFormat.longForm
+                              ? Icons.videocam_rounded
+                              : Icons.electric_bolt_rounded,
+                          variant: BadgeVariant.primary,
+                        ),
+                        ResponsiveBadge(
+                          text: '${blueprint.predictedMultiplier}× OUTLIER PROJECTION',
+                          icon: Icons.trending_up_rounded,
+                          variant: BadgeVariant.outlier,
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 12.h),
+
+                    // Title
+                    Text(
+                      blueprint.title,
+                      style: AppTypography.headlineLarge.copyWith(
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.4,
+                      ),
+                    ),
+                    SizedBox(height: 16.h),
+
+                    // Section 1: Pre-Engineered Hook
+                    _buildSectionHeader(
+                      icon: Icons.auto_awesome_rounded,
+                      title: 'OPENING 5-SECOND HOOK SCRIPT',
+                    ),
+                    SizedBox(height: 8.h),
+                    TactileCard(
+                      backgroundColor: AppColors.canvas,
+                      padding: EdgeInsets.all(14.w),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            blueprint.hookText,
+                            style: AppTypography.bodyLarge.copyWith(
+                              color: AppColors.textInk,
+                              fontWeight: FontWeight.w600,
+                              height: 1.45,
+                            ),
+                          ),
+                          SizedBox(height: 10.h),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Est. speaking time: 4.8s • 0% filler words',
+                                style: AppTypography.labelSmall.copyWith(
+                                  color: AppColors.outlierJade,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              GestureDetector(
+                                onTap: () {
+                                  Clipboard.setData(
+                                      ClipboardData(text: blueprint.hookText));
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Hook copied to clipboard!',
+                                        style: AppTypography.bodySmall
+                                            .copyWith(color: Colors.white),
+                                      ),
+                                      backgroundColor: AppColors.textInk,
+                                      behavior: SnackBarBehavior.floating,
+                                    ),
+                                  );
+                                },
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.copy_rounded,
+                                        size: 13.sp, color: AppColors.primary),
+                                    SizedBox(width: 4.w),
+                                    Text(
+                                      'Copy Hook',
+                                      style: AppTypography.labelSmall.copyWith(
+                                        color: AppColors.primary,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 16.h),
+
+                    // Section 2: Thumbnail Concept Blueprint
+                    _buildSectionHeader(
+                      icon: Icons.image_outlined,
+                      title: 'THUMBNAIL CONCEPT SPLIT-BOX',
+                    ),
+                    SizedBox(height: 8.h),
+                    ThumbnailConceptBox(
+                      conceptLeft: blueprint.thumbnailConceptLeft,
+                      conceptRight: blueprint.thumbnailConceptRight,
+                      tag: blueprint.thumbnailTag,
+                    ),
+                    SizedBox(height: 16.h),
+
+                    // Section 3: 4-Step Narrative Structure
+                    _buildSectionHeader(
+                      icon: Icons.list_alt_rounded,
+                      title: 'RECOMMENDED NARRATIVE PACING',
+                    ),
+                    SizedBox(height: 8.h),
+                    _buildPacingStep(
+                      timestamp: '0:00 - 0:05',
+                      title: 'High-Stakes Hook',
+                      desc: 'Deliver contrarian thesis without intro greetings.',
+                      color: AppColors.primary,
+                    ),
+                    _buildPacingStep(
+                      timestamp: '0:05 - 0:25',
+                      title: 'Visual Proof / Problem Setup',
+                      desc: 'Display split screen or code sample highlighting the tension.',
+                      color: AppColors.warningAmber,
+                    ),
+                    _buildPacingStep(
+                      timestamp: '0:25 - 4:00',
+                      title: 'Step-by-Step Resolution',
+                      desc: 'Walkthrough actionable fix with zero explanatory lulls.',
+                      color: AppColors.outlierJade,
+                    ),
+                    _buildPacingStep(
+                      timestamp: 'End (Last 15s)',
+                      title: 'Retention Bridge & Next Video Hook',
+                      desc: 'Seamlessly transition to recommended system design video.',
+                      color: AppColors.indigoAccent,
+                    ),
+                    SizedBox(height: 16.h),
+
+                    // Section 4: Data-Backed "Why" Proof
+                    _buildSectionHeader(
+                      icon: Icons.insights_rounded,
+                      title: 'AUDIENCE DATA PROOF ("THE WHY")',
+                    ),
+                    SizedBox(height: 8.h),
+                    Container(
+                      padding: EdgeInsets.all(12.w),
+                      decoration: BoxDecoration(
+                        color: AppColors.outlierJadeSubtle,
+                        borderRadius: BorderRadius.circular(12.r),
+                        border: Border.all(color: AppColors.outlierJadeBorder),
+                      ),
+                      child: Text(
+                        blueprint.dataProofReason,
+                        style: AppTypography.bodyMedium.copyWith(
+                          color: const Color(0xFF065F46),
+                          fontWeight: FontWeight.w600,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 24.h),
+
+                    // Action Buttons Row
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () {
+                              final text = '''
+# Video Production Brief: ${blueprint.title}
+Format: ${blueprint.formatLabel}
+Projected Outlier Multiplier: ${blueprint.predictedMultiplier}x
+
+## 5-Second Hook:
+"${blueprint.hookText}"
+
+## Thumbnail Concept:
+- Left: ${blueprint.thumbnailConceptLeft}
+- Right: ${blueprint.thumbnailConceptRight}
+- Text Tag: ${blueprint.thumbnailTag}
+
+## Data Proof:
+${blueprint.dataProofReason}
+''';
+                              Clipboard.setData(ClipboardData(text: text));
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Full Production Runbook copied to clipboard!',
+                                    style: AppTypography.bodySmall
+                                        .copyWith(color: Colors.white),
+                                  ),
+                                  backgroundColor: AppColors.textInk,
+                                ),
+                              );
+                            },
+                            icon: Icon(Icons.share_outlined, size: 16.sp),
+                            label: Text(
+                              'Export Brief',
+                              style: AppTypography.labelMedium.copyWith(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: AppColors.primary),
+                              padding: EdgeInsets.symmetric(vertical: 14.h),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12.r),
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 10.w),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              final simProvider =
+                                  context.read<SimulatorProvider>();
+                              simProvider.loadBlueprint(blueprint);
+                              Navigator.pop(context);
+                              if (onSimulatePressed != null) {
+                                onSimulatePressed!();
+                              }
+                            },
+                            icon: Icon(Icons.speed_rounded, size: 16.sp),
+                            label: Text(
+                              'Run Simulator',
+                              style: AppTypography.labelMedium.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              padding: EdgeInsets.symmetric(vertical: 14.h),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12.r),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 16.h),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader({
+    required IconData icon,
+    required String title,
+  }) {
+    return Row(
+      children: [
+        Icon(icon, size: 14.sp, color: AppColors.textMuted),
+        SizedBox(width: 6.w),
+        Text(
+          title,
+          style: AppTypography.labelSmall.copyWith(
+            color: AppColors.textMuted,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 0.6,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPacingStep({
+    required String timestamp,
+    required String title,
+    required String desc,
+    required Color color,
+  }) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 10.h),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(6.r),
+              border: Border.all(color: color.withValues(alpha: 0.3)),
+            ),
+            child: Text(
+              timestamp,
+              style: AppTypography.monoTimestamp.copyWith(
+                color: color,
+                fontWeight: FontWeight.w800,
+                fontSize: 10.sp,
+              ),
+            ),
+          ),
+          SizedBox(width: 10.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: AppTypography.titleMedium.copyWith(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12.sp,
+                  ),
+                ),
+                Text(
+                  desc,
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.textSecondary,
+                    fontSize: 11.sp,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
