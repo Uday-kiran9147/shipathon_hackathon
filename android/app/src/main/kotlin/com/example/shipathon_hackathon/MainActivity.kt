@@ -1,4 +1,4 @@
-package com.example.shipathon_hackathon
+package com.astrava.prevue
 
 import io.flutter.embedding.android.FlutterActivity
 

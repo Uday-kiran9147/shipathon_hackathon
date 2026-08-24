@@ -16,11 +16,11 @@ void main() async {
   } catch (e) {
     debugPrint('[Environment] .env not found or failed to load: $e');
   }
-  runApp(const TubeSimul8App());
+  runApp(const PrevueAPP());
 }
 
-class TubeSimul8App extends StatelessWidget {
-  const TubeSimul8App({super.key});
+class PrevueAPP extends StatelessWidget {
+  const PrevueAPP({super.key});
 
   @override
   Widget build(BuildContext context) {
