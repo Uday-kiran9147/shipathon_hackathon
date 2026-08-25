@@ -18,7 +18,7 @@ class YouTubeApiService {
   bool get hasApiKey =>
       _dioClient.apiKey != null && _dioClient.apiKey!.isNotEmpty;
 
-  /// Fetch live channel data by handle (e.g. "@Telusko", "@srimankotaru", etc.)
+  /// Fetch live channel data by handle (e.g. "@Telusko", "@RevenueCat", etc.)
   Future<ChannelGraph> fetchChannelByHandle(String handleInput) async {
     final cleanHandle = handleInput.trim().startsWith('@')
         ? handleInput.trim()
@@ -26,7 +26,7 @@ class YouTubeApiService {
 
     if (cleanHandle.length <= 1) {
       throw const YouTubeApiException(
-        message: 'Please enter a valid YouTube channel handle (e.g. @Telusko)',
+        message: 'Please enter a valid YouTube channel handle (e.g. @RevenueCat)',
       );
     }
 
@@ -52,27 +52,8 @@ class YouTubeApiService {
       return await _parseLiveChannelItem(channelItem, cleanHandle);
     }
 
-    // Fallback: search by channel query
-    final searchResponse = await _dioClient.get(
-      'search',
-      queryParameters: {
-        'part': 'snippet',
-        'q': cleanHandle.replaceAll('@', ''),
-        'type': 'channel',
-        'maxResults': 1,
-      },
-    );
-
-    final searchItems = searchResponse.data['items'] as List<dynamic>?;
-    if (searchItems != null && searchItems.isNotEmpty) {
-      final foundChannelId = searchItems.first['id']?['channelId'] as String?;
-      if (foundChannelId != null) {
-        return await fetchChannelById(foundChannelId);
-      }
-    }
-
     throw YouTubeApiException(
-      message: 'Channel "$cleanHandle" could not be found on YouTube.',
+      message: 'No YouTube channel found with handle "$cleanHandle".',
       statusCode: 404,
     );
   }

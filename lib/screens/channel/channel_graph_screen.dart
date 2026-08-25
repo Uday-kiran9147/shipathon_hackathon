@@ -287,23 +287,17 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                                         behavior: SnackBarBehavior.floating,
                                       ),
                                     );
-                                  } else if (channelProvider.syncError !=
-                                      null) {
+                                  } else {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content: Text(
-                                          channelProvider.syncError!,
+                                          '${channelProvider.syncError}',
                                           style: AppTypography.bodySmall
                                               .copyWith(color: Colors.white),
                                         ),
-                                        backgroundColor: AppColors.hazardRuby,
+                                        backgroundColor:
+                                            AppColors.warningAmber,
                                         behavior: SnackBarBehavior.floating,
-                                        action: SnackBarAction(
-                                          label: 'Set API Key',
-                                          textColor: Colors.white,
-                                          onPressed: () =>
-                                              _showApiKeyModal(context),
-                                        ),
                                       ),
                                     );
                                   }
@@ -393,7 +387,7 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                     SizedBox(height: 16.h),
                     if (!channelProvider.hasApiKey) ...[
                       OutlinedButton.icon(
-                        onPressed: () => _showApiKeyModal(context),
+                        onPressed: () {}, // _showApiKeyModal(context),
                         icon: Icon(Icons.key_rounded,
                             size: 16.sp, color: AppColors.primary),
                         label: Text(
