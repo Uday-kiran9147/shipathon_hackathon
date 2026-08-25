@@ -6,7 +6,7 @@ import '../core/services/youtube_api_service.dart';
 import '../models/channel_graph.dart';
 
 class ChannelProvider extends ChangeNotifier {
-  static const String defaultHandle = '@Srimankotaru';
+  static const String defaultHandle = '@RevenueCat';
   final YouTubeApiService _youtubeService = YouTubeApiService();
 
   ChannelGraph _channel = const ChannelGraph(handle: defaultHandle);
