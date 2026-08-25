@@ -1,3 +1,5 @@
+import 'channel_graph.dart';
+
 enum BlueprintFormat {
   longForm,
   short,
@@ -18,6 +20,9 @@ class DailyBlueprint {
   final String categoryTag;
   final DateTime date;
   final bool isBookmarked;
+  final ChannelComment? audienceCommentSource;
+  final String creatorAuthenticityProof;
+  final String engagementContext;
 
   const DailyBlueprint({
     required this.id,
@@ -33,6 +38,9 @@ class DailyBlueprint {
     required this.categoryTag,
     required this.date,
     this.isBookmarked = false,
+    this.audienceCommentSource,
+    this.creatorAuthenticityProof = '',
+    this.engagementContext = '',
   });
 
   DailyBlueprint copyWith({
@@ -49,6 +57,9 @@ class DailyBlueprint {
     String? categoryTag,
     DateTime? date,
     bool? isBookmarked,
+    ChannelComment? audienceCommentSource,
+    String? creatorAuthenticityProof,
+    String? engagementContext,
   }) {
     return DailyBlueprint(
       id: id ?? this.id,
@@ -64,6 +75,11 @@ class DailyBlueprint {
       categoryTag: categoryTag ?? this.categoryTag,
       date: date ?? this.date,
       isBookmarked: isBookmarked ?? this.isBookmarked,
+      audienceCommentSource:
+          audienceCommentSource ?? this.audienceCommentSource,
+      creatorAuthenticityProof:
+          creatorAuthenticityProof ?? this.creatorAuthenticityProof,
+      engagementContext: engagementContext ?? this.engagementContext,
     );
   }
 }

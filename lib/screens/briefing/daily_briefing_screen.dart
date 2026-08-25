@@ -315,11 +315,31 @@ class _DailyBriefingScreenState extends State<DailyBriefingScreen> {
                 SizedBox(width: 6.w),
                 Expanded(
                   child: Text(
-                    '${NumberFormat.compact().format(channel.subscribers)} Subs • ${NumberFormat.compact().format(channel.medianViews)} Median Views • ${channel.recentVideos.isNotEmpty ? channel.recentVideos.length : 6} Uploads Mined',
+                    '${NumberFormat.compact().format(channel.subscribers)} Subs • ${NumberFormat.compact().format(channel.medianViews)} Median • ${channel.allRecentComments.length} Comments Mined',
                     style: AppTypography.monoTimestamp.copyWith(
                       color: AppColors.textInk,
-                      fontWeight: FontWeight.w700,
                       fontSize: 10.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (channel.signatureCreatorStyle.isNotEmpty) ...[
+            SizedBox(height: 6.h),
+            Row(
+              children: [
+                Icon(Icons.auto_awesome_rounded,
+                    size: 12.sp, color: AppColors.primary),
+                SizedBox(width: 4.w),
+                Expanded(
+                  child: Text(
+                    channel.signatureCreatorStyle,
+                    style: AppTypography.labelSmall.copyWith(
+                      color: AppColors.primaryDark,
+                      fontSize: 9.5.sp,
+                      fontWeight: FontWeight.w600,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -327,7 +347,7 @@ class _DailyBriefingScreenState extends State<DailyBriefingScreen> {
                 ),
               ],
             ),
-          ),
+          ],
         ],
       ),
     );

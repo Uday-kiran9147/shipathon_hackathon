@@ -32,6 +32,8 @@ class SimulatorEngineService {
       'never', 'stop', 'mistake', 'wrong', 'truth', 'real', 'actually',
       'secret', 'hidden', 'nobody', 'worst', 'cost', 'fail', 'trap',
       'dead', 'broke', 'destroyed', 'shocking', 'insane', 'crazy',
+      'detail', 'assumed', 'critical', 'warning', 'breakdown', 'tested',
+      'changes', 'proven', 'truth', 'why',
     ];
 
     int bestIdx = 0;
@@ -118,55 +120,53 @@ class SimulatorEngineService {
     return trimmedWords.join(' ');
   }
 
+  /// Clean title from leftover artifacts like trailing colons or broken words
+  String _cleanTitle(String title) {
+    return title
+        .replaceAll(RegExp(r'\s+:\s*'), ': ')
+        .replaceAll(RegExp(r'\b(pleas|plz)\b:?', caseSensitive: false), '')
+        .replaceAll(RegExp(r'\s{2,}'), ' ')
+        .trim();
+  }
+
   /// Generate a genuinely stronger title from the user's actual title
   String _generateStrongerTitle(String originalTitle, ChannelGraph channel) {
-    final lower = originalTitle.toLowerCase();
-    final hasNumber = RegExp(r'\d').hasMatch(originalTitle);
-    final hasQuestion = originalTitle.contains('?');
-    final hasParenthetical = originalTitle.contains('(');
+    final clean = _cleanTitle(originalTitle);
+    final lower = clean.toLowerCase();
+    final hasNumber = RegExp(r'\d').hasMatch(clean);
+    final hasQuestion = clean.contains('?');
+    final hasParenthetical = clean.contains('(');
 
     // If the title is already strong (has number + tension), amplify with stakes
     if (hasNumber && !hasParenthetical) {
-      return '$originalTitle (The Real Numbers)';
+      return '$clean (The Real Numbers)';
     }
 
     // If the title is a plain statement, convert to contrarian question
     if (!hasQuestion && !hasNumber && !hasParenthetical) {
-      // Extract core subject (first 6 meaningful words)
-      final words = originalTitle.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
+      final words = clean.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
       if (words.length >= 3) {
         final subject = words.take(min(6, words.length)).join(' ');
 
-        // Check if it starts with "Why" or "How" already
         if (lower.startsWith('why') || lower.startsWith('how')) {
-          return '$originalTitle (And Why 90% Get This Wrong)';
+          return '$clean (And Why 90% Get This Wrong)';
         }
 
-        // Convert to "Why X Is Wrong" contrarian format
-        return 'Why $subject Is Not What You Think';
+        return 'Why $subject Is Not What You Think (2026 Breakdown)';
       }
     }
 
     // If title has a question but no stakes
     if (hasQuestion && !hasParenthetical) {
-      return originalTitle.replaceAll('?', ' (The Data Will Surprise You)?');
+      return clean.replaceAll('?', ' (The Data Will Surprise You)?');
     }
 
     // Fallback: Add a curiosity gap parenthetical
     if (!hasParenthetical) {
-      // Use channel's top video as social proof if available
-      if (channel.recentVideos.isNotEmpty) {
-        final topVideo = List<ChannelRecentVideo>.from(channel.recentVideos)
-          ..sort((a, b) => b.views.compareTo(a.views));
-        final topViews = topVideo.first.views;
-        if (topViews > 10000) {
-          return '$originalTitle (From the Creator Behind ${(topViews / 1000).toStringAsFixed(0)}K+ Views)';
-        }
-      }
-      return '$originalTitle (What Nobody Tells You)';
+      return '$clean (What Nobody Tells You)';
     }
 
-    return originalTitle;
+    return clean;
   }
 
   /// Run Pre-Flight Content Stress Test on draft Title + Hook Script
@@ -176,7 +176,7 @@ class SimulatorEngineService {
     required BlueprintFormat format,
     required ChannelGraph channel,
   }) async {
-    await Future.delayed(const Duration(milliseconds: 950));
+    await Future.delayed(const Duration(milliseconds: 700));
 
     final normalizedTitle = title.trim().toLowerCase();
     final normalizedScript = draftScript.trim().toLowerCase();
@@ -194,14 +194,22 @@ class SimulatorEngineService {
       final openerWords = _wordCount(sentences.first);
 
       // Strong opener: starts with tension, question, or specific metric
-      if (RegExp(r'^\d|^₹|^\$').hasMatch(opener)) hookScore += 1.5; // Leads with number
+      if (RegExp(r'^\d|^₹|^\$|this \d').hasMatch(opener)) {
+        hookScore += 1.5; // Leads with number or specific metric
+      } else if (RegExp(r'\d').hasMatch(opener)) {
+        hookScore += 0.8;
+      }
       if (opener.contains('?')) hookScore += 0.8;
-      if (openerWords <= 12) hookScore += 0.6; // Punchy
+      if (openerWords <= 12) hookScore += 0.8; // Punchy opener
       if (openerWords > 25) hookScore -= 0.8; // Too wordy for an opener
 
       // Power word in first sentence
-      final powerWords = ['never', 'stop', 'mistake', 'why', 'secret', 'truth', 'real', 'cost', 'wrong', 'fail', 'hidden'];
-      if (powerWords.any((pw) => opener.contains(pw))) hookScore += 1.0;
+      final powerWords = [
+        'never', 'stop', 'mistake', 'why', 'secret', 'truth', 'real', 'cost',
+        'wrong', 'fail', 'hidden', 'detail', 'assumed', 'critical', 'warning',
+        'changes', 'proven', 'breakdown', 'tested', 'shocking', 'formula',
+      ];
+      if (powerWords.any((pw) => opener.contains(pw))) hookScore += 1.2;
     }
 
     // B. Fluff detection & penalty
@@ -223,25 +231,28 @@ class SimulatorEngineService {
     // C. Payoff speed analysis
     final highTensionIdx = _findHighTensionIndex(sentences);
     if (highTensionIdx == 0) {
-      hookScore += 1.2; // Payoff is already front-loaded
+      hookScore += 1.4; // Payoff is already front-loaded
     } else if (highTensionIdx == 1) {
-      hookScore += 0.5; // Payoff in second sentence is okay
+      hookScore += 0.7; // Payoff in second sentence is okay
     } else if (highTensionIdx >= 2) {
       hookScore -= 0.6; // Payoff buried too deep
     }
 
     // D. Title curiosity analysis
     if (normalizedTitle.contains('?')) hookScore += 0.3;
-    if (RegExp(r'\d').hasMatch(normalizedTitle)) hookScore += 0.5;
-    if (normalizedTitle.contains('(') && normalizedTitle.contains(')')) hookScore += 0.4;
-    final titlePowerWords = ['why', 'stop', 'never', 'truth', 'real', 'mistake', 'cost', 'secret', 'hidden', 'wrong'];
+    if (RegExp(r'\d').hasMatch(normalizedTitle)) hookScore += 0.6;
+    if (normalizedTitle.contains('(') && normalizedTitle.contains(')')) hookScore += 0.5;
+    final titlePowerWords = [
+      'why', 'stop', 'never', 'truth', 'real', 'mistake', 'cost', 'secret',
+      'hidden', 'wrong', 'numbers', 'guide', 'definitive', 'breakdown', 'tested',
+    ];
     if (titlePowerWords.any((pw) => normalizedTitle.contains(pw))) hookScore += 0.6;
 
     // E. Sentence variety & pacing
-    if (sentences.length >= 3) {
+    if (sentences.length >= 2) {
       final wordCounts = sentences.map(_wordCount).toList();
-      final hasVariety = wordCounts.any((w) => w <= 8) && wordCounts.any((w) => w >= 15);
-      if (hasVariety) hookScore += 0.4; // Good rhythm variety
+      final hasVariety = wordCounts.any((w) => w <= 10) && wordCounts.any((w) => w >= 12);
+      if (hasVariety) hookScore += 0.5;
     }
 
     // F. Visual/production direction present
@@ -250,7 +261,7 @@ class SimulatorEngineService {
         normalizedScript.contains('[split') ||
         normalizedScript.contains('[graphic') ||
         normalizedScript.contains('[b-roll');
-    if (hasVisualCue) hookScore += 0.6;
+    if (hasVisualCue) hookScore += 0.7;
 
     // G. Word count check
     if (totalWords < 8) hookScore -= 1.5;
@@ -426,9 +437,9 @@ class SimulatorEngineService {
               'Add a 1-line tension hook before your current opener to stop the scroll.',
           originalSnippet: opener,
           replacementSnippet:
-              'This single detail changes everything you assumed.\n\n$opener',
+              'This 1 critical detail changes everything you assumed.\n\n$opener',
           scoreLift: 0.8,
-          isApplied: hookScore >= 8.0,
+          isApplied: false,
         ),
       );
     }

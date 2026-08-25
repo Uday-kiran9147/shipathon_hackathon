@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
+import '../../models/channel_graph.dart';
 import '../../providers/channel_provider.dart';
 import '../../providers/subscription_provider.dart';
 import '../../widgets/common/custom_app_bar.dart';
@@ -30,104 +31,319 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
     super.dispose();
   }
 
-  void _showApiKeyModal(BuildContext context) {
+
+  void _showVideoDetailsModal(BuildContext context, ChannelRecentVideo video) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
         return Container(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom + 20.h,
-            left: 20.w,
-            right: 20.w,
-            top: 20.h,
-          ),
+          height: 640.h,
           decoration: BoxDecoration(
             color: AppColors.surface,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
+          child: SafeArea(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    margin: EdgeInsets.only(top: 10.h, bottom: 8.h),
+                    width: 36.w,
+                    height: 4.h,
+                    decoration: BoxDecoration(
+                      color: AppColors.borderLight,
+                      borderRadius: BorderRadius.circular(2.r),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 8.h),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Icon(Icons.key_rounded,
-                          color: AppColors.primary, size: 20.sp),
-                      SizedBox(width: 8.w),
-                      Text(
-                        'YouTube Data API v3 Key',
-                        style: AppTypography.titleLarge.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
+                      Row(
+                        children: [
+                          Icon(Icons.video_camera_back_rounded,
+                              color: AppColors.youtubeRed, size: 20.sp),
+                          SizedBox(width: 8.w),
+                          Text(
+                            'VIDEO DEEP TEARDOWN',
+                            style: AppTypography.labelSmall.copyWith(
+                              color: AppColors.textInk,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.close_rounded),
                       ),
                     ],
                   ),
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close_rounded),
+                ),
+                const Divider(),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 18.w, vertical: 10.h),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          video.title,
+                          style: AppTypography.titleLarge.copyWith(
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                        SizedBox(height: 10.h),
+                        Wrap(
+                          spacing: 8.w,
+                          runSpacing: 6.h,
+                          children: [
+                            _buildStatChip(
+                                Icons.remove_red_eye_rounded,
+                                '${NumberFormat.compact().format(video.views)} Views',
+                                AppColors.primary),
+                            _buildStatChip(
+                                Icons.thumb_up_rounded,
+                                '${NumberFormat.compact().format(video.likes)} Likes',
+                                AppColors.outlierJade),
+                            _buildStatChip(
+                                Icons.comment_rounded,
+                                '${video.commentCount} Comments',
+                                AppColors.studioCrimson),
+                            _buildStatChip(
+                                Icons.timer_rounded,
+                                video.durationFormatted,
+                                AppColors.textSecondary),
+                          ],
+                        ),
+                        SizedBox(height: 16.h),
+                        Text(
+                          'VIDEO DESCRIPTION & CONTEXT',
+                          style: AppTypography.labelSmall.copyWith(
+                            color: AppColors.textMuted,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        SizedBox(height: 6.h),
+                        Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.all(12.w),
+                          decoration: BoxDecoration(
+                            color: AppColors.canvas,
+                            borderRadius: BorderRadius.circular(12.r),
+                            border: Border.all(color: AppColors.borderLight),
+                          ),
+                          child: Text(
+                            video.description.isNotEmpty
+                                ? video.description
+                                : 'No description provided.',
+                            style: AppTypography.bodySmall.copyWith(
+                              color: AppColors.textInk,
+                              height: 1.45,
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 16.h),
+                        if (video.tags.isNotEmpty) ...[
+                          Text(
+                            'TAGS & SEARCH CLUSTERS',
+                            style: AppTypography.labelSmall.copyWith(
+                              color: AppColors.textMuted,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          SizedBox(height: 6.h),
+                          Wrap(
+                            spacing: 6.w,
+                            runSpacing: 6.h,
+                            children: video.tags.map((tag) {
+                              return Container(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 8.w, vertical: 4.h),
+                                decoration: BoxDecoration(
+                                  color: AppColors.surfaceSubtle,
+                                  borderRadius: BorderRadius.circular(6.r),
+                                  border:
+                                      Border.all(color: AppColors.borderLight),
+                                ),
+                                child: Text(
+                                  '#$tag',
+                                  style: AppTypography.labelSmall.copyWith(
+                                    fontSize: 10.sp,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                          SizedBox(height: 16.h),
+                        ],
+                        Text(
+                          'TOP AUDIENCE COMMENTS & REQUESTS (${video.topComments.length})',
+                          style: AppTypography.labelSmall.copyWith(
+                            color: AppColors.textMuted,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        SizedBox(height: 8.h),
+                        if (video.topComments.isEmpty) ...[
+                          Text(
+                            'No comments synced yet or comments disabled for this video.',
+                            style: AppTypography.bodySmall.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ] else ...[
+                          ...video.topComments.map((c) => _buildCommentTile(c)),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildStatChip(IconData icon, String label, Color color) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(6.r),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12.sp, color: color),
+          SizedBox(width: 4.w),
+          Text(
+            label,
+            style: AppTypography.labelSmall.copyWith(
+              color: color,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCommentTile(ChannelComment comment) {
+    Color badgeColor;
+    String badgeText;
+    switch (comment.intentCategory) {
+      case ChannelCommentIntent.request:
+        badgeColor = AppColors.primary;
+        badgeText = '💡 VIDEO REQUEST';
+        break;
+      case ChannelCommentIntent.question:
+        badgeColor = AppColors.warningAmber;
+        badgeText = '❓ QUESTION';
+        break;
+      case ChannelCommentIntent.praise:
+        badgeColor = AppColors.outlierJade;
+        badgeText = '🔥 TOP PRAISE';
+        break;
+      case ChannelCommentIntent.feedback:
+        badgeColor = AppColors.studioCrimson;
+        badgeText = '📝 FEEDBACK';
+        break;
+      case ChannelCommentIntent.discussion:
+        badgeColor = AppColors.textSecondary;
+        badgeText = '💬 DISCUSSION';
+        break;
+    }
+
+    return Container(
+      margin: EdgeInsets.only(bottom: 8.h),
+      padding: EdgeInsets.all(10.w),
+      decoration: BoxDecoration(
+        color: AppColors.canvas,
+        borderRadius: BorderRadius.circular(10.r),
+        border: Border.all(color: AppColors.borderLight),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 9.r,
+                    backgroundColor: AppColors.primary,
+                    child: Text(
+                      comment.authorDisplayName.isNotEmpty
+                          ? comment.authorDisplayName[0].toUpperCase()
+                          : 'V',
+                      style: TextStyle(color: Colors.white, fontSize: 8.sp),
+                    ),
+                  ),
+                  SizedBox(width: 6.w),
+                  Text(
+                    comment.authorDisplayName,
+                    style: AppTypography.labelSmall.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textInk,
+                    ),
                   ),
                 ],
               ),
-              SizedBox(height: 8.h),
-              Text(
-                'Enter your Google Cloud YouTube Data API v3 key to enable live channel synchronization. You can also configure YOUTUBE_API_KEY in .env.',
-                style: AppTypography.bodySmall.copyWith(
-                  color: AppColors.textSecondary,
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                decoration: BoxDecoration(
+                  color: badgeColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(4.r),
+                  border: Border.all(color: badgeColor.withValues(alpha: 0.3)),
                 ),
-              ),
-              SizedBox(height: 14.h),
-              TextField(
-                controller: _apiKeyController,
-                style: AppTypography.bodyMedium.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textInk,
-                ),
-                decoration: const InputDecoration(
-                  hintText: 'AIzaSy...',
-                  prefixIcon: Icon(Icons.vpn_key_outlined, size: 18),
-                ),
-              ),
-              SizedBox(height: 16.h),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    final key = _apiKeyController.text.trim();
-                    context.read<ChannelProvider>().setApiKey(
-                          key.isNotEmpty ? key : null,
-                        );
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          key.isNotEmpty
-                              ? '🔑 YouTube API Key configured!'
-                              : 'YouTube API Key cleared.',
-                          style: AppTypography.bodySmall
-                              .copyWith(color: Colors.white),
-                        ),
-                        backgroundColor: key.isNotEmpty
-                            ? AppColors.outlierJade
-                            : AppColors.textInk,
-                      ),
-                    );
-                  },
-                  child: Text(
-                    'Save Configuration',
-                    style:
-                        AppTypography.labelLarge.copyWith(color: Colors.white),
+                child: Text(
+                  badgeText,
+                  style: AppTypography.labelSmall.copyWith(
+                    fontSize: 8.sp,
+                    fontWeight: FontWeight.w800,
+                    color: badgeColor,
                   ),
                 ),
               ),
             ],
           ),
-        );
-      },
+          SizedBox(height: 6.h),
+          Text(
+            comment.text,
+            style: AppTypography.bodySmall.copyWith(
+              color: AppColors.textInk,
+              height: 1.35,
+            ),
+          ),
+          if (comment.likeCount > 0) ...[
+            SizedBox(height: 4.h),
+            Text(
+              '👍 ${comment.likeCount} likes',
+              style: AppTypography.labelSmall.copyWith(
+                color: AppColors.textMuted,
+                fontSize: 9.sp,
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 
@@ -148,28 +364,12 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
       appBar: CustomAppBar(
         title: 'Channel Graph',
         subtitle: 'Context Engine & Live YouTube Sync',
-        actions: [
-          IconButton(
-            icon: Icon(
-              channelProvider.hasApiKey
-                  ? Icons.key_rounded
-                  : Icons.key_off_rounded,
-              color: channelProvider.hasApiKey
-                  ? AppColors.outlierJade
-                  : AppColors.textMuted,
-              size: 20.sp,
-            ),
-            tooltip: 'Configure YouTube API Key',
-            onPressed: () => _showApiKeyModal(context),
-          ),
-        ],
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // YouTube Live Sync Input Box
             TactileCard(
               padding: EdgeInsets.all(14.w),
               child: Column(
@@ -224,7 +424,7 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                             Text(
                               channelProvider.hasApiKey
                                   ? 'API KEY READY'
-                                  : 'NO API KEY',
+                                  : 'OFFLINE / DEMO',
                               style: AppTypography.labelSmall.copyWith(
                                 fontSize: 9.sp,
                                 fontWeight: FontWeight.w800,
@@ -262,24 +462,16 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                             : () async {
                                 final handle =
                                     _syncHandleController.text.trim();
-                                if (handle.isEmpty) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                          'Please enter a YouTube handle to sync.'),
-                                    ),
-                                  );
-                                  return;
-                                }
-
-                                final success = await channelProvider
-                                    .syncChannel(handle);
-                                if (context.mounted) {
+                                if (handle.isNotEmpty) {
+                                  final success = await context
+                                      .read<ChannelProvider>()
+                                      .syncChannel(handle);
+                                  if (!context.mounted) return;
                                   if (success) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content: Text(
-                                          '✓ Connected to ${channelProvider.channel.channelName} (${channelProvider.channel.handle})',
+                                          '✅ Synced YouTube Channel and Audience Intelligence!',
                                           style: AppTypography.bodySmall
                                               .copyWith(color: Colors.white),
                                         ),
@@ -291,12 +483,12 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content: Text(
-                                          '${channelProvider.syncError}',
+                                          channelProvider.syncError ??
+                                              'Failed to sync YouTube channel.',
                                           style: AppTypography.bodySmall
                                               .copyWith(color: Colors.white),
                                         ),
-                                        backgroundColor:
-                                            AppColors.warningAmber,
+                                        backgroundColor: AppColors.studioCrimson,
                                         behavior: SnackBarBehavior.floating,
                                       ),
                                     );
@@ -339,77 +531,20 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                       ),
                     ],
                   ),
+                  SizedBox(height: 8.h),
+                  Wrap(
+                    spacing: 6.w,
+                    children: [
+                      _buildPresetChip('@RevenueCat'),
+                      _buildPresetChip('@Telusko'),
+                      _buildPresetChip('@SrimanKotaru'),
+                    ],
+                  ),
                 ],
               ),
             ),
             SizedBox(height: 16.h),
-
-            // If No Channel is connected yet:
-            if (!channel.isConfigured) ...[
-              Container(
-                padding: EdgeInsets.all(28.w),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(18.r),
-                  border: Border.all(color: AppColors.borderLight),
-                  boxShadow: AppColors.cardElevation,
-                ),
-                child: Column(
-                  children: [
-                    Container(
-                      padding: EdgeInsets.all(16.w),
-                      decoration: BoxDecoration(
-                        color: AppColors.primarySubtle,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.sensors_off_rounded,
-                        size: 36.sp,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                    SizedBox(height: 14.h),
-                    Text(
-                      'No Channel Connected',
-                      style: AppTypography.titleLarge.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    SizedBox(height: 6.h),
-                    Text(
-                      'Enter your YouTube handle above to fetch your real channel statistics, median views, and audience topic clusters.',
-                      textAlign: TextAlign.center,
-                      style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.textSecondary,
-                        height: 1.4,
-                      ),
-                    ),
-                    SizedBox(height: 16.h),
-                    if (!channelProvider.hasApiKey) ...[
-                      OutlinedButton.icon(
-                        onPressed: () {}, // _showApiKeyModal(context),
-                        icon: Icon(Icons.key_rounded,
-                            size: 16.sp, color: AppColors.primary),
-                        label: Text(
-                          'Configure YouTube API Key',
-                          style: AppTypography.labelSmall.copyWith(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: AppColors.primary),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10.r),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ] else ...[
-              // Channel Details Card
+            if (channel.isConfigured) ...[
               TactileCard(
                 padding: EdgeInsets.all(16.w),
                 child: Column(
@@ -418,8 +553,8 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                     Row(
                       children: [
                         Container(
-                          width: 48.w,
-                          height: 48.w,
+                          width: 52.w,
+                          height: 52.w,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: AppColors.primarySubtle,
@@ -438,13 +573,13 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                                         (context, error, stackTrace) => Icon(
                                       Icons.play_circle_fill_rounded,
                                       color: AppColors.youtubeRed,
-                                      size: 26.sp,
+                                      size: 28.sp,
                                     ),
                                   )
                                 : Icon(
                                     Icons.play_circle_fill_rounded,
                                     color: AppColors.youtubeRed,
-                                    size: 26.sp,
+                                    size: 28.sp,
                                   ),
                           ),
                         ),
@@ -466,7 +601,7 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                                   ),
                                   SizedBox(width: 4.w),
                                   Icon(Icons.check_circle_rounded,
-                                      size: 14.sp, color: AppColors.primary),
+                                      size: 15.sp, color: AppColors.primary),
                                 ],
                               ),
                               Text(
@@ -480,28 +615,83 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                         ),
                       ],
                     ),
-                    SizedBox(height: 16.h),
-                    const Divider(),
+                    if (channel.channelDescription.isNotEmpty) ...[
+                      SizedBox(height: 12.h),
+                      Container(
+                        padding: EdgeInsets.all(10.w),
+                        decoration: BoxDecoration(
+                          color: AppColors.canvas,
+                          borderRadius: BorderRadius.circular(10.r),
+                          border: Border.all(color: AppColors.borderLight),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'CHANNEL ABOUT & MISSION',
+                              style: AppTypography.labelSmall.copyWith(
+                                color: AppColors.textMuted,
+                                fontSize: 9.sp,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            SizedBox(height: 4.h),
+                            Text(
+                              channel.channelDescription,
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTypography.bodySmall.copyWith(
+                                color: AppColors.textInk,
+                                height: 1.35,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                    if (channel.signatureCreatorStyle.isNotEmpty) ...[
+                      SizedBox(height: 10.h),
+                      Container(
+                        padding: EdgeInsets.all(10.w),
+                        decoration: BoxDecoration(
+                          color: AppColors.outlierJadeSubtle,
+                          borderRadius: BorderRadius.circular(10.r),
+                          border: Border.all(color: AppColors.outlierJadeBorder),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(Icons.auto_awesome_rounded,
+                                size: 14.sp, color: AppColors.outlierJade),
+                            SizedBox(width: 6.w),
+                            Expanded(
+                              child: Text(
+                                'MINED CREATOR VOICE: ${channel.signatureCreatorStyle}',
+                                style: AppTypography.labelSmall.copyWith(
+                                  color: const Color(0xFF065F46),
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 10.sp,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                     SizedBox(height: 14.h),
-
+                    const Divider(),
+                    SizedBox(height: 12.h),
                     if (channel.niche.isNotEmpty) ...[
                       _buildInfoRow('Niche / Core Focus', channel.niche),
-                      SizedBox(height: 10.h),
-                    ],
-                    if (channel.targetAudienceLevel.isNotEmpty) ...[
-                      _buildInfoRow(
-                          'Target Demographic', channel.targetAudienceLevel),
-                      SizedBox(height: 10.h),
+                      SizedBox(height: 8.h),
                     ],
                     _buildInfoRow('Primary Format', channel.topFormat),
                   ],
                 ),
               ),
               SizedBox(height: 16.h),
-
-              // Performance Baseline Metrics Grid
               Text(
-                'HISTORICAL BASELINE METRICS',
+                'CHANNEL ENGAGEMENT & BASELINE',
                 style: AppTypography.labelSmall.copyWith(
                   color: AppColors.textMuted,
                   fontWeight: FontWeight.w800,
@@ -519,7 +709,7 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                       color: AppColors.primary,
                     ),
                   ),
-                  SizedBox(width: 10.w),
+                  SizedBox(width: 8.w),
                   Expanded(
                     child: _buildMetricTile(
                       label: 'MEDIAN VIEWS',
@@ -528,12 +718,12 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                       color: AppColors.outlierJade,
                     ),
                   ),
-                  SizedBox(width: 10.w),
+                  SizedBox(width: 8.w),
                   Expanded(
                     child: _buildMetricTile(
-                      label: 'TOTAL UPLOADS',
-                      value: NumberFormat.compact().format(channel.totalVideos),
-                      icon: Icons.video_collection_rounded,
+                      label: 'AVG LIKES',
+                      value: NumberFormat.compact().format(channel.averageLikes),
+                      icon: Icons.thumb_up_rounded,
                       color: AppColors.studioCrimson,
                     ),
                   ),
@@ -541,59 +731,180 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
               ),
               SizedBox(height: 16.h),
 
-              // Recent Synced Videos Section
-              if (channel.recentVideos.isNotEmpty) ...[
-                Text(
-                  'RECENT SYNCED UPLOADS',
-                  style: AppTypography.labelSmall.copyWith(
-                    color: AppColors.textMuted,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.6,
-                  ),
+              // AUDIENCE VOICE & LIVE COMMENTS HUB
+              if (channel.audienceRequests.isNotEmpty ||
+                  channel.audienceInsight.topViewerRequests.isNotEmpty) ...[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'AUDIENCE VOICE & VIEWER REQUESTS',
+                      style: AppTypography.labelSmall.copyWith(
+                        color: AppColors.textMuted,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.6,
+                      ),
+                    ),
+                    Container(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                      decoration: BoxDecoration(
+                        color: AppColors.primarySubtle,
+                        borderRadius: BorderRadius.circular(6.r),
+                      ),
+                      child: Text(
+                        '${channel.allRecentComments.length} Comments Mined',
+                        style: AppTypography.labelSmall.copyWith(
+                          fontSize: 9.sp,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 SizedBox(height: 8.h),
                 TactileCard(
                   padding: EdgeInsets.all(12.w),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Top Recurring Viewer Demands (Next Video Candidates)',
+                        style: AppTypography.labelSmall.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textInk,
+                        ),
+                      ),
+                      SizedBox(height: 8.h),
+                      ...channel.audienceInsight.topViewerRequests.map((req) {
+                        return Padding(
+                          padding: EdgeInsets.only(bottom: 6.h),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(Icons.lightbulb_rounded,
+                                  size: 14.sp, color: AppColors.warningAmber),
+                              SizedBox(width: 6.w),
+                              Expanded(
+                                child: Text(
+                                  req,
+                                  style: AppTypography.bodySmall.copyWith(
+                                    color: AppColors.textInk,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 16.h),
+              ],
+
+              if (channel.recentVideos.isNotEmpty) ...[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'RECENT UPLOADS & ENGAGEMENT',
+                      style: AppTypography.labelSmall.copyWith(
+                        color: AppColors.textMuted,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.6,
+                      ),
+                    ),
+                    Text(
+                      'Tap video for full teardown',
+                      style: AppTypography.labelSmall.copyWith(
+                        color: AppColors.textSecondary,
+                        fontSize: 10.sp,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 8.h),
+                TactileCard(
+                  padding: EdgeInsets.all(8.w),
+                  child: Column(
                     children: channel.recentVideos.map((video) {
-                      return Padding(
-                        padding: EdgeInsets.symmetric(vertical: 6.h),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: EdgeInsets.all(6.w),
-                              decoration: BoxDecoration(
-                                color: AppColors.surfaceSubtle,
-                                borderRadius: BorderRadius.circular(6.r),
+                      return InkWell(
+                        onTap: () => _showVideoDetailsModal(context, video),
+                        borderRadius: BorderRadius.circular(8.r),
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(
+                              vertical: 8.h, horizontal: 6.w),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: EdgeInsets.all(8.w),
+                                decoration: BoxDecoration(
+                                  color: AppColors.surfaceSubtle,
+                                  borderRadius: BorderRadius.circular(8.r),
+                                ),
+                                child: Icon(Icons.play_arrow_rounded,
+                                    size: 18.sp, color: AppColors.youtubeRed),
                               ),
-                              child: Icon(Icons.play_arrow_rounded,
-                                  size: 16.sp, color: AppColors.youtubeRed),
-                            ),
-                            SizedBox(width: 10.w),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    video.title,
-                                    style: AppTypography.bodySmall.copyWith(
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.textInk,
+                              SizedBox(width: 10.w),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      video.title,
+                                      style: AppTypography.bodySmall.copyWith(
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.textInk,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  Text(
-                                    '${NumberFormat.compact().format(video.views)} views',
-                                    style: AppTypography.labelSmall.copyWith(
-                                      color: AppColors.outlierJade,
-                                      fontWeight: FontWeight.w700,
+                                    SizedBox(height: 2.h),
+                                    Row(
+                                      children: [
+                                        Text(
+                                          '${NumberFormat.compact().format(video.views)} views',
+                                          style:
+                                              AppTypography.labelSmall.copyWith(
+                                            color: AppColors.outlierJade,
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 10.sp,
+                                          ),
+                                        ),
+                                        if (video.likes > 0) ...[
+                                          SizedBox(width: 6.w),
+                                          Text(
+                                            '• 👍 ${NumberFormat.compact().format(video.likes)}',
+                                            style: AppTypography.labelSmall
+                                                .copyWith(
+                                              color: AppColors.textSecondary,
+                                              fontSize: 10.sp,
+                                            ),
+                                          ),
+                                        ],
+                                        if (video.commentCount > 0) ...[
+                                          SizedBox(width: 6.w),
+                                          Text(
+                                            '• 💬 ${video.commentCount}',
+                                            style: AppTypography.labelSmall
+                                                .copyWith(
+                                              color: AppColors.textSecondary,
+                                              fontSize: 10.sp,
+                                            ),
+                                          ),
+                                        ],
+                                      ],
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
+                              Icon(Icons.chevron_right_rounded,
+                                  size: 18.sp, color: AppColors.textMuted),
+                            ],
+                          ),
                         ),
                       );
                     }).toList(),
@@ -601,8 +912,6 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                 ),
                 SizedBox(height: 16.h),
               ],
-
-              // Top Topic Clusters
               if (channel.topTopicClusters.isNotEmpty) ...[
                 Text(
                   'PROVEN TOPIC CLUSTERS',
@@ -646,8 +955,6 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                 SizedBox(height: 20.h),
               ],
             ],
-
-            // Hackathon Judge Demo Controls Box
             TactileCard(
               backgroundColor: AppColors.proGoldSubtle,
               border: Border.all(color: const Color(0xFFFDE68A), width: 1.5),
@@ -661,7 +968,7 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                           color: AppColors.proGold, size: 18.sp),
                       SizedBox(width: 8.w),
                       Text(
-                        'HACKATHON DEMO & JUDGE CONTROLS',
+                        'HACKATHON DEMO & REVENUECAT CONTROLS',
                         style: AppTypography.labelSmall.copyWith(
                           color: AppColors.proGold,
                           fontWeight: FontWeight.w800,
@@ -671,7 +978,7 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                   ),
                   SizedBox(height: 8.h),
                   Text(
-                    'Instant toggle between Free Tier (3 sims limit) and Creator Pro (unlimited simulations) for testing RevenueCat flows.',
+                    'Instant toggle between Free Tier and Creator Pro to test RevenueCat access gates.',
                     style: AppTypography.bodySmall.copyWith(
                       color: const Color(0xFF92400E),
                     ),
@@ -730,6 +1037,18 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildPresetChip(String handle) {
+    return ActionChip(
+      label: Text(handle, style: AppTypography.labelSmall),
+      backgroundColor: AppColors.surface,
+      side: const BorderSide(color: AppColors.borderLight),
+      onPressed: () {
+        _syncHandleController.text = handle;
+        context.read<ChannelProvider>().syncChannel(handle);
+      },
     );
   }
 

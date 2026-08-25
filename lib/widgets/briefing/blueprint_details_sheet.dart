@@ -254,6 +254,7 @@ class BlueprintDetailsSheet extends StatelessWidget {
                     ),
                     SizedBox(height: 8.h),
                     Container(
+                      width: double.infinity,
                       padding: EdgeInsets.all(12.w),
                       decoration: BoxDecoration(
                         color: AppColors.outlierJadeSubtle,
@@ -269,6 +270,121 @@ class BlueprintDetailsSheet extends StatelessWidget {
                         ),
                       ),
                     ),
+
+                    // Section 5: Audience Comment Source (if available)
+                    if (blueprint.audienceCommentSource != null) ...[
+                      SizedBox(height: 16.h),
+                      _buildSectionHeader(
+                        icon: Icons.forum_rounded,
+                        title: 'INSPIRED BY VIEWER COMMENT',
+                      ),
+                      SizedBox(height: 8.h),
+                      Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.all(12.w),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEFF6FF),
+                          borderRadius: BorderRadius.circular(12.r),
+                          border: Border.all(color: const Color(0xFFBFDBFE)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 10.r,
+                                      backgroundColor: AppColors.primary,
+                                      child: Text(
+                                        blueprint.audienceCommentSource!.authorDisplayName.isNotEmpty
+                                            ? blueprint.audienceCommentSource!.authorDisplayName[0].toUpperCase()
+                                            : 'V',
+                                        style: TextStyle(
+                                            color: Colors.white, fontSize: 9.sp, fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                    SizedBox(width: 6.w),
+                                    Text(
+                                      blueprint.audienceCommentSource!.authorDisplayName,
+                                      style: AppTypography.labelMedium.copyWith(
+                                        color: AppColors.primaryDark,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                if (blueprint.audienceCommentSource!.likeCount > 0)
+                                  Container(
+                                    padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(6.r),
+                                      border: Border.all(color: const Color(0xFFBFDBFE)),
+                                    ),
+                                    child: Text(
+                                      '👍 ${blueprint.audienceCommentSource!.likeCount} Likes',
+                                      style: AppTypography.labelSmall.copyWith(
+                                        color: AppColors.primary,
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 10.sp,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            SizedBox(height: 8.h),
+                            Text(
+                              '"${blueprint.audienceCommentSource!.text}"',
+                              style: AppTypography.bodyMedium.copyWith(
+                                color: AppColors.textInk,
+                                fontStyle: FontStyle.italic,
+                                height: 1.4,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+
+                    // Section 6: Creator Authenticity Match (if available)
+                    if (blueprint.creatorAuthenticityProof.isNotEmpty) ...[
+                      SizedBox(height: 16.h),
+                      _buildSectionHeader(
+                        icon: Icons.verified_user_rounded,
+                        title: 'CREATOR AUTHENTICITY & VOICE MATCH',
+                      ),
+                      SizedBox(height: 8.h),
+                      Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.all(12.w),
+                        decoration: BoxDecoration(
+                          color: AppColors.canvas,
+                          borderRadius: BorderRadius.circular(12.r),
+                          border: Border.all(color: AppColors.borderLight),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(Icons.check_circle_rounded,
+                                size: 16.sp, color: AppColors.outlierJade),
+                            SizedBox(width: 8.w),
+                            Expanded(
+                              child: Text(
+                                blueprint.creatorAuthenticityProof,
+                                style: AppTypography.bodySmall.copyWith(
+                                  color: AppColors.textInk,
+                                  fontWeight: FontWeight.w600,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                     SizedBox(height: 24.h),
 
                     // Action Buttons Row

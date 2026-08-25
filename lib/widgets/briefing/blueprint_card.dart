@@ -78,7 +78,70 @@ class BlueprintCard extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: 12.h),
+
+          // Optional: Live Audience Comment Source Callout
+          if (blueprint.audienceCommentSource != null) ...[
+            SizedBox(height: 10.h),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 7.h),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEFF6FF), // Light cobalt tint
+                borderRadius: BorderRadius.circular(8.r),
+                border: Border.all(color: const Color(0xFFBFDBFE)),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.forum_rounded,
+                    size: 14.sp,
+                    color: AppColors.primary,
+                  ),
+                  SizedBox(width: 6.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              blueprint.audienceCommentSource!.authorDisplayName,
+                              style: AppTypography.labelSmall.copyWith(
+                                color: AppColors.primaryDark,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            if (blueprint.audienceCommentSource!.likeCount > 0) ...[
+                              SizedBox(width: 6.w),
+                              Text(
+                                '• 👍 ${blueprint.audienceCommentSource!.likeCount}',
+                                style: AppTypography.labelSmall.copyWith(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 10.sp,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                        SizedBox(height: 2.h),
+                        Text(
+                          '"${blueprint.audienceCommentSource!.text}"',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.bodySmall.copyWith(
+                            color: AppColors.textInk,
+                            fontStyle: FontStyle.italic,
+                            fontSize: 11.sp,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          SizedBox(height: 10.h),
 
           // Title
           Text(
