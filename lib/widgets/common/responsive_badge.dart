@@ -35,43 +35,50 @@ class ResponsiveBadge extends StatelessWidget {
 
     switch (variant) {
       case BadgeVariant.primary:
-        bg = AppColors.primarySubtle;
-        border = const Color(0xFFBFDBFE);
-        fg = AppColors.primaryDark;
+        bg = const Color(0xFF181A24); // Solid Deep Black
+        border = const Color(0xFF181A24);
+        fg = Colors.white;
         break;
       case BadgeVariant.outlier:
         bg = AppColors.outlierJadeSubtle;
-        border = AppColors.outlierJadeBorder;
-        fg = AppColors.outlierJade;
+        border = AppColors.outlierJade;
+        fg = const Color(0xFF047857);
         break;
       case BadgeVariant.hazard:
         bg = AppColors.hazardRubySubtle;
-        border = AppColors.hazardRubyBorder;
-        fg = AppColors.hazardRuby;
+        border = AppColors.hazardRuby;
+        fg = const Color(0xFFBE123C);
         break;
       case BadgeVariant.warning:
         bg = AppColors.warningAmberSubtle;
-        border = AppColors.warningAmberBorder;
-        fg = AppColors.warningAmber;
+        border = AppColors.warningAmber;
+        fg = const Color(0xFFB45309);
         break;
       case BadgeVariant.pro:
-        bg = AppColors.proGoldSubtle;
-        border = const Color(0xFFFDE68A);
-        fg = AppColors.proGold;
+        bg = const Color(0xFF181A24);
+        border = const Color(0xFFF59E0B);
+        fg = const Color(0xFFF59E0B);
         break;
       case BadgeVariant.neutral:
-        bg = AppColors.surfaceSubtle;
-        border = AppColors.borderLight;
-        fg = AppColors.textSecondary;
+        bg = const Color(0xFFF1F5F9);
+        border = const Color(0xFFCBD5E1);
+        fg = AppColors.textPrimary;
         break;
     }
 
     final content = Container(
-      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(20.r),
-        border: Border.all(color: border, width: 1),
+        borderRadius: BorderRadius.circular(100.r), // True Capsule geometry
+        border: Border.all(color: border, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -84,7 +91,7 @@ class ResponsiveBadge extends StatelessWidget {
             text,
             style: AppTypography.labelSmall.copyWith(
               color: fg,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w800, // Heavy solid typography
             ),
           ),
         ],

@@ -46,15 +46,16 @@ class _RetentionHazardScrubberState extends State<RetentionHazardScrubber> {
               Expanded(
                 child: Row(
                   children: [
-                    Icon(Icons.timeline_rounded,
-                        size: 15.sp, color: AppColors.hazardRuby),
+                    Icon(Icons.timer_rounded,
+                        size: 18.sp, color: AppColors.hazardRuby),
                     SizedBox(width: 6.w),
                     Flexible(
                       child: Text(
-                        '30-SEC RETENTION TIMELINE',
+                        '30-SEC DROP-OFF CHECK',
                         style: AppTypography.labelSmall.copyWith(
                           color: AppColors.textInk,
                           fontWeight: FontWeight.w800,
+                          fontSize: 12.sp,
                           letterSpacing: 0.5,
                         ),
                         overflow: TextOverflow.ellipsis,
@@ -65,7 +66,7 @@ class _RetentionHazardScrubberState extends State<RetentionHazardScrubber> {
               ),
               SizedBox(width: 6.w),
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 3.h),
+                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
                 decoration: BoxDecoration(
                   color: widget.hazards.isEmpty
                       ? AppColors.outlierJadeSubtle
@@ -79,14 +80,14 @@ class _RetentionHazardScrubberState extends State<RetentionHazardScrubber> {
                 ),
                 child: Text(
                   widget.hazards.isEmpty
-                      ? '0 HAZARDS'
-                      : '${widget.hazards.length} HAZARD FLAGS',
+                      ? '✓ NO DROP-OFF'
+                      : '${widget.hazards.length} DROP-OFF RISKS',
                   style: AppTypography.labelSmall.copyWith(
                     color: widget.hazards.isEmpty
                         ? AppColors.outlierJade
                         : AppColors.hazardRuby,
                     fontWeight: FontWeight.w800,
-                    fontSize: 9.sp,
+                    fontSize: 10.5.sp,
                   ),
                 ),
               ),
@@ -168,13 +169,13 @@ class _RetentionHazardScrubberState extends State<RetentionHazardScrubber> {
                   },
                 ),
               ),
-              SizedBox(height: 6.h),
-              // Time Labels (Responsive & compact)
+              SizedBox(height: 8.h),
+              // Time Labels (Responsive & readable)
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text('0:00 (Hook)',
-                      style: AppTypography.monoTimestamp.copyWith(fontSize: 10.sp)),
+                      style: AppTypography.monoTimestamp.copyWith(fontSize: 11.sp)),
                   Text(
                     '0:${_currentSecond.toString().padLeft(2, '0')}',
                     style: AppTypography.monoTimestamp.copyWith(
@@ -182,22 +183,22 @@ class _RetentionHazardScrubberState extends State<RetentionHazardScrubber> {
                           ? AppColors.hazardRuby
                           : AppColors.primary,
                       fontWeight: FontWeight.w800,
-                      fontSize: 11.sp,
+                      fontSize: 13.sp,
                     ),
                   ),
                   Text('0:30 (Cutoff)',
-                      style: AppTypography.monoTimestamp.copyWith(fontSize: 10.sp)),
+                      style: AppTypography.monoTimestamp.copyWith(fontSize: 11.sp)),
                 ],
               ),
               // Slider for continuous touch scrub
               SliderTheme(
                 data: SliderThemeData(
-                  trackHeight: 2.h,
+                  trackHeight: 3.h,
                   activeTrackColor: AppColors.primary,
                   inactiveTrackColor: AppColors.borderLight,
                   thumbColor: AppColors.textInk,
                   overlayColor: AppColors.primary.withValues(alpha: 0.1),
-                  thumbShape: RoundSliderThumbShape(enabledThumbRadius: 6.r),
+                  thumbShape: RoundSliderThumbShape(enabledThumbRadius: 8.r),
                 ),
                 child: Slider(
                   value: _currentSecond.toDouble(),
@@ -230,14 +231,15 @@ class _RetentionHazardScrubberState extends State<RetentionHazardScrubber> {
                         child: Row(
                           children: [
                             Icon(Icons.warning_amber_rounded,
-                                size: 14.sp, color: AppColors.hazardRuby),
+                                size: 16.sp, color: AppColors.hazardRuby),
                             SizedBox(width: 6.w),
                             Flexible(
                               child: Text(
-                                'HAZARD AT ${activeHazard.timestampRange}',
+                                'DROP-OFF SPOT: ${activeHazard.timestampRange}',
                                 style: AppTypography.labelSmall.copyWith(
                                   color: AppColors.hazardRuby,
                                   fontWeight: FontWeight.w800,
+                                  fontSize: 11.sp,
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -248,16 +250,16 @@ class _RetentionHazardScrubberState extends State<RetentionHazardScrubber> {
                       SizedBox(width: 6.w),
                       Container(
                         padding:
-                            EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                            EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
                         decoration: BoxDecoration(
                           color: AppColors.hazardRuby,
-                          borderRadius: BorderRadius.circular(4.r),
+                          borderRadius: BorderRadius.circular(6.r),
                         ),
                         child: Text(
                           '${activeHazard.dropOffRiskPercentage}% DROP-OFF',
                           style: AppTypography.labelSmall.copyWith(
                             color: Colors.white,
-                            fontSize: 9.sp,
+                            fontSize: 10.sp,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
@@ -269,8 +271,8 @@ class _RetentionHazardScrubberState extends State<RetentionHazardScrubber> {
                     activeHazard.title,
                     style: AppTypography.titleMedium.copyWith(
                       color: AppColors.textInk,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 14.sp,
                     ),
                   ),
                   SizedBox(height: 4.h),
@@ -279,6 +281,7 @@ class _RetentionHazardScrubberState extends State<RetentionHazardScrubber> {
                     style: AppTypography.bodySmall.copyWith(
                       color: AppColors.textSecondary,
                       height: 1.35,
+                      fontSize: 12.5.sp,
                     ),
                   ),
                 ],

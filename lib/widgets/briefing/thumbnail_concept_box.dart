@@ -132,7 +132,7 @@ class ThumbnailConceptBox extends StatelessWidget {
                 padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
                 decoration: BoxDecoration(
                   color: AppColors.textInk,
-                  borderRadius: BorderRadius.circular(6.r),
+                  borderRadius: BorderRadius.circular(100.r), // Capsule tag
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.15),

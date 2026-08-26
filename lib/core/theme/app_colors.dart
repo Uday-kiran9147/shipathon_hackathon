@@ -12,23 +12,26 @@ class AppColors {
   static const Color surfaceHighlight = Color(0xFFE8EDF5);
   
   // Borders & Dividers
+  // Borders & Dividers
   static const Color borderLight = Color(0xFFE5E9F0);
   static const Color borderSubtle = Color(0xFFEEF1F6);
-  static const Color borderFocused = Color(0xFF2563EB);
+  static const Color borderFocused = Color(0xFFFF0022);
 
-  // Brand / Editorial Primary
-  static const Color primaryDark = Color(0xFF1E3A8A);    // Deep Editorial Cobalt
-  static const Color primary = Color(0xFF2563EB);        // Electric Royal Blue
-  static const Color primaryLight = Color(0xFF3B82F6);   // Glow / Active
-  static const Color primarySubtle = Color(0xFFEFF6FF);  // Background tint
-  static const Color indigoAccent = Color(0xFF4F46E5);
+  // Brand / Editorial Primary (Aligned with Logo Red & Ink Black)
+  static const Color primaryDark = Color(0xFF181A24);    // Deep Ink / Charcoal Black
+  static const Color primary = Color(0xFFFF0022);        // Vibrant Prevue Red (from logo)
+  static const Color primaryLight = Color(0xFFFF334B);   // Bright Red Glow / Active
+  static const Color primarySubtle = Color(0xFFFFF1F2);  // Soft Red background tint
+  static const Color primaryBorder = Color(0xFFFECDD3);  // Soft Red border
+  static const Color brandBlack = Color(0xFF181A24);     // Deep Black
+  static const Color indigoAccent = Color(0xFF181A24);
 
   // YouTube / Studio Accent
-  static const Color youtubeRed = Color(0xFFFF0033);
+  static const Color youtubeRed = Color(0xFFFF0022);
   static const Color studioCrimson = Color(0xFFFF2D55);
   static const Color studioCrimsonSubtle = Color(0xFFFFF1F4);
 
-  // Semantic Signals: Outlier & Conviction (Jade / Emerald)
+  // Semantic Signals: Outlier & Conviction (Jade / Mint Green from Logo Arrow)
   static const Color outlierJade = Color(0xFF059669);
   static const Color outlierJadeLight = Color(0xFF10B981);
   static const Color outlierJadeSubtle = Color(0xFFECFDF5);
@@ -60,7 +63,7 @@ class AppColors {
 
   // Gradients
   static const LinearGradient primaryGradient = LinearGradient(
-    colors: [Color(0xFF1E3A8A), Color(0xFF2563EB)],
+    colors: [Color(0xFFE50914), Color(0xFFFF2D55)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
@@ -84,36 +87,44 @@ class AppColors {
   );
 
   static const LinearGradient heroMeshGradient = LinearGradient(
-    colors: [Color(0xFFEFF6FF), Color(0xFFFAFAFC), Color(0xFFFFF1F4)],
+    colors: [Color(0xFFFFF1F2), Color(0xFFFAFAFC), Color(0xFFECFDF5)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
-  // Layered Tactile Shadows
+  // Layered Heavy Tactile Shadows for Solid Visual Weight
   static List<BoxShadow> get cardElevation => [
     const BoxShadow(
-      color: Color(0x080F172A),
-      blurRadius: 24,
+      color: Color(0x140F172A), // 8% alpha deep ink shadow
+      blurRadius: 20,
       offset: Offset(0, 8),
     ),
     const BoxShadow(
-      color: Color(0x040F172A),
-      blurRadius: 6,
+      color: Color(0x0A0F172A), // 4% alpha crisp ground shadow
+      blurRadius: 4,
       offset: Offset(0, 2),
     ),
   ];
 
   static List<BoxShadow> get cardElevationPressed => [
     const BoxShadow(
-      color: Color(0x050F172A),
+      color: Color(0x0F0F172A),
       blurRadius: 8,
       offset: Offset(0, 2),
     ),
   ];
 
+  static List<BoxShadow> get solidButtonGlow => [
+    BoxShadow(
+      color: const Color(0xFFFF0022).withValues(alpha: 0.35),
+      blurRadius: 18,
+      offset: const Offset(0, 6),
+    ),
+  ];
+
   static List<BoxShadow> get proGlow => [
     BoxShadow(
-      color: const Color(0xFF2563EB).withValues(alpha: 0.25),
+      color: const Color(0xFFFF0022).withValues(alpha: 0.28),
       blurRadius: 20,
       offset: const Offset(0, 8),
     ),

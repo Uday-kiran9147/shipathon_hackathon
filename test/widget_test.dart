@@ -7,7 +7,7 @@ import 'package:shipathon_hackathon/core/services/blueprint_generator_service.da
 import 'package:shipathon_hackathon/core/services/youtube_api_service.dart';
 
 void main() {
-  testWidgets('PrevueAPP smoke test', (WidgetTester tester) async {
+  testWidgets('PrevueAPP smoke test & responsiveness across viewports without overflow', (WidgetTester tester) async {
     // Set standard mobile device viewport for ScreenUtil (390 x 844)
     tester.view.physicalSize = const Size(1170, 2532);
     tester.view.devicePixelRatio = 3.0;
@@ -20,6 +20,21 @@ void main() {
     // Verify that the Daily Briefing screen loads
     expect(find.text('Daily Briefing'), findsOneWidget);
     expect(find.text('All Blueprints'), findsOneWidget);
+
+    // Test tab navigation to Simulator Tab
+    await tester.tap(find.byIcon(Icons.speed_rounded).first);
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('Test Retention'), findsWidgets);
+
+    // Test tab navigation to Channel Graph Tab
+    await tester.tap(find.byIcon(Icons.account_circle_rounded).first);
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('My Channel'), findsWidgets);
+
+    // Test narrow device viewport (360 x 640)
+    tester.view.physicalSize = const Size(1080, 1920);
+    tester.view.devicePixelRatio = 3.0;
+    await tester.pump(const Duration(milliseconds: 300));
   });
 
   group('Comment Demand Clustering & Conviction Engine Tests', () {

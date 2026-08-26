@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
 import '../../models/simulation_result.dart';
+import '../common/solid_heavy_button.dart';
 import '../common/tactile_card.dart';
 
 /// 1-Click Prescriptive Fix Action Tile
@@ -31,125 +32,106 @@ class PrescriptiveFixTile extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header: Fix Type + Score Lift Badge
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    fix.isApplied
-                        ? Icons.check_circle_rounded
-                        : Icons.auto_fix_high_rounded,
-                    size: 15.sp,
-                    color: fix.isApplied
-                        ? AppColors.outlierJade
-                        : AppColors.primary,
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      fix.isApplied
+                          ? Icons.check_circle_rounded
+                          : Icons.auto_fix_high_rounded,
+                      size: 18.sp,
+                      color: fix.isApplied
+                          ? AppColors.outlierJade
+                          : AppColors.primary,
+                    ),
+                    SizedBox(width: 8.w),
+                    Text(
+                      fix.fixType,
+                      style: AppTypography.titleMedium.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textInk,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(width: 8.w),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                  decoration: BoxDecoration(
+                    color: AppColors.outlierJadeSubtle,
+                    borderRadius: BorderRadius.circular(100.r), // Capsule pill
+                    border: Border.all(color: AppColors.outlierJadeBorder),
                   ),
-                  SizedBox(width: 6.w),
-                  Text(
-                    fix.fixType,
-                    style: AppTypography.labelLarge.copyWith(
+                  child: Text(
+                    '+${fix.scoreLift.toStringAsFixed(1)} SCORE LIFT',
+                    style: AppTypography.labelSmall.copyWith(
+                      color: AppColors.outlierJade,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.textInk,
+                      fontSize: 11.sp,
                     ),
                   ),
-                ],
-              ),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                decoration: BoxDecoration(
-                  color: AppColors.outlierJadeSubtle,
-                  borderRadius: BorderRadius.circular(6.r),
-                  border: Border.all(color: AppColors.outlierJadeBorder),
                 ),
-                child: Text(
-                  '+${fix.scoreLift.toStringAsFixed(1)} SCORE LIFT',
-                  style: AppTypography.labelSmall.copyWith(
-                    color: AppColors.outlierJade,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
           SizedBox(height: 6.h),
           Text(
             fix.description,
             style: AppTypography.bodySmall.copyWith(
               color: AppColors.textSecondary,
+              fontSize: 13.sp,
             ),
           ),
           SizedBox(height: 10.h),
 
           // Before & After Diff Box
           Container(
-            padding: EdgeInsets.all(10.w),
+            padding: EdgeInsets.all(12.w),
             decoration: BoxDecoration(
               color: AppColors.canvas,
-              borderRadius: BorderRadius.circular(8.r),
+              borderRadius: BorderRadius.circular(10.r),
               border: Border.all(color: AppColors.borderSubtle),
             ),
-            child: Column(
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Replacement line
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'FIX: ',
-                      style: AppTypography.labelSmall.copyWith(
-                        color: AppColors.outlierJade,
-                        fontWeight: FontWeight.w800,
-                      ),
+                Text(
+                  'FIX: ',
+                  style: AppTypography.labelSmall.copyWith(
+                    color: AppColors.outlierJade,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 12.sp,
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    fix.replacementSnippet,
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w600,
+                      height: 1.35,
                     ),
-                    Expanded(
-                      child: Text(
-                        fix.replacementSnippet,
-                        style: AppTypography.bodySmall.copyWith(
-                          color: AppColors.textPrimary,
-                          fontWeight: FontWeight.w600,
-                          height: 1.3,
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ],
             ),
           ),
-          SizedBox(height: 12.h),
+          SizedBox(height: 14.h),
 
           // Action Button
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: fix.isApplied ? null : onApply,
-              icon: Icon(
-                fix.isApplied
-                    ? Icons.done_all_rounded
-                    : Icons.bolt_rounded,
-                size: 16.sp,
-              ),
-              label: Text(
-                fix.isApplied ? 'Prescription Applied' : 'Apply 1-Click Fix',
-                style: AppTypography.labelMedium.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: fix.isApplied
-                    ? AppColors.outlierJade
-                    : AppColors.primary,
-                disabledBackgroundColor: AppColors.outlierJade.withValues(alpha: 0.8),
-                disabledForegroundColor: Colors.white,
-                padding: EdgeInsets.symmetric(vertical: 10.h),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10.r),
-                ),
-              ),
-            ),
+          SolidHeavyButton(
+            label: fix.isApplied ? 'Improvement Applied ✓' : 'Apply 1-Tap Improvement',
+            icon: fix.isApplied ? Icons.done_all_rounded : Icons.bolt_rounded,
+            height: 48.h,
+            backgroundColor: fix.isApplied ? AppColors.outlierJade : AppColors.primary,
+            shadowColor: fix.isApplied ? const Color(0xFF065F46) : const Color(0xFF990014),
+            borderColor: fix.isApplied ? const Color(0xFF047857) : const Color(0xFFCC0018),
+            onPressed: fix.isApplied ? null : onApply,
           ),
         ],
       ),

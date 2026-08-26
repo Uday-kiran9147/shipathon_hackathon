@@ -75,6 +75,17 @@ class _HookScoreGaugeState extends State<HookScoreGauge>
         final currentScore = _scoreAnimation.value;
         final scoreColor = _getScoreColor(currentScore);
 
+        String ratingText;
+        if (currentScore >= 8.5) {
+          ratingText = '🌟 Excellent Retention (Top Outlier)';
+        } else if (currentScore >= 7.0) {
+          ratingText = '👍 Good Hook (Above Average)';
+        } else if (currentScore >= 5.0) {
+          ratingText = '⚖️ Average (Some Drop-off Expected)';
+        } else {
+          ratingText = '⚠️ High Drop-off Risk (Needs Fixes)';
+        }
+
         return Container(
           padding: EdgeInsets.all(20.w),
           decoration: BoxDecoration(
@@ -85,33 +96,43 @@ class _HookScoreGaugeState extends State<HookScoreGauge>
           ),
           child: Column(
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'PRE-FLIGHT RADAR',
-                    style: AppTypography.labelSmall.copyWith(
-                      color: AppColors.textMuted,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.8,
-                    ),
-                  ),
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                    decoration: BoxDecoration(
-                      color: scoreColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(6.r),
-                      border: Border.all(color: scoreColor.withValues(alpha: 0.3)),
-                    ),
-                    child: Text(
-                      widget.tier.multiplierLabel,
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: ratingText.length > 30
+                      ? MainAxisAlignment.start
+                      : MainAxisAlignment.spaceBetween,
+                  spacing: 8.w,
+                  children: [
+                    Text(
+                      'RETENTION STRENGTH',
                       style: AppTypography.labelSmall.copyWith(
-                        color: scoreColor,
-                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 12.sp,
+                        letterSpacing: 0.5,
                       ),
                     ),
-                  ),
-                ],
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                      decoration: BoxDecoration(
+                        color: scoreColor.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(100.r), // Capsule pill
+                        border: Border.all(color: scoreColor.withValues(alpha: 0.3)),
+                      ),
+                      child: Text(
+                        widget.tier.multiplierLabel,
+                        style: AppTypography.labelSmall.copyWith(
+                          color: scoreColor,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 12.sp,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
               SizedBox(height: 18.h),
               // Gauge Circular Dial
@@ -136,14 +157,14 @@ class _HookScoreGaugeState extends State<HookScoreGauge>
                         currentScore.toStringAsFixed(1),
                         style: AppTypography.monoScoreLarge.copyWith(
                           color: AppColors.textInk,
-                          fontSize: 34.sp,
+                          fontSize: 36.sp,
                         ),
                       ),
                       Text(
                         'HOOK SCORE / 10',
                         style: AppTypography.labelSmall.copyWith(
-                          color: AppColors.textMuted,
-                          fontSize: 9.sp,
+                          color: AppColors.textSecondary,
+                          fontSize: 11.sp,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -151,7 +172,16 @@ class _HookScoreGaugeState extends State<HookScoreGauge>
                   ),
                 ],
               ),
-              SizedBox(height: 18.h),
+              SizedBox(height: 12.h),
+              Text(
+                ratingText,
+                style: AppTypography.titleMedium.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: scoreColor,
+                  fontSize: 14.sp,
+                ),
+              ),
+              SizedBox(height: 14.h),
               // Secondary Metric Bars: Audience Resonance & Tier
               Row(
                 children: [
@@ -167,17 +197,18 @@ class _HookScoreGaugeState extends State<HookScoreGauge>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'AUDIENCE RESONANCE',
+                            'AUDIENCE INTEREST',
                             style: AppTypography.labelSmall.copyWith(
-                              color: AppColors.textMuted,
-                              fontSize: 9.sp,
+                              color: AppColors.textSecondary,
+                              fontSize: 11.sp,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
-                          SizedBox(height: 2.h),
+                          SizedBox(height: 4.h),
                           Text(
                             '${widget.resonanceScore.toStringAsFixed(1)} / 10.0',
                             style: AppTypography.titleMedium.copyWith(
-                              fontWeight: FontWeight.w700,
+                              fontWeight: FontWeight.w800,
                               color: AppColors.textPrimary,
                             ),
                           ),
@@ -198,20 +229,22 @@ class _HookScoreGaugeState extends State<HookScoreGauge>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'PREDICTED TIER',
+                            'PERFORMANCE TIER',
                             style: AppTypography.labelSmall.copyWith(
-                              color: AppColors.textMuted,
-                              fontSize: 9.sp,
+                              color: AppColors.textSecondary,
+                              fontSize: 11.sp,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
-                          SizedBox(height: 2.h),
+                          SizedBox(height: 4.h),
                           Text(
                             widget.tier.title,
                             style: AppTypography.bodySmall.copyWith(
-                              fontWeight: FontWeight.w700,
+                              fontWeight: FontWeight.w800,
                               color: scoreColor,
+                              fontSize: 12.5.sp,
                             ),
-                            maxLines: 1,
+                            maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ],

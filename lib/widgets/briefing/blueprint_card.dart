@@ -9,6 +9,7 @@ import '../../providers/briefing_provider.dart';
 import '../../providers/simulator_provider.dart';
 import '../common/responsive_badge.dart';
 import '../common/shimmer_border.dart';
+import '../common/solid_heavy_button.dart';
 import '../common/tactile_card.dart';
 import 'blueprint_details_sheet.dart';
 import 'thumbnail_concept_box.dart';
@@ -30,6 +31,14 @@ class BlueprintCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final briefingProvider = context.read<BriefingProvider>();
 
+    void openDetails() {
+      BlueprintDetailsSheet.show(
+        context,
+        blueprint: blueprint,
+        onSimulatePressed: onSimulatePressed,
+      );
+    }
+
     final cardContent = Padding(
       padding: EdgeInsets.all(16.w),
       child: Column(
@@ -46,28 +55,25 @@ class BlueprintCard extends StatelessWidget {
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     ResponsiveBadge(
-                      text: blueprint.formatLabel,
+                      text: blueprint.format == BlueprintFormat.longForm
+                          ? 'Long Video'
+                          : 'Short',
                       icon: blueprint.format == BlueprintFormat.longForm
                           ? Icons.videocam_rounded
                           : Icons.electric_bolt_rounded,
                       variant: BadgeVariant.primary,
                     ),
                     ResponsiveBadge(
-                      text: '${blueprint.predictedMultiplier}× OUTLIER',
+                      text: '${blueprint.predictedMultiplier}× Projected Views',
                       icon: Icons.trending_up_rounded,
                       variant: BadgeVariant.outlier,
-                    ),
-                    ResponsiveBadge(
-                      text: '${blueprint.convictionScore}/10 CONVICTION',
-                      icon: Icons.auto_awesome_rounded,
-                      variant: BadgeVariant.neutral,
                     ),
                   ],
                 ),
               ),
               IconButton(
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
+                padding: EdgeInsets.all(8.w),
+                constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
                 onPressed: () {
                   briefingProvider.toggleBookmark(blueprint.id);
                 },
@@ -77,8 +83,8 @@ class BlueprintCard extends StatelessWidget {
                       : Icons.bookmark_border_rounded,
                   color: blueprint.isBookmarked
                       ? AppColors.primary
-                      : AppColors.textMuted,
-                  size: 20.sp,
+                      : AppColors.textSecondary,
+                  size: 24.sp,
                 ),
               ),
             ],
@@ -89,11 +95,11 @@ class BlueprintCard extends StatelessWidget {
               blueprint.audienceCommentSource != null) ...[
             SizedBox(height: 10.h),
             Container(
-              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
               decoration: BoxDecoration(
-                color: const Color(0xFFEFF6FF), // Light cobalt tint
-                borderRadius: BorderRadius.circular(10.r),
-                border: Border.all(color: const Color(0xFFBFDBFE)),
+                color: AppColors.primarySubtle,
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(color: AppColors.primaryBorder),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -105,19 +111,17 @@ class BlueprintCard extends StatelessWidget {
                         children: [
                           Icon(
                             Icons.local_fire_department_rounded,
-                            size: 13.sp,
+                            size: 15.sp,
                             color: AppColors.youtubeRed,
                           ),
-                          SizedBox(width: 4.w),
+                          SizedBox(width: 6.w),
                           Text(
-                            blueprint.demandCluster != null
-                                ? 'DEMAND VELOCITY: ${blueprint.demandCluster!.demandVelocityIndex} DVI'
-                                : 'AUDIENCE REQUEST MINED',
+                            '🔥 HIGH AUDIENCE DEMAND',
                             style: AppTypography.labelSmall.copyWith(
-                              color: AppColors.primaryDark,
+                              color: AppColors.textInk,
                               fontWeight: FontWeight.w800,
-                              fontSize: 9.sp,
-                              letterSpacing: 0.4,
+                              fontSize: 11.sp,
+                              letterSpacing: 0.3,
                             ),
                           ),
                         ],
@@ -125,30 +129,30 @@ class BlueprintCard extends StatelessWidget {
                       if (blueprint.demandCluster != null)
                         Container(
                           padding: EdgeInsets.symmetric(
-                              horizontal: 6.w, vertical: 2.h),
+                              horizontal: 10.w, vertical: 4.h),
                           decoration: BoxDecoration(
                             color: Colors.white,
-                            borderRadius: BorderRadius.circular(4.r),
-                            border: Border.all(color: const Color(0xFFBFDBFE)),
+                            borderRadius: BorderRadius.circular(100.r), // Capsule
+                            border: Border.all(color: AppColors.primaryBorder),
                           ),
                           child: Text(
-                            '👍 ${blueprint.demandCluster!.totalUpvotes} Upvotes (${blueprint.demandCluster!.commentFrequency} reqs)',
+                            '👍 ${blueprint.demandCluster!.totalUpvotes} Upvotes',
                             style: AppTypography.labelSmall.copyWith(
                               color: AppColors.primary,
                               fontWeight: FontWeight.w800,
-                              fontSize: 8.5.sp,
+                              fontSize: 10.5.sp,
                             ),
                           ),
                         ),
                     ],
                   ),
                   if (blueprint.audienceCommentSource != null) ...[
-                    SizedBox(height: 6.h),
+                    SizedBox(height: 8.h),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         CircleAvatar(
-                          radius: 8.r,
+                          radius: 10.r,
                           backgroundColor: AppColors.primary,
                           child: Text(
                             blueprint.audienceCommentSource!.authorDisplayName
@@ -159,11 +163,11 @@ class BlueprintCard extends StatelessWidget {
                                 : 'V',
                             style: TextStyle(
                                 color: Colors.white,
-                                fontSize: 7.sp,
+                                fontSize: 9.sp,
                                 fontWeight: FontWeight.bold),
                           ),
                         ),
-                        SizedBox(width: 6.w),
+                        SizedBox(width: 8.w),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -174,9 +178,10 @@ class BlueprintCard extends StatelessWidget {
                                 style: AppTypography.labelSmall.copyWith(
                                   color: AppColors.primaryDark,
                                   fontWeight: FontWeight.w700,
-                                  fontSize: 10.sp,
+                                  fontSize: 11.sp,
                                 ),
                               ),
+                              SizedBox(height: 2.h),
                               Text(
                                 '"${blueprint.audienceCommentSource!.text}"',
                                 maxLines: 2,
@@ -184,8 +189,8 @@ class BlueprintCard extends StatelessWidget {
                                 style: AppTypography.bodySmall.copyWith(
                                   color: AppColors.textInk,
                                   fontStyle: FontStyle.italic,
-                                  fontSize: 10.5.sp,
-                                  height: 1.3,
+                                  fontSize: 12.sp,
+                                  height: 1.35,
                                 ),
                               ),
                             ],
@@ -198,7 +203,7 @@ class BlueprintCard extends StatelessWidget {
               ),
             ),
           ],
-          SizedBox(height: 10.h),
+          SizedBox(height: 12.h),
 
           // Title
           Text(
@@ -228,18 +233,20 @@ class BlueprintCard extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(Icons.auto_awesome_rounded,
-                            size: 13.sp, color: AppColors.primary),
-                        SizedBox(width: 4.w),
+                            size: 15.sp, color: AppColors.primary),
+                        SizedBox(width: 6.w),
                         Text(
-                          '5-SEC HOOK',
+                          'FIRST 5 SECONDS HOOK',
                           style: AppTypography.labelSmall.copyWith(
                             color: AppColors.primaryDark,
                             fontWeight: FontWeight.w800,
+                            fontSize: 11.sp,
                           ),
                         ),
                       ],
                     ),
-                    GestureDetector(
+                    InkWell(
+                      borderRadius: BorderRadius.circular(8.r),
                       onTap: () {
                         Clipboard.setData(ClipboardData(text: blueprint.hookText));
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -257,29 +264,35 @@ class BlueprintCard extends StatelessWidget {
                           ),
                         );
                       },
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.copy_rounded,
-                              size: 12.sp, color: AppColors.textMuted),
-                          SizedBox(width: 4.w),
-                          Text(
-                            'Copy',
-                            style: AppTypography.labelSmall.copyWith(
-                              color: AppColors.textSecondary,
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.copy_rounded,
+                                size: 14.sp, color: AppColors.primary),
+                            SizedBox(width: 4.w),
+                            Text(
+                              'Copy',
+                              style: AppTypography.labelSmall.copyWith(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 11.5.sp,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ],
                 ),
-                SizedBox(height: 6.h),
+                SizedBox(height: 8.h),
                 Text(
                   blueprint.hookText,
                   style: AppTypography.bodyMedium.copyWith(
                     color: AppColors.textPrimary,
                     fontWeight: FontWeight.w500,
+                    fontSize: 13.5.sp,
                     height: 1.45,
                   ),
                 ),
@@ -298,7 +311,7 @@ class BlueprintCard extends StatelessWidget {
 
           // Data-Backed "Why" Proof
           Container(
-            padding: EdgeInsets.all(10.w),
+            padding: EdgeInsets.all(12.w),
             decoration: BoxDecoration(
               color: AppColors.outlierJadeSubtle,
               borderRadius: BorderRadius.circular(10.r),
@@ -309,7 +322,7 @@ class BlueprintCard extends StatelessWidget {
               children: [
                 Icon(
                   Icons.insights_rounded,
-                  size: 15.sp,
+                  size: 16.sp,
                   color: AppColors.outlierJade,
                 ),
                 SizedBox(width: 8.w),
@@ -319,50 +332,31 @@ class BlueprintCard extends StatelessWidget {
                     style: AppTypography.bodySmall.copyWith(
                       color: const Color(0xFF065F46),
                       fontWeight: FontWeight.w600,
+                      fontSize: 12.5.sp,
                     ),
                   ),
                 ),
               ],
             ),
           ),
-          SizedBox(height: 14.h),
+          SizedBox(height: 16.h),
 
           // Action Button: Simulate in Pre-Flight
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () {
-                final simProvider = context.read<SimulatorProvider>();
-                simProvider.loadBlueprint(blueprint);
-                if (onSimulatePressed != null) {
-                  onSimulatePressed!();
-                }
-              },
-              icon: Icon(Icons.speed_rounded, size: 18.sp),
-              label: Text(
-                'Run in Pre-Flight Simulator',
-                style: AppTypography.labelLarge.copyWith(color: Colors.white),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                padding: EdgeInsets.symmetric(vertical: 13.h),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-              ),
-            ),
+          SolidHeavyButton(
+            label: 'Test Video Retention in Simulator',
+            icon: Icons.speed_rounded,
+            height: 52.h,
+            onPressed: () {
+              final simProvider = context.read<SimulatorProvider>();
+              simProvider.loadBlueprint(blueprint);
+              if (onSimulatePressed != null) {
+                onSimulatePressed!();
+              }
+            },
           ),
         ],
       ),
     );
-
-    void openDetails() {
-      BlueprintDetailsSheet.show(
-        context,
-        blueprint: blueprint,
-        onSimulatePressed: onSimulatePressed,
-      );
-    }
 
     if (isHero) {
       return GestureDetector(

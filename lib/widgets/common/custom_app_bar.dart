@@ -35,24 +35,33 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       title: Row(
         children: [
           Container(
-            width: 34.w,
-            height: 34.w,
+            width: 36.w,
+            height: 36.w,
             decoration: BoxDecoration(
-              gradient: AppColors.primaryGradient,
               borderRadius: BorderRadius.circular(10.r),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.25),
-                  blurRadius: 8,
+                  color: const Color(0xFFFF0022).withValues(alpha: 0.25),
+                  blurRadius: 10,
                   offset: const Offset(0, 3),
                 ),
               ],
             ),
-            child: Center(
-              child: Icon(
-                Icons.play_arrow_rounded,
-                color: Colors.white,
-                size: 20.sp,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(10.r),
+              child: Image.asset(
+                'assets/images/prevue_logo_v6.png',
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  color: const Color(0xFFFF0022),
+                  child: Center(
+                    child: Icon(
+                      Icons.play_arrow_rounded,
+                      color: Colors.white,
+                      size: 20.sp,
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
@@ -99,7 +108,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                 color: subProvider.isPro
                     ? AppColors.proGoldSubtle
                     : AppColors.primarySubtle,
-                borderRadius: BorderRadius.circular(20.r),
+                borderRadius: BorderRadius.circular(100.r), // Capsule pill badge
                 border: Border.all(
                   color: subProvider.isPro
                       ? const Color(0xFFFDE68A)

@@ -26,7 +26,7 @@ class ChannelProvider extends ChangeNotifier {
     if (envKey.isNotEmpty) {
       _configuredApiKey = envKey;
       _youtubeService.configureApiKey(envKey);
-      syncChannel(defaultHandle);
+      // syncChannel(defaultHandle);
     }
   }
 

@@ -5,6 +5,7 @@ import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
 import '../../providers/subscription_provider.dart';
+import '../../widgets/common/solid_heavy_button.dart';
 
 /// High-Converting RevenueCat Creator Pro Paywall BottomSheet
 class CreatorProPaywallSheet extends StatefulWidget {
@@ -76,28 +77,61 @@ class _CreatorProPaywallSheetState extends State<CreatorProPaywallSheet> {
                 padding: EdgeInsets.symmetric(horizontal: 20.w),
                 child: Column(
                   children: [
-                    // Pro Crown Badge
-                    Container(
-                      width: 54.w,
-                      height: 54.w,
-                      decoration: BoxDecoration(
-                        gradient: AppColors.proShimmerGradient,
-                        borderRadius: BorderRadius.circular(16.r),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.proGoldAccent.withValues(alpha: 0.3),
-                            blurRadius: 16,
-                            offset: const Offset(0, 6),
+                    // Pro Prevue Logo Badge
+                    Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Container(
+                          width: 64.w,
+                          height: 64.w,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(18.r),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFFF0022).withValues(alpha: 0.25),
+                                blurRadius: 20,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                      child: Center(
-                        child: Icon(
-                          Icons.workspace_premium_rounded,
-                          color: Colors.white,
-                          size: 28.sp,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(18.r),
+                            child: Image.asset(
+                              'assets/images/prevue_logo_v6.png',
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) => Container(
+                                color: const Color(0xFFFF0022),
+                                child: const Center(
+                                  child: Icon(Icons.play_arrow_rounded, color: Colors.white),
+                                ),
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
+                        Positioned(
+                          right: -4.w,
+                          top: -4.h,
+                          child: Container(
+                            padding: EdgeInsets.all(4.w),
+                            decoration: BoxDecoration(
+                              gradient: AppColors.proShimmerGradient,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.proGoldAccent.withValues(alpha: 0.4),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Icon(
+                              Icons.workspace_premium_rounded,
+                              color: Colors.white,
+                              size: 14.sp,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     SizedBox(height: 12.h),
 
@@ -182,18 +216,18 @@ class _CreatorProPaywallSheetState extends State<CreatorProPaywallSheet> {
                                       ),
                                       Container(
                                         padding: EdgeInsets.symmetric(
-                                            horizontal: 6.w, vertical: 2.h),
+                                            horizontal: 8.w, vertical: 3.h),
                                         decoration: BoxDecoration(
                                           color: AppColors.outlierJade,
                                           borderRadius:
-                                              BorderRadius.circular(4.r),
+                                              BorderRadius.circular(100.r),
                                         ),
                                         child: Text(
                                           'SAVE ${AppConstants.annualSavingsPercentage}',
                                           style: AppTypography.labelSmall
                                               .copyWith(
                                             color: Colors.white,
-                                            fontSize: 8.sp,
+                                            fontSize: 8.5.sp,
                                             fontWeight: FontWeight.w800,
                                           ),
                                         ),
@@ -275,68 +309,29 @@ class _CreatorProPaywallSheetState extends State<CreatorProPaywallSheet> {
                     SizedBox(height: 20.h),
 
                     // Primary CTA: Start Free Trial
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: subProvider.isPurchasing
-                            ? null
-                            : () async {
-                                final success = await subProvider.purchasePackage(
-                                    isAnnual: _isAnnual);
-                                if (context.mounted && success) {
-                                  Navigator.pop(context);
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        '🚀 Welcome to Creator Pro! Unlimited simulations unlocked.',
-                                        style: AppTypography.bodySmall
-                                            .copyWith(color: Colors.white),
-                                      ),
-                                      backgroundColor: AppColors.outlierJade,
-                                    ),
-                                  );
-                                }
-                              },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          padding: EdgeInsets.symmetric(vertical: 16.h),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14.r),
-                          ),
-                          shadowColor: AppColors.primary.withValues(alpha: 0.3),
-                          elevation: 6,
-                        ),
-                        child: subProvider.isPurchasing
-                            ? SizedBox(
-                                height: 20.h,
-                                width: 20.h,
-                                child: const CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor:
-                                      AlwaysStoppedAnimation<Color>(Colors.white),
-                                ),
-                              )
-                            : Column(
-                                children: [
-                                  Text(
-                                    'Start 7-Day Free Trial',
-                                    style: AppTypography.labelLarge.copyWith(
-                                      color: Colors.white,
-                                      fontSize: 15.sp,
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                  ),
-                                  SizedBox(height: 2.h),
-                                  Text(
-                                    'Then ${_isAnnual ? AppConstants.priceAnnual : AppConstants.priceMonthly} / ${_isAnnual ? 'year' : 'month'} • Cancel anytime',
-                                    style: AppTypography.labelSmall.copyWith(
-                                      color: Colors.white.withValues(alpha: 0.85),
-                                      fontSize: 10.sp,
-                                    ),
-                                  ),
-                                ],
+                    SolidHeavyButton(
+                      label: 'Start 7-Day Free Trial',
+                      height: 56.h,
+                      fontSize: 16.sp,
+                      isLoading: subProvider.isPurchasing,
+                      loadingText: 'Activating Creator Pro...',
+                      onPressed: () async {
+                        final success = await subProvider.purchasePackage(
+                            isAnnual: _isAnnual);
+                        if (context.mounted && success) {
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                '🚀 Welcome to Creator Pro! Unlimited simulations unlocked.',
+                                style: AppTypography.bodySmall
+                                    .copyWith(color: Colors.white),
                               ),
-                      ),
+                              backgroundColor: AppColors.outlierJade,
+                            ),
+                          );
+                        }
+                      },
                     ),
                     SizedBox(height: 12.h),
 
@@ -401,17 +396,17 @@ class _CreatorProPaywallSheetState extends State<CreatorProPaywallSheet> {
     required String subtitle,
   }) {
     return Padding(
-      padding: EdgeInsets.only(bottom: 12.h),
+      padding: EdgeInsets.only(bottom: 14.h),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: EdgeInsets.all(6.w),
-            decoration: BoxDecoration(
+            padding: EdgeInsets.all(8.w),
+            decoration: const BoxDecoration(
               color: AppColors.outlierJadeSubtle,
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, size: 14.sp, color: AppColors.outlierJade),
+            child: Icon(icon, size: 18.sp, color: AppColors.outlierJade),
           ),
           SizedBox(width: 12.w),
           Expanded(
@@ -421,15 +416,17 @@ class _CreatorProPaywallSheetState extends State<CreatorProPaywallSheet> {
                 Text(
                   title,
                   style: AppTypography.titleMedium.copyWith(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 14.5.sp,
+                    color: AppColors.textInk,
                   ),
                 ),
+                SizedBox(height: 2.h),
                 Text(
                   subtitle,
                   style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.textMuted,
-                    fontSize: 11.sp,
+                    color: AppColors.textSecondary,
+                    fontSize: 12.5.sp,
                   ),
                 ),
               ],

@@ -7,6 +7,7 @@ import '../../core/theme/app_typography.dart';
 import '../../models/daily_blueprint.dart';
 import '../../providers/simulator_provider.dart';
 import '../common/responsive_badge.dart';
+import '../common/solid_heavy_button.dart';
 import '../common/tactile_card.dart';
 import 'thumbnail_concept_box.dart';
 
@@ -332,9 +333,9 @@ class BlueprintDetailsSheet extends StatelessWidget {
                         width: double.infinity,
                         padding: EdgeInsets.all(12.w),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFEFF6FF),
+                          color: AppColors.primarySubtle,
                           borderRadius: BorderRadius.circular(12.r),
-                          border: Border.all(color: const Color(0xFFBFDBFE)),
+                          border: Border.all(color: AppColors.primaryBorder),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -580,7 +581,10 @@ ${blueprint.dataProofReason}
                         ),
                         SizedBox(width: 10.w),
                         Expanded(
-                          child: ElevatedButton.icon(
+                          child: SolidHeavyButton(
+                            label: 'Run Simulator',
+                            icon: Icons.speed_rounded,
+                            height: 48.h,
                             onPressed: () {
                               final simProvider =
                                   context.read<SimulatorProvider>();
@@ -590,21 +594,6 @@ ${blueprint.dataProofReason}
                                 onSimulatePressed!();
                               }
                             },
-                            icon: Icon(Icons.speed_rounded, size: 16.sp),
-                            label: Text(
-                              'Run Simulator',
-                              style: AppTypography.labelMedium.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              padding: EdgeInsets.symmetric(vertical: 14.h),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12.r),
-                              ),
-                            ),
                           ),
                         ),
                       ],
@@ -655,7 +644,7 @@ ${blueprint.dataProofReason}
             padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(6.r),
+              borderRadius: BorderRadius.circular(100.r), // Capsule timestamp
               border: Border.all(color: color.withValues(alpha: 0.3)),
             ),
             child: Text(
