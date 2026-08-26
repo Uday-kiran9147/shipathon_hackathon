@@ -115,9 +115,15 @@ class BlueprintDetailsSheet extends StatelessWidget {
                           variant: BadgeVariant.primary,
                         ),
                         ResponsiveBadge(
-                          text: '${blueprint.predictedMultiplier}× OUTLIER PROJECTION',
+                          text:
+                              '${blueprint.predictedMultiplier}× OUTLIER PROJECTION (${blueprint.confidenceIntervalMin}×–${blueprint.confidenceIntervalMax}× Range)',
                           icon: Icons.trending_up_rounded,
                           variant: BadgeVariant.outlier,
+                        ),
+                        ResponsiveBadge(
+                          text: '${blueprint.convictionScore}/10 CONVICTION',
+                          icon: Icons.auto_awesome_rounded,
+                          variant: BadgeVariant.neutral,
                         ),
                       ],
                     ),
@@ -215,42 +221,47 @@ class BlueprintDetailsSheet extends StatelessWidget {
                     ),
                     SizedBox(height: 16.h),
 
-                    // Section 3: 4-Step Narrative Structure
+                    // Section 3: 4-Step Narrative Structure & Tailored Retention Anchors
                     _buildSectionHeader(
                       icon: Icons.list_alt_rounded,
-                      title: 'RECOMMENDED NARRATIVE PACING',
+                      title: 'PRE-ENGINEERED RETENTION ANCHORS & PACING',
                     ),
                     SizedBox(height: 8.h),
-                    _buildPacingStep(
-                      timestamp: '0:00 - 0:05',
-                      title: 'High-Stakes Hook',
-                      desc: 'Deliver contrarian thesis without intro greetings.',
-                      color: AppColors.primary,
-                    ),
-                    _buildPacingStep(
-                      timestamp: '0:05 - 0:25',
-                      title: 'Visual Proof / Problem Setup',
-                      desc: 'Display split screen or code sample highlighting the tension.',
-                      color: AppColors.warningAmber,
-                    ),
-                    _buildPacingStep(
-                      timestamp: '0:25 - 4:00',
-                      title: 'Step-by-Step Resolution',
-                      desc: 'Walkthrough actionable fix with zero explanatory lulls.',
-                      color: AppColors.outlierJade,
-                    ),
-                    _buildPacingStep(
-                      timestamp: 'End (Last 15s)',
-                      title: 'Retention Bridge & Next Video Hook',
-                      desc: 'Seamlessly transition to recommended system design video.',
-                      color: AppColors.indigoAccent,
-                    ),
+                    ...blueprint.preEngineeredRetentionAnchors.asMap().entries.map((entry) {
+                      final idx = entry.key;
+                      final anchor = entry.value;
+                      final parts = anchor.split(': ');
+                      final timestamp = parts.isNotEmpty ? parts.first : '0:00';
+                      final desc = parts.length > 1 ? parts.sublist(1).join(': ') : anchor;
+
+                      Color stepColor;
+                      switch (idx % 4) {
+                        case 0:
+                          stepColor = AppColors.primary;
+                          break;
+                        case 1:
+                          stepColor = AppColors.warningAmber;
+                          break;
+                        case 2:
+                          stepColor = AppColors.outlierJade;
+                          break;
+                        default:
+                          stepColor = AppColors.indigoAccent;
+                      }
+
+                      return _buildPacingStep(
+                        timestamp: timestamp,
+                        title: 'Phase ${idx + 1}',
+                        desc: desc,
+                        color: stepColor,
+                      );
+                    }),
                     SizedBox(height: 16.h),
 
-                    // Section 4: Data-Backed "Why" Proof
+                    // Section 4: Data-Backed "Why" Proof & Mathematical Conviction
                     _buildSectionHeader(
                       icon: Icons.insights_rounded,
-                      title: 'AUDIENCE DATA PROOF ("THE WHY")',
+                      title: 'AUDIENCE DEMAND PROOF & CONVICTION BREAKDOWN',
                     ),
                     SizedBox(height: 8.h),
                     Container(
@@ -261,22 +272,60 @@ class BlueprintDetailsSheet extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12.r),
                         border: Border.all(color: AppColors.outlierJadeBorder),
                       ),
-                      child: Text(
-                        blueprint.dataProofReason,
-                        style: AppTypography.bodyMedium.copyWith(
-                          color: const Color(0xFF065F46),
-                          fontWeight: FontWeight.w600,
-                          height: 1.4,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'MATHEMATICAL CONVICTION',
+                                style: AppTypography.labelSmall.copyWith(
+                                  color: const Color(0xFF065F46),
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 9.sp,
+                                ),
+                              ),
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 6.w, vertical: 2.h),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(4.r),
+                                  border: Border.all(
+                                      color: AppColors.outlierJadeBorder),
+                                ),
+                                child: Text(
+                                  '${blueprint.convictionScore}/10 High Conviction',
+                                  style: AppTypography.labelSmall.copyWith(
+                                    color: AppColors.outlierJade,
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 9.sp,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 6.h),
+                          Text(
+                            blueprint.dataProofReason,
+                            style: AppTypography.bodyMedium.copyWith(
+                              color: const Color(0xFF065F46),
+                              fontWeight: FontWeight.w600,
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
 
-                    // Section 5: Audience Comment Source (if available)
-                    if (blueprint.audienceCommentSource != null) ...[
+                    // Section 5: Demand Cluster & Comment Evidence
+                    if (blueprint.demandCluster != null ||
+                        blueprint.audienceCommentSource != null) ...[
                       SizedBox(height: 16.h),
                       _buildSectionHeader(
                         icon: Icons.forum_rounded,
-                        title: 'INSPIRED BY VIEWER COMMENT',
+                        title: 'COMMUNITY DEMAND EVIDENCE',
                       ),
                       SizedBox(height: 8.h),
                       Container(
@@ -290,60 +339,151 @@ class BlueprintDetailsSheet extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    CircleAvatar(
-                                      radius: 10.r,
-                                      backgroundColor: AppColors.primary,
-                                      child: Text(
-                                        blueprint.audienceCommentSource!.authorDisplayName.isNotEmpty
-                                            ? blueprint.audienceCommentSource!.authorDisplayName[0].toUpperCase()
-                                            : 'V',
-                                        style: TextStyle(
-                                            color: Colors.white, fontSize: 9.sp, fontWeight: FontWeight.bold),
-                                      ),
-                                    ),
-                                    SizedBox(width: 6.w),
-                                    Text(
-                                      blueprint.audienceCommentSource!.authorDisplayName,
-                                      style: AppTypography.labelMedium.copyWith(
-                                        color: AppColors.primaryDark,
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                if (blueprint.audienceCommentSource!.likeCount > 0)
-                                  Container(
-                                    padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(6.r),
-                                      border: Border.all(color: const Color(0xFFBFDBFE)),
-                                    ),
-                                    child: Text(
-                                      '👍 ${blueprint.audienceCommentSource!.likeCount} Likes',
-                                      style: AppTypography.labelSmall.copyWith(
-                                        color: AppColors.primary,
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 10.sp,
-                                      ),
+                            if (blueprint.demandCluster != null) ...[
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'CLUSTER: ${blueprint.demandCluster!.topicKeyword.toUpperCase()}',
+                                    style: AppTypography.labelSmall.copyWith(
+                                      color: AppColors.primaryDark,
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 9.5.sp,
                                     ),
                                   ),
-                              ],
-                            ),
-                            SizedBox(height: 8.h),
-                            Text(
-                              '"${blueprint.audienceCommentSource!.text}"',
-                              style: AppTypography.bodyMedium.copyWith(
-                                color: AppColors.textInk,
-                                fontStyle: FontStyle.italic,
-                                height: 1.4,
+                                  Text(
+                                    'DVI ${blueprint.demandCluster!.demandVelocityIndex} • ${blueprint.demandCluster!.totalUpvotes} Upvotes',
+                                    style: AppTypography.labelSmall.copyWith(
+                                      color: AppColors.primary,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 9.sp,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
+                              SizedBox(height: 8.h),
+                              ...blueprint.demandCluster!.sampleComments.map((c) {
+                                return Padding(
+                                  padding: EdgeInsets.only(bottom: 6.h),
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      CircleAvatar(
+                                        radius: 8.r,
+                                        backgroundColor: AppColors.primary,
+                                        child: Text(
+                                          c.authorDisplayName.isNotEmpty
+                                              ? c.authorDisplayName[0]
+                                                  .toUpperCase()
+                                              : 'V',
+                                          style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 7.sp,
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                      ),
+                                      SizedBox(width: 6.w),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              '${c.authorDisplayName}${c.likeCount > 0 ? ' • 👍 ${c.likeCount} likes' : ''}',
+                                              style: AppTypography.labelSmall
+                                                  .copyWith(
+                                                color: AppColors.primaryDark,
+                                                fontWeight: FontWeight.w700,
+                                                fontSize: 9.5.sp,
+                                              ),
+                                            ),
+                                            Text(
+                                              '"${c.text}"',
+                                              style: AppTypography.bodySmall
+                                                  .copyWith(
+                                                color: AppColors.textInk,
+                                                fontStyle: FontStyle.italic,
+                                                height: 1.35,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }),
+                            ] else if (blueprint.audienceCommentSource != null) ...[
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      CircleAvatar(
+                                        radius: 10.r,
+                                        backgroundColor: AppColors.primary,
+                                        child: Text(
+                                          blueprint.audienceCommentSource!
+                                                  .authorDisplayName.isNotEmpty
+                                              ? blueprint.audienceCommentSource!
+                                                  .authorDisplayName[0]
+                                                  .toUpperCase()
+                                              : 'V',
+                                          style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 9.sp,
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                      ),
+                                      SizedBox(width: 6.w),
+                                      Text(
+                                        blueprint.audienceCommentSource!
+                                            .authorDisplayName,
+                                        style:
+                                            AppTypography.labelMedium.copyWith(
+                                          color: AppColors.primaryDark,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  if (blueprint.audienceCommentSource!.likeCount >
+                                      0)
+                                    Container(
+                                      padding: EdgeInsets.symmetric(
+                                          horizontal: 6.w, vertical: 2.h),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius:
+                                            BorderRadius.circular(6.r),
+                                        border: Border.all(
+                                            color: const Color(0xFFBFDBFE)),
+                                      ),
+                                      child: Text(
+                                        '👍 ${blueprint.audienceCommentSource!.likeCount} Likes',
+                                        style:
+                                            AppTypography.labelSmall.copyWith(
+                                          color: AppColors.primary,
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 10.sp,
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              SizedBox(height: 8.h),
+                              Text(
+                                '"${blueprint.audienceCommentSource!.text}"',
+                                style: AppTypography.bodyMedium.copyWith(
+                                  color: AppColors.textInk,
+                                  fontStyle: FontStyle.italic,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ),

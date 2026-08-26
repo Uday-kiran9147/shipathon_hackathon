@@ -731,14 +731,192 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
               ),
               SizedBox(height: 16.h),
 
-              // AUDIENCE VOICE & LIVE COMMENTS HUB
-              if (channel.audienceRequests.isNotEmpty ||
-                  channel.audienceInsight.topViewerRequests.isNotEmpty) ...[
+              // CREATOR AUTHENTICITY & AUTHORITY PROFILE
+              Text(
+                'CREATOR DNA & AUTHENTICITY METRICS',
+                style: AppTypography.labelSmall.copyWith(
+                  color: AppColors.textMuted,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.6,
+                ),
+              ),
+              SizedBox(height: 8.h),
+              TactileCard(
+                padding: EdgeInsets.all(14.w),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            padding: EdgeInsets.all(10.w),
+                            decoration: BoxDecoration(
+                              color: AppColors.primarySubtle,
+                              borderRadius: BorderRadius.circular(10.r),
+                              border: Border.all(
+                                  color: AppColors.primary
+                                      .withValues(alpha: 0.2)),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(Icons.psychology_rounded,
+                                        size: 14.sp, color: AppColors.primary),
+                                    SizedBox(width: 4.w),
+                                    Text(
+                                      'AUTHORITY TRUST',
+                                      style: AppTypography.labelSmall.copyWith(
+                                        fontSize: 8.5.sp,
+                                        fontWeight: FontWeight.w800,
+                                        color: AppColors.primaryDark,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 4.h),
+                                Text(
+                                  '${channel.authenticityProfile.questionToPraiseRatio}× Ratio',
+                                  style: AppTypography.monoScoreMedium.copyWith(
+                                    fontSize: 15.sp,
+                                    color: AppColors.primaryDark,
+                                  ),
+                                ),
+                                Text(
+                                  'Tech Questions vs Praise',
+                                  style: AppTypography.labelSmall.copyWith(
+                                    fontSize: 8.5.sp,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 8.w),
+                        Expanded(
+                          child: Container(
+                            padding: EdgeInsets.all(10.w),
+                            decoration: BoxDecoration(
+                              color: AppColors.outlierJadeSubtle,
+                              borderRadius: BorderRadius.circular(10.r),
+                              border: Border.all(
+                                  color: AppColors.outlierJadeBorder),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(Icons.bolt_rounded,
+                                        size: 14.sp,
+                                        color: AppColors.outlierJade),
+                                    SizedBox(width: 4.w),
+                                    Text(
+                                      'DEMAND VELOCITY',
+                                      style: AppTypography.labelSmall.copyWith(
+                                        fontSize: 8.5.sp,
+                                        fontWeight: FontWeight.w800,
+                                        color: const Color(0xFF065F46),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 4.h),
+                                Text(
+                                  '${channel.authenticityProfile.engagementVelocity} Velocity',
+                                  style: AppTypography.monoScoreMedium.copyWith(
+                                    fontSize: 15.sp,
+                                    color: const Color(0xFF065F46),
+                                  ),
+                                ),
+                                Text(
+                                  'Interactions per 1K Views',
+                                  style: AppTypography.labelSmall.copyWith(
+                                    fontSize: 8.5.sp,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 12.h),
+                    Text(
+                      'SIGNATURE HOOK ARCHETYPE',
+                      style: AppTypography.labelSmall.copyWith(
+                        color: AppColors.textMuted,
+                        fontSize: 9.sp,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    SizedBox(height: 4.h),
+                    Text(
+                      channel.authenticityProfile.signatureHookStyle,
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.textInk,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    SizedBox(height: 10.h),
+                    Container(
+                      padding: EdgeInsets.all(10.w),
+                      decoration: BoxDecoration(
+                        color: AppColors.hazardRubySubtle,
+                        borderRadius: BorderRadius.circular(8.r),
+                        border: Border.all(color: AppColors.hazardRubyBorder),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(Icons.warning_amber_rounded,
+                              size: 14.sp, color: AppColors.hazardRuby),
+                          SizedBox(width: 6.w),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'NICHE RETENTION VULNERABILITY ALERT',
+                                  style: AppTypography.labelSmall.copyWith(
+                                    color: AppColors.hazardRuby,
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 8.5.sp,
+                                  ),
+                                ),
+                                SizedBox(height: 2.h),
+                                Text(
+                                  channel.authenticityProfile
+                                      .retentionVulnerabilityArea,
+                                  style: AppTypography.bodySmall.copyWith(
+                                    color: AppColors.hazardRuby,
+                                    fontSize: 10.5.sp,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 16.h),
+
+              // AUDIENCE VOICE & LIVE COMMENTS HUB WITH DEMAND CLUSTERS
+              if (channel.audienceInsight.topDemandClusters.isNotEmpty ||
+                  channel.audienceRequests.isNotEmpty) ...[
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'AUDIENCE VOICE & VIEWER REQUESTS',
+                      'AUDIENCE DEMAND CLUSTERS & INTEL',
                       style: AppTypography.labelSmall.copyWith(
                         color: AppColors.textMuted,
                         fontWeight: FontWeight.w800,
@@ -764,44 +942,144 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                   ],
                 ),
                 SizedBox(height: 8.h),
-                TactileCard(
-                  padding: EdgeInsets.all(12.w),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Top Recurring Viewer Demands (Next Video Candidates)',
-                        style: AppTypography.labelSmall.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.textInk,
-                        ),
-                      ),
-                      SizedBox(height: 8.h),
-                      ...channel.audienceInsight.topViewerRequests.map((req) {
-                        return Padding(
-                          padding: EdgeInsets.only(bottom: 6.h),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Icon(Icons.lightbulb_rounded,
-                                  size: 14.sp, color: AppColors.warningAmber),
-                              SizedBox(width: 6.w),
-                              Expanded(
-                                child: Text(
-                                  req,
-                                  style: AppTypography.bodySmall.copyWith(
-                                    color: AppColors.textInk,
-                                    fontWeight: FontWeight.w600,
+                if (channel.audienceInsight.topDemandClusters.isNotEmpty) ...[
+                  ...channel.audienceInsight.topDemandClusters.map((cluster) {
+                    return Padding(
+                      padding: EdgeInsets.only(bottom: 8.h),
+                      child: TactileCard(
+                        padding: EdgeInsets.all(12.w),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.local_fire_department_rounded,
+                                          size: 15.sp,
+                                          color: AppColors.youtubeRed),
+                                      SizedBox(width: 6.w),
+                                      Flexible(
+                                        child: Text(
+                                          cluster.topicKeyword,
+                                          style:
+                                              AppTypography.titleMedium.copyWith(
+                                            fontWeight: FontWeight.w800,
+                                            fontSize: 12.5.sp,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                              ),
+                                Container(
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 6.w, vertical: 2.h),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.outlierJadeSubtle,
+                                    borderRadius: BorderRadius.circular(4.r),
+                                    border: Border.all(
+                                        color: AppColors.outlierJadeBorder),
+                                  ),
+                                  child: Text(
+                                    'DVI ${cluster.demandVelocityIndex} • ${cluster.totalUpvotes} Upvotes',
+                                    style: AppTypography.labelSmall.copyWith(
+                                      color: AppColors.outlierJade,
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 8.5.sp,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            if (cluster.sampleComments.isNotEmpty) ...[
+                              SizedBox(height: 8.h),
+                              ...cluster.sampleComments.take(2).map((c) {
+                                return Container(
+                                  margin: EdgeInsets.only(bottom: 4.h),
+                                  padding: EdgeInsets.all(8.w),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.canvas,
+                                    borderRadius: BorderRadius.circular(6.r),
+                                    border:
+                                        Border.all(color: AppColors.borderLight),
+                                  ),
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        '💬',
+                                        style: TextStyle(fontSize: 10.sp),
+                                      ),
+                                      SizedBox(width: 6.w),
+                                      Expanded(
+                                        child: Text(
+                                          '${c.authorDisplayName}: "${c.text}" (${c.likeCount} likes)',
+                                          style:
+                                              AppTypography.bodySmall.copyWith(
+                                            fontSize: 10.sp,
+                                            color: AppColors.textInk,
+                                            height: 1.3,
+                                          ),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }),
                             ],
+                          ],
+                        ),
+                      ),
+                    );
+                  }),
+                ] else ...[
+                  TactileCard(
+                    padding: EdgeInsets.all(12.w),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Top Recurring Viewer Demands',
+                          style: AppTypography.labelSmall.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textInk,
                           ),
-                        );
-                      }),
-                    ],
+                        ),
+                        SizedBox(height: 8.h),
+                        ...channel.audienceInsight.topViewerRequests.map((req) {
+                          return Padding(
+                            padding: EdgeInsets.only(bottom: 6.h),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Icon(Icons.lightbulb_rounded,
+                                    size: 14.sp, color: AppColors.warningAmber),
+                                SizedBox(width: 6.w),
+                                Expanded(
+                                  child: Text(
+                                    req,
+                                    style: AppTypography.bodySmall.copyWith(
+                                      color: AppColors.textInk,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
+                      ],
+                    ),
                   ),
-                ),
+                ],
                 SizedBox(height: 16.h),
               ],
 

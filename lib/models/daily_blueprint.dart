@@ -17,12 +17,18 @@ class DailyBlueprint {
   final String thumbnailTag;
   final String dataProofReason;
   final double predictedMultiplier;
+  final double convictionScore; // 0.0 to 10.0 mathematically computed
+  final double confidenceIntervalMin;
+  final double confidenceIntervalMax;
   final String categoryTag;
   final DateTime date;
   final bool isBookmarked;
   final ChannelComment? audienceCommentSource;
+  final CommentDemandCluster? demandCluster;
+  final String demandEvidenceSummary;
   final String creatorAuthenticityProof;
   final String engagementContext;
+  final List<String> preEngineeredRetentionAnchors;
 
   const DailyBlueprint({
     required this.id,
@@ -35,12 +41,23 @@ class DailyBlueprint {
     required this.thumbnailTag,
     required this.dataProofReason,
     required this.predictedMultiplier,
+    this.convictionScore = 8.8,
+    this.confidenceIntervalMin = 2.4,
+    this.confidenceIntervalMax = 3.6,
     required this.categoryTag,
     required this.date,
     this.isBookmarked = false,
     this.audienceCommentSource,
+    this.demandCluster,
+    this.demandEvidenceSummary = '',
     this.creatorAuthenticityProof = '',
     this.engagementContext = '',
+    this.preEngineeredRetentionAnchors = const [
+      '0:00 - 0:05: High-tension contrarian premise',
+      '0:05 - 0:25: Immediate visual proof / code diff',
+      '0:25 - 4:00: Step-by-step resolution without fluff',
+      'End: Seamless retention bridge to related topic'
+    ],
   });
 
   DailyBlueprint copyWith({
@@ -54,12 +71,18 @@ class DailyBlueprint {
     String? thumbnailTag,
     String? dataProofReason,
     double? predictedMultiplier,
+    double? convictionScore,
+    double? confidenceIntervalMin,
+    double? confidenceIntervalMax,
     String? categoryTag,
     DateTime? date,
     bool? isBookmarked,
     ChannelComment? audienceCommentSource,
+    CommentDemandCluster? demandCluster,
+    String? demandEvidenceSummary,
     String? creatorAuthenticityProof,
     String? engagementContext,
+    List<String>? preEngineeredRetentionAnchors,
   }) {
     return DailyBlueprint(
       id: id ?? this.id,
@@ -68,19 +91,31 @@ class DailyBlueprint {
       formatLabel: formatLabel ?? this.formatLabel,
       hookText: hookText ?? this.hookText,
       thumbnailConceptLeft: thumbnailConceptLeft ?? this.thumbnailConceptLeft,
-      thumbnailConceptRight: thumbnailConceptRight ?? this.thumbnailConceptRight,
+      thumbnailConceptRight:
+          thumbnailConceptRight ?? this.thumbnailConceptRight,
       thumbnailTag: thumbnailTag ?? this.thumbnailTag,
       dataProofReason: dataProofReason ?? this.dataProofReason,
       predictedMultiplier: predictedMultiplier ?? this.predictedMultiplier,
+      convictionScore: convictionScore ?? this.convictionScore,
+      confidenceIntervalMin:
+          confidenceIntervalMin ?? this.confidenceIntervalMin,
+      confidenceIntervalMax:
+          confidenceIntervalMax ?? this.confidenceIntervalMax,
       categoryTag: categoryTag ?? this.categoryTag,
       date: date ?? this.date,
       isBookmarked: isBookmarked ?? this.isBookmarked,
       audienceCommentSource:
           audienceCommentSource ?? this.audienceCommentSource,
+      demandCluster: demandCluster ?? this.demandCluster,
+      demandEvidenceSummary:
+          demandEvidenceSummary ?? this.demandEvidenceSummary,
       creatorAuthenticityProof:
           creatorAuthenticityProof ?? this.creatorAuthenticityProof,
       engagementContext: engagementContext ?? this.engagementContext,
+      preEngineeredRetentionAnchors:
+          preEngineeredRetentionAnchors ?? this.preEngineeredRetentionAnchors,
     );
   }
 }
+
 

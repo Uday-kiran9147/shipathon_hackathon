@@ -57,6 +57,11 @@ class BlueprintCard extends StatelessWidget {
                       icon: Icons.trending_up_rounded,
                       variant: BadgeVariant.outlier,
                     ),
+                    ResponsiveBadge(
+                      text: '${blueprint.convictionScore}/10 CONVICTION',
+                      icon: Icons.auto_awesome_rounded,
+                      variant: BadgeVariant.neutral,
+                    ),
                   ],
                 ),
               ),
@@ -79,64 +84,116 @@ class BlueprintCard extends StatelessWidget {
             ],
           ),
 
-          // Optional: Live Audience Comment Source Callout
-          if (blueprint.audienceCommentSource != null) ...[
+          // Live Audience Demand & Comment Source Callout
+          if (blueprint.demandCluster != null ||
+              blueprint.audienceCommentSource != null) ...[
             SizedBox(height: 10.h),
             Container(
-              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 7.h),
+              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
               decoration: BoxDecoration(
                 color: const Color(0xFFEFF6FF), // Light cobalt tint
-                borderRadius: BorderRadius.circular(8.r),
+                borderRadius: BorderRadius.circular(10.r),
                 border: Border.all(color: const Color(0xFFBFDBFE)),
               ),
-              child: Row(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(
-                    Icons.forum_rounded,
-                    size: 14.sp,
-                    color: AppColors.primary,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.local_fire_department_rounded,
+                            size: 13.sp,
+                            color: AppColors.youtubeRed,
+                          ),
+                          SizedBox(width: 4.w),
+                          Text(
+                            blueprint.demandCluster != null
+                                ? 'DEMAND VELOCITY: ${blueprint.demandCluster!.demandVelocityIndex} DVI'
+                                : 'AUDIENCE REQUEST MINED',
+                            style: AppTypography.labelSmall.copyWith(
+                              color: AppColors.primaryDark,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 9.sp,
+                              letterSpacing: 0.4,
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (blueprint.demandCluster != null)
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 6.w, vertical: 2.h),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(4.r),
+                            border: Border.all(color: const Color(0xFFBFDBFE)),
+                          ),
+                          child: Text(
+                            '👍 ${blueprint.demandCluster!.totalUpvotes} Upvotes (${blueprint.demandCluster!.commentFrequency} reqs)',
+                            style: AppTypography.labelSmall.copyWith(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 8.5.sp,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
-                  SizedBox(width: 6.w),
-                  Expanded(
-                    child: Column(
+                  if (blueprint.audienceCommentSource != null) ...[
+                    SizedBox(height: 6.h),
+                    Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            Text(
-                              blueprint.audienceCommentSource!.authorDisplayName,
-                              style: AppTypography.labelSmall.copyWith(
-                                color: AppColors.primaryDark,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            if (blueprint.audienceCommentSource!.likeCount > 0) ...[
-                              SizedBox(width: 6.w),
+                        CircleAvatar(
+                          radius: 8.r,
+                          backgroundColor: AppColors.primary,
+                          child: Text(
+                            blueprint.audienceCommentSource!.authorDisplayName
+                                    .isNotEmpty
+                                ? blueprint.audienceCommentSource!
+                                    .authorDisplayName[0]
+                                    .toUpperCase()
+                                : 'V',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 7.sp,
+                                fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        SizedBox(width: 6.w),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
                               Text(
-                                '• 👍 ${blueprint.audienceCommentSource!.likeCount}',
+                                blueprint
+                                    .audienceCommentSource!.authorDisplayName,
                                 style: AppTypography.labelSmall.copyWith(
-                                  color: AppColors.textSecondary,
+                                  color: AppColors.primaryDark,
+                                  fontWeight: FontWeight.w700,
                                   fontSize: 10.sp,
                                 ),
                               ),
+                              Text(
+                                '"${blueprint.audienceCommentSource!.text}"',
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTypography.bodySmall.copyWith(
+                                  color: AppColors.textInk,
+                                  fontStyle: FontStyle.italic,
+                                  fontSize: 10.5.sp,
+                                  height: 1.3,
+                                ),
+                              ),
                             ],
-                          ],
-                        ),
-                        SizedBox(height: 2.h),
-                        Text(
-                          '"${blueprint.audienceCommentSource!.text}"',
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppTypography.bodySmall.copyWith(
-                            color: AppColors.textInk,
-                            fontStyle: FontStyle.italic,
-                            fontSize: 11.sp,
                           ),
                         ),
                       ],
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),

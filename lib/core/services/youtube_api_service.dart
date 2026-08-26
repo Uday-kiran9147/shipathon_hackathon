@@ -1,3 +1,4 @@
+import 'dart:math';
 import '../network/dio_client.dart';
 import '../../models/channel_graph.dart';
 
@@ -284,6 +285,15 @@ class YouTubeApiService {
       niche: niche,
     );
 
+    final authenticityProfile = _synthesizeAuthenticityProfile(
+      recentVideos: recentVideos,
+      niche: niche,
+      medianViews: calculatedMedianViews,
+      avgLikes: avgLikes,
+      avgComments: avgComments,
+      topicClusters: topicClusters,
+    );
+
     return ChannelGraph(
       channelId: channelId,
       channelName: channelTitle,
@@ -305,6 +315,7 @@ class YouTubeApiService {
       recentVideos: recentVideos,
       audienceInsight: audienceInsight,
       signatureCreatorStyle: signatureStyle,
+      authenticityProfile: authenticityProfile,
     );
   }
 
@@ -552,27 +563,214 @@ class YouTubeApiService {
     if (requests.isEmpty && topicClusters.isNotEmpty) {
       requests.add('Step-by-step breakdown on ${topicClusters.first}');
       if (topicClusters.length > 1) {
-        requests.add('Real-world benchmark comparing ${topicClusters[0]} vs ${topicClusters[1]}');
+        requests.add(
+            'Real-world benchmark comparing ${topicClusters[0]} vs ${topicClusters[1]}');
       }
     }
 
     // Find highest engagement video topic
-    String topTopic = topicClusters.isNotEmpty ? topicClusters.first : 'Core Tutorials';
+    String topTopic =
+        topicClusters.isNotEmpty ? topicClusters.first : 'Core Tutorials';
     if (recentVideos.isNotEmpty) {
       final sortedByViews = List<ChannelRecentVideo>.from(recentVideos)
         ..sort((a, b) => b.views.compareTo(a.views));
       topTopic = sortedByViews.first.title;
     }
 
+    final demandClusters = _clusterCommentsByDemand(
+      recentVideos: recentVideos,
+      topicClusters: topicClusters,
+    );
+
     return AudienceInsight(
       topViewerRequests: requests,
       topAudienceQuestions: questions,
+      topDemandClusters: demandClusters,
       praiseKeywords: praises.isNotEmpty
           ? praises
-          : ['Exceptional clarity', 'Actionable frameworks', 'High-density insights'],
+          : [
+              'Exceptional clarity',
+              'Actionable frameworks',
+              'High-density insights'
+            ],
       averageLikesPerVideo: avgLikes,
       averageCommentsPerVideo: avgComments,
       topPerformingTopic: topTopic,
+    );
+  }
+
+  /// Semantic grouping of comments into high-conviction demand clusters with Demand Velocity Index (DVI)
+  List<CommentDemandCluster> _clusterCommentsByDemand({
+    required List<ChannelRecentVideo> recentVideos,
+    required List<String> topicClusters,
+  }) {
+    final allComments = <ChannelComment>[];
+    for (final v in recentVideos) {
+      allComments.addAll(v.topComments);
+    }
+
+    if (allComments.isEmpty) return [];
+
+    final clusterBuckets = <String, List<ChannelComment>>{};
+    final upvoteBuckets = <String, int>{};
+
+    for (final comment in allComments) {
+      if (comment.intentCategory != ChannelCommentIntent.request &&
+          comment.intentCategory != ChannelCommentIntent.question) {
+        continue;
+      }
+
+      // Match against topic clusters or extract key noun phrases
+      String matchedTopic = 'General Community Demand';
+      final lowerText = comment.text.toLowerCase();
+
+      bool foundCluster = false;
+      for (final cluster in topicClusters) {
+        final words = cluster
+            .toLowerCase()
+            .split(RegExp(r'\s+'))
+            .where((w) => w.length > 3);
+        if (words.any((w) => lowerText.contains(w))) {
+          matchedTopic = cluster;
+          foundCluster = true;
+          break;
+        }
+      }
+
+      if (!foundCluster) {
+        // Extract 2-4 word topic candidate from comment
+        final clean = comment.text
+            .replaceAll(RegExp(r'[?.,!"]'), '')
+            .replaceAll(
+                RegExp(
+                    r'(can you please|please make a video on|video on|tutorial on|how to|what is|can you do a video on)',
+                    caseSensitive: false),
+                '')
+            .trim();
+        final words = clean.split(RegExp(r'\s+')).take(4).join(' ');
+        if (words.length > 5) {
+          matchedTopic = _capitalizeTag(words);
+        }
+      }
+
+      clusterBuckets.putIfAbsent(matchedTopic, () => []).add(comment);
+      upvoteBuckets[matchedTopic] =
+          (upvoteBuckets[matchedTopic] ?? 0) + comment.likeCount;
+    }
+
+    final demandClusters = <CommentDemandCluster>[];
+    int clusterId = 1;
+
+    for (final entry in clusterBuckets.entries) {
+      final topic = entry.key;
+      final comments = entry.value;
+      final totalLikes = upvoteBuckets[topic] ?? 0;
+      final frequency = comments.length;
+
+      // Demand Velocity Index formula: frequency * (1 + log10(1 + likes))
+      final dvi = frequency *
+          (1.0 + (totalLikes > 0 ? (log(1.0 + totalLikes) / ln10) : 0.0));
+      final primaryIntent = comments
+              .any((c) => c.intentCategory == ChannelCommentIntent.request)
+          ? ChannelCommentIntent.request
+          : ChannelCommentIntent.question;
+
+      demandClusters.add(
+        CommentDemandCluster(
+          id: 'cluster_$clusterId',
+          topicKeyword: topic,
+          sampleComments: comments.take(4).toList(),
+          totalUpvotes: totalLikes,
+          commentFrequency: frequency,
+          demandVelocityIndex: (dvi * 10).round() / 10.0,
+          primaryIntent: primaryIntent,
+        ),
+      );
+      clusterId++;
+    }
+
+    demandClusters.sort(
+        (a, b) => b.demandVelocityIndex.compareTo(a.demandVelocityIndex));
+    return demandClusters;
+  }
+
+  /// Synthesize Creator DNA and Niche Authenticity Profile
+  CreatorAuthenticityProfile _synthesizeAuthenticityProfile({
+    required List<ChannelRecentVideo> recentVideos,
+    required String niche,
+    required int medianViews,
+    required int avgLikes,
+    required int avgComments,
+    required List<String> topicClusters,
+  }) {
+    int questionCount = 0;
+    int praiseCount = 0;
+
+    for (final v in recentVideos) {
+      for (final c in v.topComments) {
+        if (c.intentCategory == ChannelCommentIntent.question) questionCount++;
+        if (c.intentCategory == ChannelCommentIntent.praise) praiseCount++;
+      }
+    }
+
+    final qToPRatio = praiseCount > 0
+        ? ((questionCount / praiseCount) * 10).round() / 10.0
+        : (questionCount > 0 ? 2.5 : 1.0);
+    final viewsDenominator = max(1, medianViews ~/ 1000);
+    final velocity =
+        (((avgLikes + avgComments) / viewsDenominator) * 10).round() / 10.0;
+
+    String hookStyle =
+        'Data-backed tension with immediate code/benchmark proof';
+    String vulnerability = '0:12 - 0:18 (Explanatory lull before solution)';
+    List<String> outlierFormats = [
+      'Deep Dive Masterclass',
+      'Teardown & Benchmark'
+    ];
+
+    final lowerNiche = niche.toLowerCase();
+    if (lowerNiche.contains('dev') ||
+        lowerNiche.contains('code') ||
+        lowerNiche.contains('software')) {
+      hookStyle =
+          'Contrarian architecture critique leading into constructor live-code diff';
+      vulnerability =
+          '0:10 - 0:24 (Boilerplate project setup and dependency installs)';
+      outlierFormats = [
+        'Architectural Deep Dive',
+        'Benchmark Teardown',
+        'Clean Code Short'
+      ];
+    } else if (lowerNiche.contains('auto') || lowerNiche.contains('motovlog')) {
+      hookStyle =
+          'Line-by-line dealer invoice revelation and ownership reality';
+      vulnerability =
+          '0:06 - 0:18 (Prolonged exhaust revs or scenic drone without thesis)';
+      outlierFormats = [
+        'Cost Transparency Teardown',
+        'Ownership Truth',
+        'Rider Rule Short'
+      ];
+    } else if (lowerNiche.contains('monetization') ||
+        lowerNiche.contains('saas') ||
+        lowerNiche.contains('app')) {
+      hookStyle =
+          'High-stakes MRR/LTV metric comparison from real app cohort data';
+      vulnerability =
+          '0:14 - 0:26 (Abstract growth definitions before actual paywall UI)';
+      outlierFormats = [
+        'Paywall Case Study',
+        'Pricing A/B Teardown',
+        'Monetization Short'
+      ];
+    }
+
+    return CreatorAuthenticityProfile(
+      questionToPraiseRatio: qToPRatio.clamp(0.4, 4.5),
+      engagementVelocity: velocity.clamp(1.2, 45.0),
+      signatureHookStyle: hookStyle,
+      outlierVideoFormats: outlierFormats,
+      retentionVulnerabilityArea: vulnerability,
     );
   }
 
@@ -840,6 +1038,55 @@ class YouTubeApiService {
             'Spring Boot 3.3 GraalVM Native Image Benchmarks',
             'Lombok Pitfalls & Clean Code Anti-Patterns',
           ],
+          topDemandClusters: [
+            CommentDemandCluster(
+              id: 'cluster_tel_01',
+              topicKeyword: 'Spring Boot 3.3 & Microservices',
+              sampleComments: [
+                ChannelComment(
+                  id: 'tc_01',
+                  authorDisplayName: '@rahul_devops',
+                  text:
+                      'Navin sir, can you please do a deep dive video on Microservices distributed transactions with Saga Pattern and Kafka?',
+                  likeCount: 148,
+                  publishedAt: null,
+                  intentCategory: ChannelCommentIntent.request,
+                ),
+                ChannelComment(
+                  id: 'tc_02',
+                  authorDisplayName: '@priya_codes',
+                  text:
+                      'How does Spring Boot 3.3 GraalVM Native Image compare to standard JVM startup in production?',
+                  likeCount: 64,
+                  publishedAt: null,
+                  intentCategory: ChannelCommentIntent.question,
+                ),
+              ],
+              totalUpvotes: 212,
+              commentFrequency: 14,
+              demandVelocityIndex: 4.8,
+              primaryIntent: ChannelCommentIntent.request,
+            ),
+            CommentDemandCluster(
+              id: 'cluster_tel_02',
+              topicKeyword: 'Clean Code & Architectural Pitfalls',
+              sampleComments: [
+                ChannelComment(
+                  id: 'tc_04',
+                  authorDisplayName: '@dev_lead_vikram',
+                  text:
+                      'Please make a full video on Lombok pitfalls in large teams! Many juniors abuse @Data.',
+                  likeCount: 112,
+                  publishedAt: null,
+                  intentCategory: ChannelCommentIntent.request,
+                ),
+              ],
+              totalUpvotes: 112,
+              commentFrequency: 8,
+              demandVelocityIndex: 3.9,
+              primaryIntent: ChannelCommentIntent.request,
+            ),
+          ],
           averageLikesPerVideo: 6025,
           averageCommentsPerVideo: 381,
           praiseKeywords: [
@@ -848,7 +1095,20 @@ class YouTubeApiService {
             'Best Java explanations',
           ],
           topPerformingTopic:
-            'Why Senior Developers Avoid @Autowired on Private Fields',
+              'Why Senior Developers Avoid @Autowired on Private Fields',
+        ),
+        authenticityProfile: const CreatorAuthenticityProfile(
+          questionToPraiseRatio: 1.8,
+          engagementVelocity: 14.2,
+          signatureHookStyle:
+              'Contrarian architecture critique leading into constructor live-code diff',
+          outlierVideoFormats: [
+            'Architectural Deep Dive',
+            'Benchmark Teardown',
+            'Clean Code Short'
+          ],
+          retentionVulnerabilityArea:
+              '0:10 - 0:24 (Boilerplate project setup and dependency installs)',
         ),
       );
     }
@@ -884,7 +1144,8 @@ class YouTubeApiService {
         recentVideos: [
           ChannelRecentVideo(
             id: 'sk_vid_01',
-            title: 'The Real 1-Year Ownership Cost of a German Superbike in India',
+            title:
+                'The Real 1-Year Ownership Cost of a German Superbike in India',
             description:
                 'Line by line dealer invoices, tire wear, insurance, and maintenance reality of living with a 200HP liter bike in daily Indian conditions.',
             views: 380000,
@@ -923,6 +1184,46 @@ class YouTubeApiService {
             'Complete Track Day Prep & Tire Wear Guide',
             'Garage Maintenance Teardown for 2026',
           ],
+          topDemandClusters: [
+            CommentDemandCluster(
+              id: 'cluster_sk_01',
+              topicKeyword: 'Superbike Ownership & Financial Reality',
+              sampleComments: [
+                ChannelComment(
+                  id: 'sk_c01',
+                  authorDisplayName: '@rider_kiran',
+                  text:
+                      'Bhai, can you do a comparison on whether buying a used Ducati Panigale vs a brand new ZX-10R makes financial sense in 2026?',
+                  likeCount: 310,
+                  publishedAt: null,
+                  intentCategory: ChannelCommentIntent.request,
+                ),
+              ],
+              totalUpvotes: 310,
+              commentFrequency: 24,
+              demandVelocityIndex: 5.6,
+              primaryIntent: ChannelCommentIntent.request,
+            ),
+            CommentDemandCluster(
+              id: 'cluster_sk_02',
+              topicKeyword: 'Track Day Dynamics & Tire Prep',
+              sampleComments: [
+                ChannelComment(
+                  id: 'sk_c02',
+                  authorDisplayName: '@auto_enthusiast_99',
+                  text:
+                      'What track tires do you recommend for BIC track days that won\'t melt after 2 sessions?',
+                  likeCount: 95,
+                  publishedAt: null,
+                  intentCategory: ChannelCommentIntent.question,
+                ),
+              ],
+              totalUpvotes: 95,
+              commentFrequency: 11,
+              demandVelocityIndex: 4.1,
+              primaryIntent: ChannelCommentIntent.question,
+            ),
+          ],
           averageLikesPerVideo: 24500,
           averageCommentsPerVideo: 1420,
           praiseKeywords: [
@@ -931,7 +1232,20 @@ class YouTubeApiService {
             'Exact cost transparency',
           ],
           topPerformingTopic:
-            'The Real 1-Year Ownership Cost of a German Superbike in India',
+              'The Real 1-Year Ownership Cost of a German Superbike in India',
+        ),
+        authenticityProfile: const CreatorAuthenticityProfile(
+          questionToPraiseRatio: 1.2,
+          engagementVelocity: 28.5,
+          signatureHookStyle:
+              'Line-by-line dealer invoice revelation and garage reality',
+          outlierVideoFormats: [
+            'Cost Transparency Teardown',
+            'Ownership Truth',
+            'Rider Rule Short'
+          ],
+          retentionVulnerabilityArea:
+              '0:06 - 0:18 (Prolonged exhaust revs or scenic drone without thesis)',
         ),
       );
     }
@@ -1006,6 +1320,46 @@ class YouTubeApiService {
           'Optimal Free Trial Duration Benchmarks for B2C SaaS',
           'A/B Testing Annual vs Monthly Pricing Psychology',
         ],
+        topDemandClusters: [
+          CommentDemandCluster(
+            id: 'cluster_rc_01',
+            topicKeyword: 'Dynamic Remote Paywalls in Flutter',
+            sampleComments: [
+              ChannelComment(
+                id: 'rc_c01',
+                authorDisplayName: '@flutter_builder',
+                text:
+                    'Can you make a video on Flutter dynamic paywalls with remote configuration without app store resubmission?',
+                likeCount: 42,
+                publishedAt: null,
+                intentCategory: ChannelCommentIntent.request,
+              ),
+            ],
+            totalUpvotes: 42,
+            commentFrequency: 9,
+            demandVelocityIndex: 4.2,
+            primaryIntent: ChannelCommentIntent.request,
+          ),
+          CommentDemandCluster(
+            id: 'cluster_rc_02',
+            topicKeyword: 'Pricing Psychology & Free Trial Optimization',
+            sampleComments: [
+              ChannelComment(
+                id: 'rc_c02',
+                authorDisplayName: '@saas_founder',
+                text:
+                    'What is the optimal trial duration for B2C consumer utility apps vs productivity apps?',
+                likeCount: 28,
+                publishedAt: null,
+                intentCategory: ChannelCommentIntent.question,
+              ),
+            ],
+            totalUpvotes: 28,
+            commentFrequency: 6,
+            demandVelocityIndex: 3.5,
+            primaryIntent: ChannelCommentIntent.question,
+          ),
+        ],
         averageLikesPerVideo: 640,
         averageCommentsPerVideo: 78,
         praiseKeywords: [
@@ -1014,7 +1368,20 @@ class YouTubeApiService {
           'High conversion frameworks',
         ],
         topPerformingTopic:
-          'How Top Grossing iOS Apps Design Paywalls for 40% Higher LTV',
+            'How Top Grossing iOS Apps Design Paywalls for 40% Higher LTV',
+      ),
+      authenticityProfile: const CreatorAuthenticityProfile(
+        questionToPraiseRatio: 2.1,
+        engagementVelocity: 18.2,
+        signatureHookStyle:
+            'High-stakes MRR/LTV metric comparison from real app cohort data',
+        outlierVideoFormats: [
+          'Paywall Case Study',
+          'Pricing A/B Teardown',
+          'Monetization Short'
+        ],
+        retentionVulnerabilityArea:
+            '0:14 - 0:26 (Abstract growth definitions before actual paywall UI)',
       ),
     );
   }

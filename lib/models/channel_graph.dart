@@ -14,7 +14,7 @@ class ChannelComment {
   final String? authorProfileImageUrl;
   final String text;
   final int likeCount;
-  final DateTime publishedAt;
+  final DateTime? publishedAt;
   final ChannelCommentIntent intentCategory;
   final bool isPinned;
 
@@ -24,7 +24,7 @@ class ChannelComment {
     this.authorProfileImageUrl,
     required this.text,
     this.likeCount = 0,
-    required this.publishedAt,
+    this.publishedAt,
     this.intentCategory = ChannelCommentIntent.discussion,
     this.isPinned = false,
   });
@@ -43,8 +43,8 @@ class ChannelComment {
       text: json['text'] as String? ?? '',
       likeCount: json['likeCount'] as int? ?? 0,
       publishedAt: json['publishedAt'] != null
-          ? DateTime.tryParse(json['publishedAt'] as String) ?? DateTime.now()
-          : DateTime.now(),
+          ? DateTime.tryParse(json['publishedAt'] as String)
+          : null,
       intentCategory: intent,
       isPinned: json['isPinned'] as bool? ?? false,
     );
@@ -56,9 +56,111 @@ class ChannelComment {
         'authorProfileImageUrl': authorProfileImageUrl,
         'text': text,
         'likeCount': likeCount,
-        'publishedAt': publishedAt.toIso8601String(),
+        'publishedAt': publishedAt?.toIso8601String(),
         'intentCategory': intentCategory.name,
         'isPinned': isPinned,
+      };
+}
+
+/// Semantic cluster of multiple audience comments expressing identical demand
+class CommentDemandCluster {
+  final String id;
+  final String topicKeyword;
+  final List<ChannelComment> sampleComments;
+  final int totalUpvotes;
+  final int commentFrequency;
+  final double demandVelocityIndex; // DVI: frequency * log(likes+1) weighted
+  final ChannelCommentIntent primaryIntent;
+
+  const CommentDemandCluster({
+    required this.id,
+    required this.topicKeyword,
+    this.sampleComments = const [],
+    this.totalUpvotes = 0,
+    this.commentFrequency = 1,
+    this.demandVelocityIndex = 1.0,
+    this.primaryIntent = ChannelCommentIntent.request,
+  });
+
+  factory CommentDemandCluster.fromJson(Map<String, dynamic> json) {
+    final rawComments = json['sampleComments'] as List<dynamic>? ?? [];
+    final comments = rawComments
+        .map((c) => ChannelComment.fromJson(c as Map<String, dynamic>))
+        .toList();
+    final intentStr = json['primaryIntent'] as String? ?? 'request';
+    final intent = ChannelCommentIntent.values.firstWhere(
+      (e) => e.name == intentStr,
+      orElse: () => ChannelCommentIntent.request,
+    );
+
+    return CommentDemandCluster(
+      id: json['id'] as String? ?? '',
+      topicKeyword: json['topicKeyword'] as String? ?? '',
+      sampleComments: comments,
+      totalUpvotes: json['totalUpvotes'] as int? ?? 0,
+      commentFrequency: json['commentFrequency'] as int? ?? 1,
+      demandVelocityIndex:
+          (json['demandVelocityIndex'] as num?)?.toDouble() ?? 1.0,
+      primaryIntent: intent,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'topicKeyword': topicKeyword,
+        'sampleComments': sampleComments.map((c) => c.toJson()).toList(),
+        'totalUpvotes': totalUpvotes,
+        'commentFrequency': commentFrequency,
+        'demandVelocityIndex': demandVelocityIndex,
+        'primaryIntent': primaryIntent.name,
+      };
+}
+
+/// Creator DNA & Niche Authenticity Profile
+class CreatorAuthenticityProfile {
+  final double questionToPraiseRatio; // Educational trust & authority indicator
+  final double engagementVelocity; // Likes + Comments per 1K Views
+  final String signatureHookStyle;
+  final List<String> outlierVideoFormats;
+  final String retentionVulnerabilityArea;
+
+  const CreatorAuthenticityProfile({
+    this.questionToPraiseRatio = 1.0,
+    this.engagementVelocity = 5.2,
+    this.signatureHookStyle =
+        'Data-backed tension with immediate code/case proof',
+    this.outlierVideoFormats = const [
+      'Deep Dive Masterclass',
+      'Teardown & Benchmark'
+    ],
+    this.retentionVulnerabilityArea =
+        '0:12 - 0:18 (Explanatory lull before solution)',
+  });
+
+  factory CreatorAuthenticityProfile.fromJson(Map<String, dynamic> json) {
+    return CreatorAuthenticityProfile(
+      questionToPraiseRatio:
+          (json['questionToPraiseRatio'] as num?)?.toDouble() ?? 1.0,
+      engagementVelocity:
+          (json['engagementVelocity'] as num?)?.toDouble() ?? 5.2,
+      signatureHookStyle: json['signatureHookStyle'] as String? ??
+          'Data-backed tension with immediate code/case proof',
+      outlierVideoFormats: (json['outlierVideoFormats'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const ['Deep Dive Masterclass', 'Teardown & Benchmark'],
+      retentionVulnerabilityArea: json['retentionVulnerabilityArea']
+              as String? ??
+          '0:12 - 0:18 (Explanatory lull before solution)',
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'questionToPraiseRatio': questionToPraiseRatio,
+        'engagementVelocity': engagementVelocity,
+        'signatureHookStyle': signatureHookStyle,
+        'outlierVideoFormats': outlierVideoFormats,
+        'retentionVulnerabilityArea': retentionVulnerabilityArea,
       };
 }
 
@@ -148,6 +250,7 @@ class ChannelRecentVideo {
 class AudienceInsight {
   final List<String> topViewerRequests;
   final List<ChannelComment> topAudienceQuestions;
+  final List<CommentDemandCluster> topDemandClusters;
   final List<String> praiseKeywords;
   final int averageLikesPerVideo;
   final int averageCommentsPerVideo;
@@ -156,6 +259,7 @@ class AudienceInsight {
   const AudienceInsight({
     this.topViewerRequests = const [],
     this.topAudienceQuestions = const [],
+    this.topDemandClusters = const [],
     this.praiseKeywords = const [],
     this.averageLikesPerVideo = 0,
     this.averageCommentsPerVideo = 0,
@@ -167,6 +271,10 @@ class AudienceInsight {
     final questions = rawQuestions
         .map((q) => ChannelComment.fromJson(q as Map<String, dynamic>))
         .toList();
+    final rawClusters = json['topDemandClusters'] as List<dynamic>? ?? [];
+    final clusters = rawClusters
+        .map((c) => CommentDemandCluster.fromJson(c as Map<String, dynamic>))
+        .toList();
 
     return AudienceInsight(
       topViewerRequests: (json['topViewerRequests'] as List<dynamic>?)
@@ -174,6 +282,7 @@ class AudienceInsight {
               .toList() ??
           [],
       topAudienceQuestions: questions,
+      topDemandClusters: clusters,
       praiseKeywords: (json['praiseKeywords'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??
@@ -188,6 +297,7 @@ class AudienceInsight {
         'topViewerRequests': topViewerRequests,
         'topAudienceQuestions':
             topAudienceQuestions.map((q) => q.toJson()).toList(),
+        'topDemandClusters': topDemandClusters.map((c) => c.toJson()).toList(),
         'praiseKeywords': praiseKeywords,
         'averageLikesPerVideo': averageLikesPerVideo,
         'averageCommentsPerVideo': averageCommentsPerVideo,
@@ -218,6 +328,7 @@ class ChannelGraph {
   final List<ChannelRecentVideo> recentVideos;
   final AudienceInsight audienceInsight;
   final String signatureCreatorStyle;
+  final CreatorAuthenticityProfile authenticityProfile;
 
   const ChannelGraph({
     this.channelId,
@@ -241,6 +352,7 @@ class ChannelGraph {
     this.recentVideos = const [],
     this.audienceInsight = const AudienceInsight(),
     this.signatureCreatorStyle = '',
+    this.authenticityProfile = const CreatorAuthenticityProfile(),
   });
 
   /// Check if the channel graph contains synced live data
@@ -287,6 +399,7 @@ class ChannelGraph {
     List<ChannelRecentVideo>? recentVideos,
     AudienceInsight? audienceInsight,
     String? signatureCreatorStyle,
+    CreatorAuthenticityProfile? authenticityProfile,
   }) {
     return ChannelGraph(
       channelId: channelId ?? this.channelId,
@@ -311,6 +424,7 @@ class ChannelGraph {
       audienceInsight: audienceInsight ?? this.audienceInsight,
       signatureCreatorStyle:
           signatureCreatorStyle ?? this.signatureCreatorStyle,
+      authenticityProfile: authenticityProfile ?? this.authenticityProfile,
     );
   }
 }
