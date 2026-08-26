@@ -146,7 +146,9 @@ class _DailyBriefingScreenState extends State<DailyBriefingScreen> {
               SizedBox(height: 18.h),
 
               // Blueprints Feed List
-              if (briefingProvider.blueprints.isEmpty) ...[
+              if (briefingProvider.isLoading) ...[
+                _buildLoadingState(),
+              ] else if (briefingProvider.blueprints.isEmpty) ...[
                 _buildEmptyState(),
               ] else ...[
                 ...briefingProvider.blueprints.asMap().entries.map((entry) {
@@ -393,6 +395,46 @@ class _DailyBriefingScreenState extends State<DailyBriefingScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(vertical: 40.h, horizontal: 20.w),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: AppColors.borderLight),
+      ),
+      child: Column(
+        children: [
+          SizedBox(
+            width: 32.w,
+            height: 32.w,
+            child: const CircularProgressIndicator(
+              strokeWidth: 3,
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+            ),
+          ),
+          SizedBox(height: 16.h),
+          Text(
+            'Synthesizing Dynamic AI Blueprints...',
+            style: AppTypography.titleMedium.copyWith(
+              fontWeight: FontWeight.w700,
+              color: AppColors.textInk,
+            ),
+          ),
+          SizedBox(height: 6.h),
+          Text(
+            'Google Gemini 1.5 Flash is mining your live comments, historical outliers, and audience demand velocity.',
+            textAlign: TextAlign.center,
+            style: AppTypography.bodySmall.copyWith(
+              color: AppColors.textMuted,
+            ),
+          ),
+        ],
       ),
     );
   }

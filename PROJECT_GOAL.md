@@ -1,6 +1,6 @@
-# TubeSimul8 - Project Goal & Milestones Tracker
+# Prevue - Project Goal & Milestones Tracker
 
-**Project:** TubeSimul8 (YouTube Creator Intelligence & Pre-Flight Simulator)  
+**Project:** Prevue (YouTube Creator Intelligence & Pre-Flight Simulator)  
 **Hackathon Target:** Best RevenueCat Integration & Best Craft of App Development  
 **Theme:** World-Class "Curated Studio Light"  
 **Responsiveness:** `flutter_screenutil` (Strict `.w`, `.h`, `.r`, `.sp`)  

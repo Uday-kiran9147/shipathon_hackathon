@@ -2,7 +2,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Application-wide constants & Environment-driven credentials
 class AppConstants {
-  static const String appName = 'TubeSimul8';
+  static const String appName = 'Prevue';
   static const String appTagline = 'YouTube Pre-Flight Intelligence';
 
   // Environment Configured Keys (from .env with safe uninitialized fallback)
@@ -11,16 +11,22 @@ class AppConstants {
   
   static String get revenueCatApiKeyApple =>
       dotenv.isInitialized
-          ? (dotenv.env['REVENUECAT_APPLE_API_KEY'] ?? 'appl_mock_tubesimul8_apple_key')
-          : 'appl_mock_tubesimul8_apple_key';
+          ? (dotenv.env['REVENUECAT_APPLE_API_KEY'] ?? 'appl_mock_prevue_apple_key')
+          : 'appl_mock_prevue_apple_key';
 
   static String get revenueCatApiKeyGoogle =>
       dotenv.isInitialized
-          ? (dotenv.env['REVENUECAT_GOOGLE_API_KEY'] ?? 'goog_mock_tubesimul8_google_key')
-          : 'goog_mock_tubesimul8_google_key';
+          ? (dotenv.env['REVENUECAT_GOOGLE_API_KEY'] ?? 'goog_mock_prevue_google_key')
+          : 'goog_mock_prevue_google_key';
 
   static String get geminiApiKey =>
       dotenv.isInitialized ? (dotenv.env['GEMINI_API_KEY'] ?? '') : '';
+
+  // Gemini Model Identifier (Single source of truth for Gemini Model)
+  static String get geminiModel =>
+      dotenv.isInitialized
+          ? (dotenv.env['GEMINI_MODEL'] ?? 'gemini-3.1-pro-preview')
+          : 'gemini-3.1-pro-preview';
 
   // RevenueCat Configuration
   static const String entitlementPro = 'creator_pro_access';

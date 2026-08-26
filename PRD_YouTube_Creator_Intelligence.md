@@ -1,5 +1,5 @@
 # Product Requirements Document (PRD)
-## Project: TubeSimul8 (YouTube Creator Intelligence & Pre-Flight Simulator)
+## Project: Prevue (YouTube Creator Intelligence & Pre-Flight Simulator)
 **Category:** Creator Economy / AI Intelligence / B2C SaaS  
 **Target Award:** Best RevenueCat Integration / Shipathon Hackathon  
 **Target Platform:** YouTube (Long-form & Shorts)  
@@ -18,7 +18,7 @@ To eliminate creative guesswork and wasted production hours for YouTube creators
 2. **Post-Mortem Analytics vs. Pre-Flight Prediction:** Existing YouTube analytics (YouTube Studio, VidIQ, TubeBuddy) only tell creators *why a video flopped after they spent 15 hours filming and editing*. There is no pre-publication simulator to stress-test titles, hooks, and retention drop-offs *before* production.
 3. **The Blank-Page Paralysis:** Creators rely on generic AI idea generators that suggest uninspired listicles with zero connection to their channel's proprietary audience resonance or historical retention curves.
 
-### 1.3 The Solution: TubeSimul8
+### 1.3 The Solution: Prevue
 A mobile-first intelligence platform tailored exclusively for YouTube creators:
 * **Feature 1: Daily Prescriptive Briefing ("What to Film Tomorrow")** — High-conviction video blueprints backed by proprietary channel data reasons.
 * **Feature 2: Pre-Flight Content Simulator ("Will this work?")** — Instant pre-publication stress test calculating Hook Score (0–10), 30-second Retention Hazard, and 3 prescriptive fixes before filming.
@@ -45,7 +45,7 @@ graph TD
 ### Persona: The Solo YouTube Creator ("Marcus")
 * **Channel:** Tech & Coding (45K subscribers, publishes 1 long-form video + 2 Shorts weekly).
 * **Pain Points:** Spends 12 hours researching and editing videos that sometimes flop with a 2.5% CTR; struggles to know which topics his existing subscribers actually crave.
-* **Journey with TubeSimul8:**
+* **Journey with Prevue:**
   1. Opens the app on Monday morning $\rightarrow$ receives 1 high-conviction video prescription with verified audience proof (*"Your last 2 videos on system architecture generated 3.4× median subscribers"*).
   2. Writes a draft hook and inputs it into the **Pre-Flight Simulator**.
   3. Simulator warns of a **Retention Hazard at 0:14** due to slow exposition.
@@ -104,7 +104,7 @@ graph TD
 sequenceDiagram
     autonumber
     actor Creator as YouTube Creator
-    participant App as TubeSimul8 App
+    participant App as Prevue App
     participant RC as RevenueCat SDK
     participant Store as Apple App Store / Google Play
 
@@ -141,7 +141,7 @@ sequenceDiagram
 ```mermaid
 graph LR
     subgraph Client [Flutter Mobile App]
-        A[TubeSimul8 UI<br/>Studio Dark Theme]
+        A[Prevue UI<br/>Studio Dark Theme]
         B[Daily Brief Dashboard]
         C[Simulator Input & Radar View]
         D[RevenueCat SDK<br/>purchases_flutter]
@@ -179,4 +179,4 @@ graph LR
 ---
 
 ## 8. Summary & Execution Status
-This PRD outlines the lean, high-impact YouTube MVP for **TubeSimul8**. The scope is strictly bounded to the two highest-conviction features (Daily Prescription + Pre-Flight Simulator) with seamless RevenueCat subscription integration.
+This PRD outlines the lean, high-impact YouTube MVP for **Prevue**. The scope is strictly bounded to the two highest-conviction features (Daily Prescription + Pre-Flight Simulator) with seamless RevenueCat subscription integration.

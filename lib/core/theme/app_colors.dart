@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Curated Studio Light Color System for TubeSimul8
+/// Curated Studio Light Color System for Prevue
 /// Designed with international hackathon craft standards in mind:
 /// warm off-white canvas, pure elevated card layers, crisp ink typography,
 /// and purposeful semantic indicators for creator intelligence.

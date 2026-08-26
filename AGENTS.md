@@ -1,4 +1,4 @@
-# TubeSimul8 Development & Vibe Coding Guardrails
+# Prevue Development & Vibe Coding Guardrails
 
 ## 1. Core Architecture
 - **Framework:** Flutter (Dart 3.x)

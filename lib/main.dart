@@ -37,7 +37,7 @@ class PrevueAPP extends StatelessWidget {
         splitScreenMode: true,
         builder: (context, child) {
           return MaterialApp(
-            title: 'TubeSimul8',
+            title: 'Prevue',
             debugShowCheckedModeBanner: false,
             theme: AppTheme.lightTheme,
             home: const MainNavigationShell(),

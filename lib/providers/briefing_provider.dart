@@ -62,20 +62,55 @@ class BriefingProvider extends ChangeNotifier {
   }
 
   /// Sync blueprints to match the new ChannelGraph profile
-  void updateForChannel(ChannelGraph channel) {
-    _blueprints = _generatorService.generateBlueprintsForChannel(channel);
+  Future<void> updateForChannel(ChannelGraph channel) async {
+    if (!channel.isConfigured || channel.recentVideos.isEmpty) {
+      _blueprints = [];
+      notifyListeners();
+      return;
+    }
+
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final bps =
+          await _generatorService.generateBlueprintsForChannelAsync(channel);
+      _blueprints = bps;
+    } catch (_) {
+      _blueprints = _generatorService.generateBlueprintsForChannel(channel);
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Explicitly clear all active blueprints
+  void clearBlueprints() {
+    _blueprints = [];
     notifyListeners();
   }
 
   /// Pull-to-refresh
   Future<void> refreshBriefing(ChannelGraph channel) async {
+    if (!channel.isConfigured || channel.recentVideos.isEmpty) {
+      _blueprints = [];
+      notifyListeners();
+      return;
+    }
+
     _isLoading = true;
     notifyListeners();
 
-    await Future.delayed(const Duration(milliseconds: 650));
-    _blueprints = _generatorService.generateBlueprintsForChannel(channel);
-    _isLoading = false;
-    notifyListeners();
+    try {
+      final bps =
+          await _generatorService.generateBlueprintsForChannelAsync(channel);
+      _blueprints = bps;
+    } catch (_) {
+      _blueprints = _generatorService.generateBlueprintsForChannel(channel);
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   /// AI Generates a brand-new blueprint in real time
