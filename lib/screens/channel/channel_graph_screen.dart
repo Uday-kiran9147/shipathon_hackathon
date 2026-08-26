@@ -535,9 +535,9 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                   Wrap(
                     spacing: 6.w,
                     children: [
-                      _buildPresetChip('@RevenueCat'),
+                      _buildPresetChip('@MrBeast'),
                       _buildPresetChip('@Telusko'),
-                      _buildPresetChip('@SrimanKotaru'),
+                      _buildPresetChip('@mkbhd'),
                     ],
                   ),
                 ],
