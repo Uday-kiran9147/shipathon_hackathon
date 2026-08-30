@@ -49,7 +49,8 @@ class GeminiService {
 
   /// Generates a list of dynamic bespoke video blueprints using the configured Gemini model
   Future<List<DailyBlueprint>> generateBlueprintsFromChannelGraph(
-      ChannelGraph channel) async {
+    ChannelGraph channel,
+  ) async {
     if (!channel.isConfigured || channel.recentVideos.isEmpty) {
       return [];
     }
@@ -116,16 +117,18 @@ class GeminiService {
           'https://generativelanguage.googleapis.com/v1beta/models/$currentModel:generateContent?key=$_effectiveApiKey';
 
       try {
-        log('[GeminiService] Calling Gemini API ($currentModel, maxTokens: $maxTokens)...');
+        log(
+          '[GeminiService] Calling Gemini API ($currentModel, maxTokens: $maxTokens)...',
+        );
         final response = await _dio.post(
           url,
           data: {
             'contents': [
               {
                 'parts': [
-                  {'text': prompt}
-                ]
-              }
+                  {'text': prompt},
+                ],
+              },
             ],
             'generationConfig': {
               'temperature': isSingle ? 0.8 : 0.7,
@@ -144,7 +147,9 @@ class GeminiService {
         final candidate = candidates[0];
         final finishReason = candidate['finishReason']?.toString();
         if (finishReason != null && finishReason != 'STOP') {
-          log('[GeminiService] ($currentModel) Candidate finishReason: $finishReason');
+          log(
+            '[GeminiService] ($currentModel) Candidate finishReason: $finishReason',
+          );
         }
 
         final contentParts = candidate['content']?['parts'] as List?;
@@ -160,28 +165,40 @@ class GeminiService {
       } on DioException catch (dioErr) {
         lastDioException = dioErr;
         final statusCode = dioErr.response?.statusCode;
-        final errorMsg = dioErr.response?.data?['error']?['message'] ?? dioErr.message;
-        log('[GeminiService] DioError ($statusCode) on model $currentModel: $errorMsg');
+        final errorMsg =
+            dioErr.response?.data?['error']?['message'] ?? dioErr.message;
+        log(
+          '[GeminiService] DioError ($statusCode) on model $currentModel: $errorMsg',
+        );
 
         // Stop immediately on authentication / permission errors
         if (statusCode == 401 || statusCode == 403) {
-          throw Exception('Gemini API Authentication Error ($statusCode): $errorMsg');
+          throw Exception(
+            'Gemini API Authentication Error ($statusCode): $errorMsg',
+          );
         }
         // If 404 (model not found) or model syntax error, cascade to next candidate model
-        if (statusCode == 404 || (statusCode == 400 && errorMsg.toString().toLowerCase().contains('model'))) {
+        if (statusCode == 404 ||
+            (statusCode == 400 &&
+                errorMsg.toString().toLowerCase().contains('model'))) {
           continue;
         }
       } catch (e) {
         lastError = e;
-        log('[GeminiService] Parsing or generation exception on model $currentModel: $e');
+        log(
+          '[GeminiService] Parsing or generation exception on model $currentModel: $e',
+        );
       }
     }
 
     if (lastDioException != null) {
-      final errorMsg = lastDioException.response?.data?['error']?['message'] ?? lastDioException.message;
+      final errorMsg =
+          lastDioException.response?.data?['error']?['message'] ??
+          lastDioException.message;
       throw Exception('Gemini API Error: $errorMsg');
     }
-    throw lastError ?? Exception('Gemini generation failed on all attempted models.');
+    throw lastError ??
+        Exception('Gemini generation failed on all attempted models.');
   }
 
   /// Constructs the system and contextual prompt fed to Gemini
@@ -190,12 +207,16 @@ class GeminiService {
     for (var i = 0; i < channel.recentVideos.length && i < 6; i++) {
       final v = channel.recentVideos[i];
       recentVideosBuffer.writeln(
-          '  - "${v.title}" | Views: ${v.views} | Likes: ${v.likes} | Comments: ${v.commentCount}');
+        '  - "${v.title}" | Views: ${v.views} | Likes: ${v.likes} | Comments: ${v.commentCount}',
+      );
       if (v.topComments.isNotEmpty) {
         for (var c in v.topComments.take(2)) {
-          final cleanComment = c.text.replaceAll('"', "'").replaceAll('\n', ' ');
+          final cleanComment = c.text
+              .replaceAll('"', "'")
+              .replaceAll('\n', ' ');
           recentVideosBuffer.writeln(
-              '    * Comment by ${c.authorDisplayName} (${c.likeCount} likes): "$cleanComment"');
+            '    * Comment by ${c.authorDisplayName} (${c.likeCount} likes): "$cleanComment"',
+          );
         }
       }
     }
@@ -203,11 +224,15 @@ class GeminiService {
     final demandClustersBuffer = StringBuffer();
     for (var cluster in channel.audienceInsight.topDemandClusters.take(4)) {
       demandClustersBuffer.writeln(
-          '  - Topic: "${cluster.topicKeyword}" | Requests: ${cluster.commentFrequency} | Upvotes: ${cluster.totalUpvotes} | DVI: ${cluster.demandVelocityIndex.toStringAsFixed(1)}');
+        '  - Topic: "${cluster.topicKeyword}" | Requests: ${cluster.commentFrequency} | Upvotes: ${cluster.totalUpvotes} | DVI: ${cluster.demandVelocityIndex.toStringAsFixed(1)}',
+      );
       if (cluster.sampleComments.isNotEmpty) {
-        final cleanQuote = cluster.sampleComments.first.text.replaceAll('"', "'").replaceAll('\n', ' ');
+        final cleanQuote = cluster.sampleComments.first.text
+            .replaceAll('"', "'")
+            .replaceAll('\n', ' ');
         demandClustersBuffer.writeln(
-            '    Sample Quote by ${cluster.sampleComments.first.authorDisplayName}: "$cleanQuote"');
+          '    Sample Quote by ${cluster.sampleComments.first.authorDisplayName}: "$cleanQuote"',
+        );
       }
     }
 
@@ -330,7 +355,9 @@ Median Views: ${channel.medianViews}
 
   /// Parse Gemini JSON response into DailyBlueprint objects with multi-tier error recovery
   List<DailyBlueprint> parseBlueprintsFromJson(
-      String jsonText, ChannelGraph channel) {
+    String jsonText,
+    ChannelGraph channel,
+  ) {
     if (jsonText.trim().isEmpty) return [];
 
     // Stage 1: Strip markdown code blocks & extract JSON core
@@ -344,7 +371,9 @@ Median Views: ${channel.medianViews}
         return _mapJsonListToBlueprints(list, channel);
       }
     } catch (e) {
-      log('[GeminiService] Standard jsonDecode failed: $e. Attempting JSON sanitization...');
+      log(
+        '[GeminiService] Standard jsonDecode failed: $e. Attempting JSON sanitization...',
+      );
     }
 
     // Stage 3: Sanitize common LLM formatting issues (raw unescaped newlines/tabs inside quotes, trailing commas)
@@ -356,7 +385,9 @@ Median Views: ${channel.medianViews}
         return _mapJsonListToBlueprints(list, channel);
       }
     } catch (e) {
-      log('[GeminiService] Sanitized jsonDecode failed: $e. Attempting resilient chunk extraction...');
+      log(
+        '[GeminiService] Sanitized jsonDecode failed: $e. Attempting resilient chunk extraction...',
+      );
     }
 
     // Stage 4: Resilient chunk & partial object recovery
@@ -364,12 +395,18 @@ Median Views: ${channel.medianViews}
     // extract all complete blueprint objects that were successfully generated.
     final recoveredMaps = _extractIndividualBlueprintObjects(cleaned);
     if (recoveredMaps.isNotEmpty) {
-      log('[GeminiService] Successfully recovered ${recoveredMaps.length} blueprints from partial response.');
+      log(
+        '[GeminiService] Successfully recovered ${recoveredMaps.length} blueprints from partial response.',
+      );
       return _mapJsonListToBlueprints(recoveredMaps, channel);
     }
 
-    log('[GeminiService] Failed to parse blueprints from text. Snippet:\n${cleaned.length > 200 ? cleaned.substring(0, 200) : cleaned}');
-    throw FormatException('Unable to parse valid blueprint JSON from Gemini output: $jsonText');
+    log(
+      '[GeminiService] Failed to parse blueprints from text. Snippet:\n${cleaned.length > 200 ? cleaned.substring(0, 200) : cleaned}',
+    );
+    throw FormatException(
+      'Unable to parse valid blueprint JSON from Gemini output: $jsonText',
+    );
   }
 
   /// Strips markdown fences, commentary, and extracts the JSON block
@@ -490,11 +527,13 @@ Median Views: ${channel.medianViews}
       if (char == '{') {
         braceDepth++;
         // Depth 2 inside {"blueprints": [{...}]} or depth 1 if root is array [{...}]
-        if (braceDepth == 2 || (braceDepth == 1 && text.trim().startsWith('['))) {
+        if (braceDepth == 2 ||
+            (braceDepth == 1 && text.trim().startsWith('['))) {
           objectStartIndex = i;
         }
       } else if (char == '}') {
-        if ((braceDepth == 2 || (braceDepth == 1 && text.trim().startsWith('['))) &&
+        if ((braceDepth == 2 ||
+                (braceDepth == 1 && text.trim().startsWith('['))) &&
             objectStartIndex != -1) {
           final chunk = text.substring(objectStartIndex, i + 1);
           try {
@@ -541,18 +580,24 @@ Median Views: ${channel.medianViews}
 
   /// Maps raw JSON item maps into structured DailyBlueprint domain entities
   List<DailyBlueprint> _mapJsonListToBlueprints(
-      List<dynamic> list, ChannelGraph channel) {
+    List<dynamic> list,
+    ChannelGraph channel,
+  ) {
     final result = <DailyBlueprint>[];
     for (var i = 0; i < list.length; i++) {
       if (list[i] is! Map<String, dynamic>) continue;
       final item = list[i] as Map<String, dynamic>;
 
-      final isShort = (item['format'] ?? '').toString().toLowerCase().contains('short') ||
-          (item['formatLabel'] ?? '').toString().toLowerCase().contains('short');
+      final isShort =
+          (item['format'] ?? '').toString().toLowerCase().contains('short') ||
+          (item['formatLabel'] ?? '').toString().toLowerCase().contains(
+            'short',
+          );
 
       final multiplier = (item['predictedMultiplier'] is num)
           ? (item['predictedMultiplier'] as num).toDouble()
-          : (double.tryParse(item['predictedMultiplier']?.toString() ?? '') ?? 2.5);
+          : (double.tryParse(item['predictedMultiplier']?.toString() ?? '') ??
+                2.5);
 
       final rawConviction = (item['convictionScore'] is num)
           ? (item['convictionScore'] as num).toDouble()
@@ -573,29 +618,39 @@ Median Views: ${channel.medianViews}
           '0:00 - 0:05: High-tension hook',
           '0:05 - 0:25: Immediate visual thesis',
           '0:25 - 4:00: Step-by-step resolution',
-          'End: Retention bridge'
+          'End: Retention bridge',
         ]);
       }
 
       // Associate with first matching demand cluster if applicable
       CommentDemandCluster? matchedCluster;
       if (channel.audienceInsight.topDemandClusters.isNotEmpty) {
-        final clusterIndex = i % channel.audienceInsight.topDemandClusters.length;
-        matchedCluster = channel.audienceInsight.topDemandClusters[clusterIndex];
+        final clusterIndex =
+            i % channel.audienceInsight.topDemandClusters.length;
+        matchedCluster =
+            channel.audienceInsight.topDemandClusters[clusterIndex];
       }
 
       result.add(
         DailyBlueprint(
-          id: item['id']?.toString() ?? 'bp_gemini_${DateTime.now().millisecondsSinceEpoch}_$i',
+          id:
+              item['id']?.toString() ??
+              'bp_gemini_${DateTime.now().millisecondsSinceEpoch}_$i',
           title: item['title']?.toString() ?? 'Dynamic Video Blueprint',
           format: isShort ? BlueprintFormat.short : BlueprintFormat.longForm,
-          formatLabel: item['formatLabel']?.toString() ??
+          formatLabel:
+              item['formatLabel']?.toString() ??
               (isShort ? 'YouTube Short (48s)' : 'Long-Form (12–15 Min)'),
-          hookText: item['hookText']?.toString() ?? 'Today on ${channel.channelName}, we break down...',
-          thumbnailConceptLeft: item['thumbnailConceptLeft']?.toString() ?? 'Viewer Problem',
-          thumbnailConceptRight: item['thumbnailConceptRight']?.toString() ?? 'Verified Solution',
+          hookText:
+              item['hookText']?.toString() ??
+              'Today on ${channel.channelName}, we break down...',
+          thumbnailConceptLeft:
+              item['thumbnailConceptLeft']?.toString() ?? 'Viewer Problem',
+          thumbnailConceptRight:
+              item['thumbnailConceptRight']?.toString() ?? 'Verified Solution',
           thumbnailTag: item['thumbnailTag']?.toString() ?? 'VERIFIED PATTERN',
-          dataProofReason: item['dataProofReason']?.toString() ??
+          dataProofReason:
+              item['dataProofReason']?.toString() ??
               'Derived directly from live YouTube channel performance metrics.',
           predictedMultiplier: multiplier,
           convictionScore: conviction,
@@ -604,14 +659,18 @@ Median Views: ${channel.medianViews}
           categoryTag: item['categoryTag']?.toString() ?? channel.niche,
           date: DateTime.now(),
           demandCluster: matchedCluster,
-          audienceCommentSource: matchedCluster?.sampleComments.isNotEmpty == true
+          audienceCommentSource:
+              matchedCluster?.sampleComments.isNotEmpty == true
               ? matchedCluster!.sampleComments.first
               : null,
-          demandEvidenceSummary: item['demandEvidenceSummary']?.toString() ??
+          demandEvidenceSummary:
+              item['demandEvidenceSummary']?.toString() ??
               'Mined directly from live viewer comments and historical catalog outliers.',
-          creatorAuthenticityProof: item['creatorAuthenticityProof']?.toString() ??
+          creatorAuthenticityProof:
+              item['creatorAuthenticityProof']?.toString() ??
               'Aligned with "${channel.signatureCreatorStyle}".',
-          engagementContext: item['engagementContext']?.toString() ??
+          engagementContext:
+              item['engagementContext']?.toString() ??
               'Gemini AI reasoning over live channel comments and analytics.',
           preEngineeredRetentionAnchors: retentionAnchors,
         ),
@@ -621,4 +680,3 @@ Median Views: ${channel.medianViews}
     return result;
   }
 }
-

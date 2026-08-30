@@ -74,8 +74,11 @@ class BlueprintDetailsSheet extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.video_library_rounded,
-                          color: AppColors.primary, size: 18.sp),
+                      Icon(
+                        Icons.video_library_rounded,
+                        color: AppColors.primary,
+                        size: 18.sp,
+                      ),
                       SizedBox(width: 6.w),
                       Text(
                         'PRODUCTION RUNBOOK',
@@ -89,8 +92,11 @@ class BlueprintDetailsSheet extends StatelessWidget {
                   ),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: Icon(Icons.close_rounded,
-                        size: 20.sp, color: AppColors.textMuted),
+                    icon: Icon(
+                      Icons.close_rounded,
+                      size: 20.sp,
+                      color: AppColors.textMuted,
+                    ),
                   ),
                 ],
               ),
@@ -178,13 +184,15 @@ class BlueprintDetailsSheet extends StatelessWidget {
                               GestureDetector(
                                 onTap: () {
                                   Clipboard.setData(
-                                      ClipboardData(text: blueprint.hookText));
+                                    ClipboardData(text: blueprint.hookText),
+                                  );
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content: Text(
                                         'Hook copied to clipboard!',
-                                        style: AppTypography.bodySmall
-                                            .copyWith(color: Colors.white),
+                                        style: AppTypography.bodySmall.copyWith(
+                                          color: Colors.white,
+                                        ),
                                       ),
                                       backgroundColor: AppColors.textInk,
                                       behavior: SnackBarBehavior.floating,
@@ -193,8 +201,11 @@ class BlueprintDetailsSheet extends StatelessWidget {
                                 },
                                 child: Row(
                                   children: [
-                                    Icon(Icons.copy_rounded,
-                                        size: 13.sp, color: AppColors.primary),
+                                    Icon(
+                                      Icons.copy_rounded,
+                                      size: 13.sp,
+                                      color: AppColors.primary,
+                                    ),
                                     SizedBox(width: 4.w),
                                     Text(
                                       'Copy Hook',
@@ -241,19 +252,22 @@ class BlueprintDetailsSheet extends StatelessWidget {
                     _buildPacingStep(
                       timestamp: '5–15 sec',
                       title: '02 — Context',
-                      desc: 'Explain the problem / conventional bottleneck without introductory fluff.',
+                      desc:
+                          'Explain the problem / conventional bottleneck without introductory fluff.',
                       color: AppColors.warningAmber,
                     ),
                     _buildPacingStep(
                       timestamp: '15–30 sec',
                       title: '03 — Payoff',
-                      desc: 'Show the interesting result / benchmark proof before viewer drop-off.',
+                      desc:
+                          'Show the interesting result / benchmark proof before viewer drop-off.',
                       color: AppColors.outlierJade,
                     ),
                     _buildPacingStep(
                       timestamp: '30+ sec',
                       title: '04 — Escalation',
-                      desc: 'Introduce the experiment, technical breakdown, or unexpected twist.',
+                      desc:
+                          'Introduce the experiment, technical breakdown, or unexpected twist.',
                       color: AppColors.indigoAccent,
                     ),
                     SizedBox(height: 16.h),
@@ -288,12 +302,15 @@ class BlueprintDetailsSheet extends StatelessWidget {
                               ),
                               Container(
                                 padding: EdgeInsets.symmetric(
-                                    horizontal: 6.w, vertical: 2.h),
+                                  horizontal: 6.w,
+                                  vertical: 2.h,
+                                ),
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(4.r),
                                   border: Border.all(
-                                      color: AppColors.outlierJadeBorder),
+                                    color: AppColors.outlierJadeBorder,
+                                  ),
                                 ),
                                 child: Text(
                                   '${blueprint.convictionScore}/10 High Conviction',
@@ -363,7 +380,9 @@ class BlueprintDetailsSheet extends StatelessWidget {
                                 ],
                               ),
                               SizedBox(height: 8.h),
-                              ...blueprint.demandCluster!.sampleComments.map((c) {
+                              ...blueprint.demandCluster!.sampleComments.map((
+                                c,
+                              ) {
                                 return Padding(
                                   padding: EdgeInsets.only(bottom: 6.h),
                                   child: Row(
@@ -376,12 +395,13 @@ class BlueprintDetailsSheet extends StatelessWidget {
                                         child: Text(
                                           c.authorDisplayName.isNotEmpty
                                               ? c.authorDisplayName[0]
-                                                  .toUpperCase()
+                                                    .toUpperCase()
                                               : 'V',
                                           style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 7.sp,
-                                              fontWeight: FontWeight.bold),
+                                            color: Colors.white,
+                                            fontSize: 7.sp,
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                         ),
                                       ),
                                       SizedBox(width: 6.w),
@@ -394,19 +414,20 @@ class BlueprintDetailsSheet extends StatelessWidget {
                                               '${c.authorDisplayName}${c.likeCount > 0 ? ' • 👍 ${c.likeCount} likes' : ''}',
                                               style: AppTypography.labelSmall
                                                   .copyWith(
-                                                color: AppColors.primaryDark,
-                                                fontWeight: FontWeight.w700,
-                                                fontSize: 9.5.sp,
-                                              ),
+                                                    color:
+                                                        AppColors.primaryDark,
+                                                    fontWeight: FontWeight.w700,
+                                                    fontSize: 9.5.sp,
+                                                  ),
                                             ),
                                             Text(
                                               '"${c.text}"',
                                               style: AppTypography.bodySmall
                                                   .copyWith(
-                                                color: AppColors.textInk,
-                                                fontStyle: FontStyle.italic,
-                                                height: 1.35,
-                                              ),
+                                                    color: AppColors.textInk,
+                                                    fontStyle: FontStyle.italic,
+                                                    height: 1.35,
+                                                  ),
                                             ),
                                           ],
                                         ),
@@ -415,7 +436,8 @@ class BlueprintDetailsSheet extends StatelessWidget {
                                   ),
                                 );
                               }),
-                            ] else if (blueprint.audienceCommentSource != null) ...[
+                            ] else if (blueprint.audienceCommentSource !=
+                                null) ...[
                               Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
@@ -426,50 +448,61 @@ class BlueprintDetailsSheet extends StatelessWidget {
                                         radius: 10.r,
                                         backgroundColor: AppColors.primary,
                                         child: Text(
-                                          blueprint.audienceCommentSource!
-                                                  .authorDisplayName.isNotEmpty
-                                              ? blueprint.audienceCommentSource!
-                                                  .authorDisplayName[0]
-                                                  .toUpperCase()
+                                          blueprint
+                                                  .audienceCommentSource!
+                                                  .authorDisplayName
+                                                  .isNotEmpty
+                                              ? blueprint
+                                                    .audienceCommentSource!
+                                                    .authorDisplayName[0]
+                                                    .toUpperCase()
                                               : 'V',
                                           style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 9.sp,
-                                              fontWeight: FontWeight.bold),
+                                            color: Colors.white,
+                                            fontSize: 9.sp,
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                         ),
                                       ),
                                       SizedBox(width: 6.w),
                                       Text(
-                                        blueprint.audienceCommentSource!
+                                        blueprint
+                                            .audienceCommentSource!
                                             .authorDisplayName,
-                                        style:
-                                            AppTypography.labelMedium.copyWith(
-                                          color: AppColors.primaryDark,
-                                          fontWeight: FontWeight.w800,
-                                        ),
+                                        style: AppTypography.labelMedium
+                                            .copyWith(
+                                              color: AppColors.primaryDark,
+                                              fontWeight: FontWeight.w800,
+                                            ),
                                       ),
                                     ],
                                   ),
-                                  if (blueprint.audienceCommentSource!.likeCount >
+                                  if (blueprint
+                                          .audienceCommentSource!
+                                          .likeCount >
                                       0)
                                     Container(
                                       padding: EdgeInsets.symmetric(
-                                          horizontal: 6.w, vertical: 2.h),
+                                        horizontal: 6.w,
+                                        vertical: 2.h,
+                                      ),
                                       decoration: BoxDecoration(
                                         color: Colors.white,
-                                        borderRadius:
-                                            BorderRadius.circular(6.r),
+                                        borderRadius: BorderRadius.circular(
+                                          6.r,
+                                        ),
                                         border: Border.all(
-                                            color: const Color(0xFFBFDBFE)),
+                                          color: const Color(0xFFBFDBFE),
+                                        ),
                                       ),
                                       child: Text(
                                         '👍 ${blueprint.audienceCommentSource!.likeCount} Likes',
-                                        style:
-                                            AppTypography.labelSmall.copyWith(
-                                          color: AppColors.primary,
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 10.sp,
-                                        ),
+                                        style: AppTypography.labelSmall
+                                            .copyWith(
+                                              color: AppColors.primary,
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: 10.sp,
+                                            ),
                                       ),
                                     ),
                                 ],
@@ -508,8 +541,11 @@ class BlueprintDetailsSheet extends StatelessWidget {
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(Icons.check_circle_rounded,
-                                size: 16.sp, color: AppColors.outlierJade),
+                            Icon(
+                              Icons.check_circle_rounded,
+                              size: 16.sp,
+                              color: AppColors.outlierJade,
+                            ),
                             SizedBox(width: 8.w),
                             Expanded(
                               child: Text(
@@ -533,7 +569,8 @@ class BlueprintDetailsSheet extends StatelessWidget {
                         Expanded(
                           child: OutlinedButton.icon(
                             onPressed: () {
-                              final text = '''
+                              final text =
+                                  '''
 # Video Production Brief: ${blueprint.title}
 Format: ${blueprint.formatLabel}
 Projected Outlier Multiplier: ${blueprint.predictedMultiplier}x
@@ -554,8 +591,9 @@ ${blueprint.dataProofReason}
                                 SnackBar(
                                   content: Text(
                                     'Full Production Runbook copied to clipboard!',
-                                    style: AppTypography.bodySmall
-                                        .copyWith(color: Colors.white),
+                                    style: AppTypography.bodySmall.copyWith(
+                                      color: Colors.white,
+                                    ),
                                   ),
                                   backgroundColor: AppColors.textInk,
                                 ),
@@ -585,8 +623,8 @@ ${blueprint.dataProofReason}
                             icon: Icons.rocket_launch_rounded,
                             height: 48.h,
                             onPressed: () {
-                              final simProvider =
-                                  context.read<SimulatorProvider>();
+                              final simProvider = context
+                                  .read<SimulatorProvider>();
                               simProvider.loadBlueprint(blueprint);
                               Navigator.pop(context);
                               if (onSimulatePressed != null) {
@@ -608,10 +646,7 @@ ${blueprint.dataProofReason}
     );
   }
 
-  Widget _buildSectionHeader({
-    required IconData icon,
-    required String title,
-  }) {
+  Widget _buildSectionHeader({required IconData icon, required String title}) {
     return Row(
       children: [
         Icon(icon, size: 14.sp, color: AppColors.textMuted),

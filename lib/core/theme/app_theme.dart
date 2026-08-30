@@ -23,7 +23,7 @@ class AppTheme {
         error: AppColors.hazardRuby,
         onError: Colors.white,
       ),
-      textTheme: GoogleFonts.plusJakartaSansTextTheme().copyWith(
+      textTheme: GoogleFonts.robotoTextTheme().copyWith(
         displayLarge: AppTypography.displayLarge,
         displayMedium: AppTypography.displayMedium,
         headlineLarge: AppTypography.headlineLarge,
@@ -59,7 +59,9 @@ class AppTheme {
         filled: true,
         fillColor: AppColors.surface,
         contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-        hintStyle: AppTypography.bodyMedium.copyWith(color: AppColors.textMuted),
+        hintStyle: AppTypography.bodyMedium.copyWith(
+          color: AppColors.textMuted,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14.r),
           borderSide: const BorderSide(color: AppColors.borderLight, width: 1),

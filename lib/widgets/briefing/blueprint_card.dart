@@ -107,32 +107,43 @@ class BlueprintCard extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.local_fire_department_rounded,
-                            size: 15.sp,
-                            color: AppColors.youtubeRed,
-                          ),
-                          SizedBox(width: 6.w),
-                          Text(
-                            '🔥 HIGH AUDIENCE DEMAND',
-                            style: AppTypography.labelSmall.copyWith(
-                              color: AppColors.textInk,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 11.sp,
-                              letterSpacing: 0.3,
+                      Flexible(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.local_fire_department_rounded,
+                              size: 15.sp,
+                              color: AppColors.youtubeRed,
                             ),
-                          ),
-                        ],
+                            SizedBox(width: 6.w),
+                            Flexible(
+                              child: Text(
+                                '🔥 HIGH AUDIENCE DEMAND',
+                                style: AppTypography.labelSmall.copyWith(
+                                  color: AppColors.textInk,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 11.sp,
+                                  letterSpacing: 0.3,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      if (blueprint.demandCluster != null)
+                      if (blueprint.demandCluster != null) ...[
+                        SizedBox(width: 6.w),
                         Container(
                           padding: EdgeInsets.symmetric(
-                              horizontal: 10.w, vertical: 4.h),
+                            horizontal: 10.w,
+                            vertical: 4.h,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.white,
-                            borderRadius: BorderRadius.circular(100.r), // Capsule
+                            borderRadius: BorderRadius.circular(
+                              100.r,
+                            ), // Capsule
                             border: Border.all(color: AppColors.primaryBorder),
                           ),
                           child: Text(
@@ -144,8 +155,10 @@ class BlueprintCard extends StatelessWidget {
                             ),
                           ),
                         ),
+                      ],
                     ],
                   ),
+
                   if (blueprint.audienceCommentSource != null) ...[
                     SizedBox(height: 8.h),
                     Row(
@@ -155,16 +168,20 @@ class BlueprintCard extends StatelessWidget {
                           radius: 10.r,
                           backgroundColor: AppColors.primary,
                           child: Text(
-                            blueprint.audienceCommentSource!.authorDisplayName
+                            blueprint
+                                    .audienceCommentSource!
+                                    .authorDisplayName
                                     .isNotEmpty
-                                ? blueprint.audienceCommentSource!
-                                    .authorDisplayName[0]
-                                    .toUpperCase()
+                                ? blueprint
+                                      .audienceCommentSource!
+                                      .authorDisplayName[0]
+                                      .toUpperCase()
                                 : 'V',
                             style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 9.sp,
-                                fontWeight: FontWeight.bold),
+                              color: Colors.white,
+                              fontSize: 9.sp,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                         SizedBox(width: 8.w),
@@ -174,7 +191,8 @@ class BlueprintCard extends StatelessWidget {
                             children: [
                               Text(
                                 blueprint
-                                    .audienceCommentSource!.authorDisplayName,
+                                    .audienceCommentSource!
+                                    .authorDisplayName,
                                 style: AppTypography.labelSmall.copyWith(
                                   color: AppColors.primaryDark,
                                   fontWeight: FontWeight.w700,
@@ -229,31 +247,43 @@ class BlueprintCard extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.auto_awesome_rounded,
-                            size: 15.sp, color: AppColors.primary),
-                        SizedBox(width: 6.w),
-                        Text(
-                          'FIRST 5 SECONDS HOOK',
-                          style: AppTypography.labelSmall.copyWith(
-                            color: AppColors.primaryDark,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 11.sp,
+                    Flexible(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.auto_awesome_rounded,
+                            size: 15.sp,
+                            color: AppColors.primary,
                           ),
-                        ),
-                      ],
+                          SizedBox(width: 6.w),
+                          Flexible(
+                            child: Text(
+                              'FIRST 5 SECONDS HOOK',
+                              style: AppTypography.labelSmall.copyWith(
+                                color: AppColors.primaryDark,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 11.sp,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                     InkWell(
                       borderRadius: BorderRadius.circular(8.r),
                       onTap: () {
-                        Clipboard.setData(ClipboardData(text: blueprint.hookText));
+                        Clipboard.setData(
+                          ClipboardData(text: blueprint.hookText),
+                        );
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(
                               'Hook copied to clipboard!',
-                              style: AppTypography.bodySmall.copyWith(color: Colors.white),
+                              style: AppTypography.bodySmall.copyWith(
+                                color: Colors.white,
+                              ),
                             ),
                             backgroundColor: AppColors.textInk,
                             duration: const Duration(seconds: 2),
@@ -265,12 +295,18 @@ class BlueprintCard extends StatelessWidget {
                         );
                       },
                       child: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 8.w,
+                          vertical: 4.h,
+                        ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.copy_rounded,
-                                size: 14.sp, color: AppColors.primary),
+                            Icon(
+                              Icons.copy_rounded,
+                              size: 14.sp,
+                              color: AppColors.primary,
+                            ),
                             SizedBox(width: 4.w),
                             Text(
                               'Copy',
@@ -361,10 +397,7 @@ class BlueprintCard extends StatelessWidget {
     if (isHero) {
       return GestureDetector(
         onTap: openDetails,
-        child: ShimmerBorder(
-          borderRadius: 18.r,
-          child: cardContent,
-        ),
+        child: ShimmerBorder(borderRadius: 18.r, child: cardContent),
       );
     }
 

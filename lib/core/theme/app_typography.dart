@@ -3,10 +3,10 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
-/// ScreenUtil responsive typography with Plus Jakarta Sans & JetBrains Mono.
+/// ScreenUtil responsive typography with Roboto & JetBrains Mono.
 class AppTypography {
-  // --- Editorial Sans Typography ---
-  static TextStyle get displayLarge => GoogleFonts.plusJakartaSans(
+  // --- Roboto Typography ---
+  static TextStyle get displayLarge => GoogleFonts.roboto(
     fontSize: 30.sp,
     fontWeight: FontWeight.w800,
     color: AppColors.textInk,
@@ -14,7 +14,7 @@ class AppTypography {
     height: 1.2,
   );
 
-  static TextStyle get displayMedium => GoogleFonts.plusJakartaSans(
+  static TextStyle get displayMedium => GoogleFonts.roboto(
     fontSize: 24.sp,
     fontWeight: FontWeight.w700,
     color: AppColors.textInk,
@@ -22,7 +22,7 @@ class AppTypography {
     height: 1.25,
   );
 
-  static TextStyle get headlineLarge => GoogleFonts.plusJakartaSans(
+  static TextStyle get headlineLarge => GoogleFonts.roboto(
     fontSize: 21.sp,
     fontWeight: FontWeight.w700,
     color: AppColors.textInk,
@@ -30,7 +30,7 @@ class AppTypography {
     height: 1.3,
   );
 
-  static TextStyle get headlineMedium => GoogleFonts.plusJakartaSans(
+  static TextStyle get headlineMedium => GoogleFonts.roboto(
     fontSize: 19.sp,
     fontWeight: FontWeight.w700,
     color: AppColors.textPrimary,
@@ -38,55 +38,55 @@ class AppTypography {
     height: 1.35,
   );
 
-  static TextStyle get titleLarge => GoogleFonts.plusJakartaSans(
+  static TextStyle get titleLarge => GoogleFonts.roboto(
     fontSize: 17.sp,
     fontWeight: FontWeight.w700,
     color: AppColors.textPrimary,
     letterSpacing: -0.2,
   );
 
-  static TextStyle get titleMedium => GoogleFonts.plusJakartaSans(
+  static TextStyle get titleMedium => GoogleFonts.roboto(
     fontSize: 15.sp,
     fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
   );
 
-  static TextStyle get bodyLarge => GoogleFonts.plusJakartaSans(
+  static TextStyle get bodyLarge => GoogleFonts.roboto(
     fontSize: 15.sp,
     fontWeight: FontWeight.w400,
     color: AppColors.textSecondary,
     height: 1.5,
   );
 
-  static TextStyle get bodyMedium => GoogleFonts.plusJakartaSans(
+  static TextStyle get bodyMedium => GoogleFonts.roboto(
     fontSize: 14.sp,
     fontWeight: FontWeight.w400,
     color: AppColors.textSecondary,
     height: 1.45,
   );
 
-  static TextStyle get bodySmall => GoogleFonts.plusJakartaSans(
+  static TextStyle get bodySmall => GoogleFonts.roboto(
     fontSize: 13.sp,
     fontWeight: FontWeight.w500,
     color: AppColors.textSecondary,
     height: 1.4,
   );
 
-  static TextStyle get labelLarge => GoogleFonts.plusJakartaSans(
+  static TextStyle get labelLarge => GoogleFonts.roboto(
     fontSize: 14.sp,
     fontWeight: FontWeight.w700,
     color: AppColors.textPrimary,
     letterSpacing: 0.2,
   );
 
-  static TextStyle get labelMedium => GoogleFonts.plusJakartaSans(
+  static TextStyle get labelMedium => GoogleFonts.roboto(
     fontSize: 12.5.sp,
     fontWeight: FontWeight.w600,
     color: AppColors.textSecondary,
     letterSpacing: 0.3,
   );
 
-  static TextStyle get labelSmall => GoogleFonts.plusJakartaSans(
+  static TextStyle get labelSmall => GoogleFonts.roboto(
     fontSize: 11.5.sp,
     fontWeight: FontWeight.w600,
     color: AppColors.textSecondary,

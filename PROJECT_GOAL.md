@@ -34,7 +34,8 @@
    - 4th simulation triggers high-converting Pro Paywall Sheet with 7-Day Free Trial CTA.
 
 5. **Channel Graph & Live YouTube Data API v3 Engine (Dio Helper):**
-   - **Pure Handle Initialization**: Connects to live YouTube API using only handle (e.g. `@Telusko`, `@srimankotaru`, etc.).
+   - **Pure Handle Initialization**: Connects to live YouTube API using only handle (e.g. `@Telusko`, `@Fireship`, etc.).
+
    - **Zero Static Fallbacks**: Real subscriber counts, total videos, median view computation from live video items, and dynamic NLP topic clustering.
 
 ---

@@ -60,7 +60,8 @@ class _TactileCardState extends State<TactileCard>
             decoration: BoxDecoration(
               color: widget.backgroundColor ?? AppColors.surface,
               borderRadius: BorderRadius.circular(radius),
-              border: widget.border ??
+              border:
+                  widget.border ??
                   Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
               boxShadow: _isPressed
                   ? AppColors.cardElevationPressed

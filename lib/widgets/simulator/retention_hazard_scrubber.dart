@@ -17,7 +17,8 @@ class RetentionHazardScrubber extends StatefulWidget {
   });
 
   @override
-  State<RetentionHazardScrubber> createState() => _RetentionHazardScrubberState();
+  State<RetentionHazardScrubber> createState() =>
+      _RetentionHazardScrubberState();
 }
 
 class _RetentionHazardScrubberState extends State<RetentionHazardScrubber> {
@@ -46,8 +47,11 @@ class _RetentionHazardScrubberState extends State<RetentionHazardScrubber> {
               Expanded(
                 child: Row(
                   children: [
-                    Icon(Icons.timer_rounded,
-                        size: 18.sp, color: AppColors.hazardRuby),
+                    Icon(
+                      Icons.timer_rounded,
+                      size: 18.sp,
+                      color: AppColors.hazardRuby,
+                    ),
                     SizedBox(width: 6.w),
                     Flexible(
                       child: Text(
@@ -113,7 +117,9 @@ class _RetentionHazardScrubberState extends State<RetentionHazardScrubber> {
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: List.generate(totalSeconds, (sec) {
                             final inHazard = widget.hazards.any(
-                                (h) => sec >= h.startSeconds && sec <= h.endSeconds);
+                              (h) =>
+                                  sec >= h.startSeconds && sec <= h.endSeconds,
+                            );
 
                             // Retention curve calculation (drops off during hazard)
                             double heightRatio = 0.85 - (sec * 0.012);
@@ -126,16 +132,19 @@ class _RetentionHazardScrubberState extends State<RetentionHazardScrubber> {
 
                             return Expanded(
                               child: GestureDetector(
-                                onTap: () => setState(() => _currentSecond = sec),
+                                onTap: () =>
+                                    setState(() => _currentSecond = sec),
                                 child: Container(
                                   margin: EdgeInsets.symmetric(horizontal: 1.w),
                                   height: 48.h * heightRatio,
                                   decoration: BoxDecoration(
                                     color: inHazard
                                         ? AppColors.hazardRuby.withValues(
-                                            alpha: isCurrent ? 1.0 : 0.6)
+                                            alpha: isCurrent ? 1.0 : 0.6,
+                                          )
                                         : AppColors.primary.withValues(
-                                            alpha: isCurrent ? 1.0 : 0.3),
+                                            alpha: isCurrent ? 1.0 : 0.3,
+                                          ),
                                     borderRadius: BorderRadius.circular(2.r),
                                   ),
                                 ),
@@ -174,8 +183,12 @@ class _RetentionHazardScrubberState extends State<RetentionHazardScrubber> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('0:00 (Hook)',
-                      style: AppTypography.monoTimestamp.copyWith(fontSize: 11.sp)),
+                  Text(
+                    '0:00 (Hook)',
+                    style: AppTypography.monoTimestamp.copyWith(
+                      fontSize: 11.sp,
+                    ),
+                  ),
                   Text(
                     '0:${_currentSecond.toString().padLeft(2, '0')}',
                     style: AppTypography.monoTimestamp.copyWith(
@@ -186,8 +199,12 @@ class _RetentionHazardScrubberState extends State<RetentionHazardScrubber> {
                       fontSize: 13.sp,
                     ),
                   ),
-                  Text('0:30 (Cutoff)',
-                      style: AppTypography.monoTimestamp.copyWith(fontSize: 11.sp)),
+                  Text(
+                    '0:30 (Cutoff)',
+                    style: AppTypography.monoTimestamp.copyWith(
+                      fontSize: 11.sp,
+                    ),
+                  ),
                 ],
               ),
               // Slider for continuous touch scrub
@@ -205,7 +222,8 @@ class _RetentionHazardScrubberState extends State<RetentionHazardScrubber> {
                   min: 0,
                   max: 30,
                   divisions: 30,
-                  onChanged: (val) => setState(() => _currentSecond = val.round()),
+                  onChanged: (val) =>
+                      setState(() => _currentSecond = val.round()),
                 ),
               ),
             ],
@@ -230,8 +248,11 @@ class _RetentionHazardScrubberState extends State<RetentionHazardScrubber> {
                       Expanded(
                         child: Row(
                           children: [
-                            Icon(Icons.warning_amber_rounded,
-                                size: 16.sp, color: AppColors.hazardRuby),
+                            Icon(
+                              Icons.warning_amber_rounded,
+                              size: 16.sp,
+                              color: AppColors.hazardRuby,
+                            ),
                             SizedBox(width: 6.w),
                             Flexible(
                               child: Text(
@@ -248,8 +269,10 @@ class _RetentionHazardScrubberState extends State<RetentionHazardScrubber> {
                         ),
                       ),
                       Container(
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 8.w,
+                          vertical: 3.h,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.hazardRuby,
                           borderRadius: BorderRadius.circular(6.r),
@@ -343,12 +366,18 @@ class _RetentionHazardScrubberState extends State<RetentionHazardScrubber> {
               decoration: BoxDecoration(
                 color: AppColors.outlierJadeSubtle,
                 borderRadius: BorderRadius.circular(10.r),
-                border: Border.all(color: AppColors.outlierJadeBorder, width: 1),
+                border: Border.all(
+                  color: AppColors.outlierJadeBorder,
+                  width: 1,
+                ),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.check_circle_outline_rounded,
-                      size: 15.sp, color: AppColors.outlierJade),
+                  Icon(
+                    Icons.check_circle_outline_rounded,
+                    size: 15.sp,
+                    color: AppColors.outlierJade,
+                  ),
                   SizedBox(width: 8.w),
                   Expanded(
                     child: Text(

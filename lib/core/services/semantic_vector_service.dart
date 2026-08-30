@@ -4,7 +4,8 @@ import '../../models/channel_graph.dart';
 /// In-Memory Semantic Vector Search Engine & Cosine Similarity Calculator
 /// Powers sub-millisecond outlier matching and semantic comment clustering directly on device.
 class SemanticVectorService {
-  static final SemanticVectorService _instance = SemanticVectorService._internal();
+  static final SemanticVectorService _instance =
+      SemanticVectorService._internal();
   factory SemanticVectorService() => _instance;
   SemanticVectorService._internal();
 
@@ -81,11 +82,13 @@ class SemanticVectorService {
 
     for (final video in channel.recentVideos) {
       final performanceMultiplier = (video.views / medianViews);
-      if (performanceMultiplier < minMultiplier && channel.recentVideos.length > 2) {
+      if (performanceMultiplier < minMultiplier &&
+          channel.recentVideos.length > 2) {
         continue;
       }
 
-      final videoText = '${video.title} ${video.description} ${video.tags.join(' ')}';
+      final videoText =
+          '${video.title} ${video.description} ${video.tags.join(' ')}';
       final videoVector = generateFeatureVector(videoText);
       final similarity = cosineSimilarity(ideaVector, videoVector);
 
@@ -96,7 +99,10 @@ class SemanticVectorService {
       });
     }
 
-    results.sort((a, b) => (b['similarity'] as double).compareTo(a['similarity'] as double));
+    results.sort(
+      (a, b) =>
+          (b['similarity'] as double).compareTo(a['similarity'] as double),
+    );
     return results.take(3).toList();
   }
 
@@ -116,7 +122,9 @@ class SemanticVectorService {
       scored.add({'comment': c, 'score': sim});
     }
 
-    scored.sort((a, b) => (b['score'] as double).compareTo(a['score'] as double));
+    scored.sort(
+      (a, b) => (b['score'] as double).compareTo(a['score'] as double),
+    );
     return scored
         .where((item) => (item['score'] as double) > 0.15)
         .take(4)

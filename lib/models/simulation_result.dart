@@ -1,10 +1,10 @@
 import 'daily_blueprint.dart';
 
 enum PerformanceTier {
-  topOutlier,     // 🚀 Top 10% Channel Outlier (Est. 3.0×+ Median Views)
-  aboveMedian,    // 🟢 Above Median (Est. 1.3×–2.0× Median Views)
-  averageBaseline,// 🟡 Average Baseline (Est. 0.8×–1.1× Median Views)
-  highFlopRisk,   // 🔴 High Flop Risk (<0.5× Median Views)
+  topOutlier, // 🚀 Top 10% Channel Outlier (Est. 3.0×+ Median Views)
+  aboveMedian, // 🟢 Above Median (Est. 1.3×–2.0× Median Views)
+  averageBaseline, // 🟡 Average Baseline (Est. 0.8×–1.1× Median Views)
+  highFlopRisk, // 🔴 High Flop Risk (<0.5× Median Views)
 }
 
 extension PerformanceTierX on PerformanceTier {
@@ -37,8 +37,8 @@ extension PerformanceTierX on PerformanceTier {
 
 enum HazardSeverity {
   critical, // Ruby Red
-  warning,  // Amber
-  minor,    // Slate
+  warning, // Amber
+  minor, // Slate
 }
 
 class RetentionHazard {
@@ -157,7 +157,8 @@ class SimulationResult {
 
   /// Composite Overall Score across all 7 evaluation dimensions (0.0 - 10.0 scale)
   double get overallScore {
-    final composite = (hookScore * 0.28) +
+    final composite =
+        (hookScore * 0.28) +
         (resonanceScore * 0.22) +
         (noveltyScore * 0.15) +
         (topicMomentumScore * 0.15) +

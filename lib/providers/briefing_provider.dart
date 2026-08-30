@@ -3,12 +3,7 @@ import '../core/services/blueprint_generator_service.dart';
 import '../models/channel_graph.dart';
 import '../models/daily_blueprint.dart';
 
-enum BriefingFilter {
-  all,
-  longForm,
-  short,
-  saved,
-}
+enum BriefingFilter { all, longForm, short, saved }
 
 class BriefingProvider extends ChangeNotifier {
   final BlueprintGeneratorService _generatorService =
@@ -111,8 +106,8 @@ class BriefingProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final newBlueprint =
-          await _generatorService.generateFreshBlueprintOnDemand(channel);
+      final newBlueprint = await _generatorService
+          .generateFreshBlueprintOnDemand(channel);
       _blueprints.insert(0, newBlueprint);
       _isGeneratingFresh = false;
       notifyListeners();

@@ -16,10 +16,7 @@ import '../../widgets/common/tactile_card.dart';
 class DailyBriefingScreen extends StatefulWidget {
   final Function(int targetTabIndex)? onNavigateTab;
 
-  const DailyBriefingScreen({
-    super.key,
-    this.onNavigateTab,
-  });
+  const DailyBriefingScreen({super.key, this.onNavigateTab});
 
   @override
   State<DailyBriefingScreen> createState() => _DailyBriefingScreenState();
@@ -56,8 +53,9 @@ class _DailyBriefingScreenState extends State<DailyBriefingScreen> {
                     height: 20.w,
                     child: const CircularProgressIndicator(
                       strokeWidth: 2,
-                      valueColor:
-                          AlwaysStoppedAnimation<Color>(AppColors.primary),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        AppColors.primary,
+                      ),
                     ),
                   )
                 : Icon(
@@ -66,7 +64,8 @@ class _DailyBriefingScreenState extends State<DailyBriefingScreen> {
                     size: 22.sp,
                   ),
             tooltip: 'Generate Fresh AI Idea',
-            onPressed: briefingProvider.isGeneratingFresh || !channel.isConfigured
+            onPressed:
+                briefingProvider.isGeneratingFresh || !channel.isConfigured
                 ? null
                 : () async {
                     try {
@@ -77,8 +76,11 @@ class _DailyBriefingScreenState extends State<DailyBriefingScreen> {
                           SnackBar(
                             content: Row(
                               children: [
-                                const Icon(Icons.auto_awesome,
-                                    color: Colors.white, size: 18),
+                                const Icon(
+                                  Icons.auto_awesome,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
                                 SizedBox(width: 8.w),
                                 Expanded(
                                   child: Text(
@@ -143,8 +145,8 @@ class _DailyBriefingScreenState extends State<DailyBriefingScreen> {
                   children: [
                     _buildFilterChip(
                       label: 'All Blueprints',
-                      isSelected: briefingProvider.currentFilter ==
-                          BriefingFilter.all,
+                      isSelected:
+                          briefingProvider.currentFilter == BriefingFilter.all,
                       onTap: () =>
                           briefingProvider.setFilter(BriefingFilter.all),
                     ),
@@ -152,7 +154,8 @@ class _DailyBriefingScreenState extends State<DailyBriefingScreen> {
                     _buildFilterChip(
                       label: 'Long Videos (8–15m)',
                       icon: Icons.videocam_rounded,
-                      isSelected: briefingProvider.currentFilter ==
+                      isSelected:
+                          briefingProvider.currentFilter ==
                           BriefingFilter.longForm,
                       onTap: () =>
                           briefingProvider.setFilter(BriefingFilter.longForm),
@@ -161,7 +164,8 @@ class _DailyBriefingScreenState extends State<DailyBriefingScreen> {
                     _buildFilterChip(
                       label: 'Shorts (<60s)',
                       icon: Icons.electric_bolt_rounded,
-                      isSelected: briefingProvider.currentFilter ==
+                      isSelected:
+                          briefingProvider.currentFilter ==
                           BriefingFilter.short,
                       onTap: () =>
                           briefingProvider.setFilter(BriefingFilter.short),
@@ -170,7 +174,8 @@ class _DailyBriefingScreenState extends State<DailyBriefingScreen> {
                     _buildFilterChip(
                       label: 'Saved (${briefingProvider.savedCount})',
                       icon: Icons.bookmark_rounded,
-                      isSelected: briefingProvider.currentFilter ==
+                      isSelected:
+                          briefingProvider.currentFilter ==
                           BriefingFilter.saved,
                       onTap: () =>
                           briefingProvider.setFilter(BriefingFilter.saved),
@@ -187,7 +192,8 @@ class _DailyBriefingScreenState extends State<DailyBriefingScreen> {
                 switchOutCurve: Curves.easeInCubic,
                 child: KeyedSubtree(
                   key: ValueKey<String>(
-                      '${briefingProvider.currentFilter.name}_${briefingProvider.blueprints.length}_${briefingProvider.isLoading}'),
+                    '${briefingProvider.currentFilter.name}_${briefingProvider.blueprints.length}_${briefingProvider.isLoading}',
+                  ),
                   child: Column(
                     children: [
                       if (briefingProvider.isLoading) ...[
@@ -195,11 +201,15 @@ class _DailyBriefingScreenState extends State<DailyBriefingScreen> {
                       ] else if (briefingProvider.blueprints.isEmpty) ...[
                         _buildEmptyState(),
                       ] else ...[
-                        ...briefingProvider.blueprints.asMap().entries.map((entry) {
+                        ...briefingProvider.blueprints.asMap().entries.map((
+                          entry,
+                        ) {
                           final index = entry.key;
                           final blueprint = entry.value;
-                          final isHero = index == 0 &&
-                              briefingProvider.currentFilter == BriefingFilter.all;
+                          final isHero =
+                              index == 0 &&
+                              briefingProvider.currentFilter ==
+                                  BriefingFilter.all;
 
                           return Padding(
                             padding: EdgeInsets.only(bottom: 16.h),
@@ -208,7 +218,9 @@ class _DailyBriefingScreenState extends State<DailyBriefingScreen> {
                               isHero: isHero,
                               onSimulatePressed: () {
                                 if (widget.onNavigateTab != null) {
-                                  widget.onNavigateTab!(1); // Jump to Pre-Flight Simulator Tab
+                                  widget.onNavigateTab!(
+                                    1,
+                                  ); // Jump to Pre-Flight Simulator Tab
                                 }
                               },
                             ),
@@ -240,8 +252,11 @@ class _DailyBriefingScreenState extends State<DailyBriefingScreen> {
         children: [
           Row(
             children: [
-              Icon(Icons.tips_and_updates_rounded,
-                  size: 16.sp, color: AppColors.primary),
+              Icon(
+                Icons.tips_and_updates_rounded,
+                size: 16.sp,
+                color: AppColors.primary,
+              ),
               SizedBox(width: 6.w),
               Text(
                 '3-Step Quick Guide',
@@ -381,8 +396,8 @@ class _DailyBriefingScreenState extends State<DailyBriefingScreen> {
               CircleAvatar(
                 radius: 24.r,
                 backgroundColor: AppColors.primarySubtle,
-                backgroundImage: (channel.avatarUrl != null &&
-                        channel.avatarUrl!.isNotEmpty)
+                backgroundImage:
+                    (channel.avatarUrl != null && channel.avatarUrl!.isNotEmpty)
                     ? NetworkImage(channel.avatarUrl!)
                     : null,
                 child: (channel.avatarUrl == null || channel.avatarUrl!.isEmpty)
@@ -457,13 +472,17 @@ class _DailyBriefingScreenState extends State<DailyBriefingScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'Median views',
-                      style: AppTypography.bodyMedium.copyWith(
-                        color: AppColors.textSecondary,
-                        fontWeight: FontWeight.w600,
+                    Flexible(
+                      child: Text(
+                        'Median views',
+                        style: AppTypography.bodyMedium.copyWith(
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    SizedBox(width: 8.w),
                     Text(
                       medianFormatted,
                       style: AppTypography.titleMedium.copyWith(
@@ -477,13 +496,17 @@ class _DailyBriefingScreenState extends State<DailyBriefingScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'Upload frequency',
-                      style: AppTypography.bodyMedium.copyWith(
-                        color: AppColors.textSecondary,
-                        fontWeight: FontWeight.w600,
+                    Flexible(
+                      child: Text(
+                        'Upload frequency',
+                        style: AppTypography.bodyMedium.copyWith(
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    SizedBox(width: 8.w),
                     Text(
                       channel.uploadFrequencyFormatted,
                       style: AppTypography.titleMedium.copyWith(
@@ -511,30 +534,41 @@ class _DailyBriefingScreenState extends State<DailyBriefingScreen> {
               runSpacing: 8.h,
               children: [
                 Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.video_library_outlined,
-                        size: 15.sp, color: AppColors.textMuted),
-                    SizedBox(width: 6.w),
-                    Text(
-                      'Content analyzed',
-                      style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.textSecondary,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    Icon(
+                      Icons.video_library_outlined,
+                      size: 15.sp,
+                      color: AppColors.textMuted,
                     ),
                     SizedBox(width: 6.w),
-                    Text(
-                      '${channel.totalVideos > 0 ? channel.totalVideos : channel.recentVideos.length} videos',
-                      style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.textInk,
-                        fontWeight: FontWeight.w800,
+                    Flexible(
+                      child: Text.rich(
+                        TextSpan(
+                          text: 'Content analyzed: ',
+                          style: AppTypography.bodySmall.copyWith(
+                            color: AppColors.textSecondary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          children: [
+                            TextSpan(
+                              text:
+                                  '${channel.totalVideos > 0 ? channel.totalVideos : channel.recentVideos.length} videos',
+                              style: AppTypography.bodySmall.copyWith(
+                                color: AppColors.textInk,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ],
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
                 ),
+
                 Container(
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
                   decoration: BoxDecoration(
                     color: AppColors.outlierJadeSubtle,
                     borderRadius: BorderRadius.circular(6.r),
@@ -562,7 +596,10 @@ class _DailyBriefingScreenState extends State<DailyBriefingScreen> {
                 children: channel.topicPerformanceMultipliers.take(4).map((t) {
                   return Container(
                     margin: EdgeInsets.only(right: 6.w),
-                    padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 8.w,
+                      vertical: 4.h,
+                    ),
                     decoration: BoxDecoration(
                       color: t.multiple >= 1.5
                           ? AppColors.outlierJadeSubtle
@@ -623,7 +660,9 @@ class _DailyBriefingScreenState extends State<DailyBriefingScreen> {
           color: isSelected ? const Color(0xFF181A24) : AppColors.surface,
           borderRadius: BorderRadius.circular(100.r), // True Solid Capsule Pill
           border: Border.all(
-            color: isSelected ? const Color(0xFF181A24) : const Color(0xFFCBD5E1),
+            color: isSelected
+                ? const Color(0xFF181A24)
+                : const Color(0xFFCBD5E1),
             width: 1.5,
           ),
           boxShadow: isSelected
@@ -765,15 +804,19 @@ class _DailyBriefingScreenState extends State<DailyBriefingScreen> {
           ? null
           : () async {
               try {
-                final newBp =
-                    await briefingProvider.generateFreshBlueprint(channel);
+                final newBp = await briefingProvider.generateFreshBlueprint(
+                  channel,
+                );
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Row(
                         children: [
-                          const Icon(Icons.auto_awesome,
-                              color: Colors.white, size: 18),
+                          const Icon(
+                            Icons.auto_awesome,
+                            color: Colors.white,
+                            size: 18,
+                          ),
                           SizedBox(width: 8.w),
                           Expanded(
                             child: Text(

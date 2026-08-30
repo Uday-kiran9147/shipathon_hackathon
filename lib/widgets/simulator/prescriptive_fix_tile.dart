@@ -38,7 +38,10 @@ class PrescriptiveFixTile extends StatelessWidget {
               Row(
                 children: [
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 6.w,
+                      vertical: 2.h,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.hazardRubySubtle,
                       borderRadius: BorderRadius.circular(4.r),
@@ -182,12 +185,20 @@ class PrescriptiveFixTile extends StatelessWidget {
 
           // Action Button
           SolidHeavyButton(
-            label: fix.isApplied ? 'Improvement Applied ✓' : 'Apply 1-Tap Improvement',
+            label: fix.isApplied
+                ? 'Improvement Applied ✓'
+                : 'Apply 1-Tap Improvement',
             icon: fix.isApplied ? Icons.done_all_rounded : Icons.bolt_rounded,
             height: 46.h,
-            backgroundColor: fix.isApplied ? AppColors.outlierJade : AppColors.primary,
-            shadowColor: fix.isApplied ? const Color(0xFF065F46) : const Color(0xFF990014),
-            borderColor: fix.isApplied ? const Color(0xFF047857) : const Color(0xFFCC0018),
+            backgroundColor: fix.isApplied
+                ? AppColors.outlierJade
+                : AppColors.primary,
+            shadowColor: fix.isApplied
+                ? const Color(0xFF065F46)
+                : const Color(0xFF990014),
+            borderColor: fix.isApplied
+                ? const Color(0xFF047857)
+                : const Color(0xFFCC0018),
             onPressed: fix.isApplied ? null : onApply,
           ),
         ],

@@ -23,15 +23,31 @@ class _AudienceDemandIllustrationState extends State<AudienceDemandIllustration>
       'title': '"Why Senior Devs Hate Microservices"',
       'velocity': '3.4x Velocity',
       'requests': '48 Audience Demands',
-      'c1': {'name': 'Alex R.', 'text': 'How do you handle distributed trace lag?', 'likes': 142},
-      'c2': {'name': 'Sarah K.', 'text': 'Our team reverted to a monolith last month!', 'likes': 89},
+      'c1': {
+        'name': 'Alex R.',
+        'text': 'How do you handle distributed trace lag?',
+        'likes': 142,
+      },
+      'c2': {
+        'name': 'Sarah K.',
+        'text': 'Our team reverted to a monolith last month!',
+        'likes': 89,
+      },
     },
     {
       'title': '"6-Second Resume Filter Teardown"',
       'velocity': '4.1x Velocity',
       'requests': '76 Audience Demands',
-      'c1': {'name': 'Marcus D.', 'text': 'Why do ATS parsers reject PDF portfolios?', 'likes': 210},
-      'c2': {'name': 'Elena P.', 'text': 'Please review real junior github links!', 'likes': 135},
+      'c1': {
+        'name': 'Marcus D.',
+        'text': 'Why do ATS parsers reject PDF portfolios?',
+        'likes': 210,
+      },
+      'c2': {
+        'name': 'Elena P.',
+        'text': 'Please review real junior github links!',
+        'likes': 135,
+      },
     },
   ];
 
@@ -108,8 +124,11 @@ class _AudienceDemandIllustrationState extends State<AudienceDemandIllustration>
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.auto_awesome_rounded,
-                                color: Colors.amberAccent, size: 14.sp),
+                            Icon(
+                              Icons.auto_awesome_rounded,
+                              color: Colors.amberAccent,
+                              size: 14.sp,
+                            ),
                             SizedBox(width: 5.w),
                             Text(
                               'VERIFIED AUDIENCE DEMAND',
@@ -124,7 +143,9 @@ class _AudienceDemandIllustrationState extends State<AudienceDemandIllustration>
                         ),
                         Container(
                           padding: EdgeInsets.symmetric(
-                              horizontal: 6.w, vertical: 2.h),
+                            horizontal: 6.w,
+                            vertical: 2.h,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.white.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(4.r),
@@ -201,8 +222,10 @@ class _AudienceDemandIllustrationState extends State<AudienceDemandIllustration>
                   });
                 },
                 child: Container(
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10.w,
+                    vertical: 6.h,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.surface,
                     borderRadius: BorderRadius.circular(10.r),
@@ -218,8 +241,11 @@ class _AudienceDemandIllustrationState extends State<AudienceDemandIllustration>
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.swap_horiz_rounded,
-                          size: 13.sp, color: AppColors.primary),
+                      Icon(
+                        Icons.swap_horiz_rounded,
+                        size: 13.sp,
+                        color: AppColors.primary,
+                      ),
                       SizedBox(width: 4.w),
                       Text(
                         'Tap to switch topic cluster',

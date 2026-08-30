@@ -47,8 +47,7 @@ class _FlopVsOutlierIllustrationState extends State<FlopVsOutlierIllustration>
     final flopRetention = (100 - (_scrubX * 82) - (_scrubX > 0.4 ? 12 : 0))
         .clamp(14, 98)
         .toInt();
-    final outlierRetention =
-        (98 - (_scrubX * 14)).clamp(78, 98).toInt();
+    final outlierRetention = (98 - (_scrubX * 14)).clamp(78, 98).toInt();
 
     return Container(
       width: double.infinity,
@@ -81,9 +80,7 @@ class _FlopVsOutlierIllustrationState extends State<FlopVsOutlierIllustration>
 
             // Background grid lines & timecode marks
             Positioned.fill(
-              child: CustomPaint(
-                painter: _GridBackgroundPainter(),
-              ),
+              child: CustomPaint(painter: _GridBackgroundPainter()),
             ),
 
             // Animated retention curves with area gradients
@@ -118,8 +115,11 @@ class _FlopVsOutlierIllustrationState extends State<FlopVsOutlierIllustration>
                             color: AppColors.primarySubtle,
                             borderRadius: BorderRadius.circular(6.r),
                           ),
-                          child: Icon(Icons.touch_app_rounded,
-                              size: 11.sp, color: AppColors.primary),
+                          child: Icon(
+                            Icons.touch_app_rounded,
+                            size: 11.sp,
+                            color: AppColors.primary,
+                          ),
                         ),
                         SizedBox(width: 6.w),
                         Expanded(
@@ -140,8 +140,10 @@ class _FlopVsOutlierIllustrationState extends State<FlopVsOutlierIllustration>
                   ),
                   SizedBox(width: 8.w),
                   Container(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 8.w,
+                      vertical: 3.h,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.textInk,
                       borderRadius: BorderRadius.circular(6.r),
@@ -161,8 +163,10 @@ class _FlopVsOutlierIllustrationState extends State<FlopVsOutlierIllustration>
 
             // Floating Dynamic Insight Bubble at Scrubber
             Positioned(
-              left: (MediaQuery.of(context).size.width * _scrubX - 50.w)
-                  .clamp(14.w, 200.w),
+              left: (MediaQuery.of(context).size.width * _scrubX - 50.w).clamp(
+                14.w,
+                200.w,
+              ),
               top: 40.h,
               child: Container(
                 padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
@@ -272,8 +276,10 @@ class _FlopVsOutlierIllustrationState extends State<FlopVsOutlierIllustration>
                   if (renderBox != null) {
                     final local = details.localPosition;
                     setState(() {
-                      _scrubX = (local.dx / renderBox.size.width)
-                          .clamp(0.08, 0.92);
+                      _scrubX = (local.dx / renderBox.size.width).clamp(
+                        0.08,
+                        0.92,
+                      );
                     });
                   }
                 },
@@ -282,8 +288,10 @@ class _FlopVsOutlierIllustrationState extends State<FlopVsOutlierIllustration>
                   if (renderBox != null) {
                     final local = details.localPosition;
                     setState(() {
-                      _scrubX = (local.dx / renderBox.size.width)
-                          .clamp(0.08, 0.92);
+                      _scrubX = (local.dx / renderBox.size.width).clamp(
+                        0.08,
+                        0.92,
+                      );
                     });
                   }
                 },
@@ -373,10 +381,7 @@ class _RetentionCurvesPainter extends CustomPainter {
   final double progress;
   final double scrubX;
 
-  _RetentionCurvesPainter({
-    required this.progress,
-    required this.scrubX,
-  });
+  _RetentionCurvesPainter({required this.progress, required this.scrubX});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -435,7 +440,9 @@ class _RetentionCurvesPainter extends CustomPainter {
 
     final outlierFillPath = Path.from(outlierPath);
     outlierFillPath.lineTo(
-        width * (progress * 0.94).clamp(0.2, 0.94), height - 40.h);
+      width * (progress * 0.94).clamp(0.2, 0.94),
+      height - 40.h,
+    );
     outlierFillPath.lineTo(14.w, height - 40.h);
     outlierFillPath.close();
 
@@ -475,7 +482,10 @@ class _RetentionCurvesPainter extends CustomPainter {
       ..strokeWidth = 1.8.w;
 
     canvas.drawLine(
-        Offset(scrubberX, 28.h), Offset(scrubberX, height - 40.h), scrubberPaint);
+      Offset(scrubberX, 28.h),
+      Offset(scrubberX, height - 40.h),
+      scrubberPaint,
+    );
 
     // Scrubber Knob
     final knobOuter = Paint()..color = AppColors.primary;

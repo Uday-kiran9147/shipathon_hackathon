@@ -44,10 +44,12 @@ class _SimulatorRadarIllustrationState extends State<SimulatorRadarIllustration>
   Widget build(BuildContext context) {
     final isHigh = widget.hookScore >= 7.5;
     final scoreColor = isHigh ? AppColors.outlierJade : AppColors.hazardRuby;
-    final scoreBg =
-        isHigh ? AppColors.outlierJadeSubtle : AppColors.hazardRubySubtle;
-    final scoreBorder =
-        isHigh ? AppColors.outlierJadeBorder : AppColors.hazardRubyBorder;
+    final scoreBg = isHigh
+        ? AppColors.outlierJadeSubtle
+        : AppColors.hazardRubySubtle;
+    final scoreBorder = isHigh
+        ? AppColors.outlierJadeBorder
+        : AppColors.hazardRubyBorder;
 
     return Container(
       width: double.infinity,
@@ -90,8 +92,10 @@ class _SimulatorRadarIllustrationState extends State<SimulatorRadarIllustration>
                 children: [
                   // Hook Score HUD Gauge
                   Container(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 14.w,
+                      vertical: 8.h,
+                    ),
                     decoration: BoxDecoration(
                       color: scoreBg,
                       borderRadius: BorderRadius.circular(14.r),
@@ -163,25 +167,35 @@ class _SimulatorRadarIllustrationState extends State<SimulatorRadarIllustration>
                   _buildHudMetric(
                     label: 'Curiosity Gap',
                     value: widget.isOptimized ? '9.4' : '4.0',
-                    color: isHigh ? AppColors.outlierJade : AppColors.hazardRuby,
+                    color: isHigh
+                        ? AppColors.outlierJade
+                        : AppColors.hazardRuby,
                   ),
                   SizedBox(height: 5.h),
                   _buildHudMetric(
                     label: 'Speed to Value',
                     value: widget.isOptimized ? '8.8' : '3.8',
-                    color: isHigh ? AppColors.outlierJade : AppColors.hazardRuby,
+                    color: isHigh
+                        ? AppColors.outlierJade
+                        : AppColors.hazardRuby,
                   ),
                   SizedBox(height: 5.h),
                   _buildHudMetric(
                     label: 'Drop-off Risk',
                     value: widget.isOptimized ? 'Clear' : '0:14 Drop',
-                    color: isHigh ? AppColors.outlierJade : AppColors.hazardRuby,
+                    color: isHigh
+                        ? AppColors.outlierJade
+                        : AppColors.hazardRuby,
                   ),
                   SizedBox(height: 5.h),
                   _buildHudMetric(
                     label: 'Predicted Tier',
-                    value: widget.isOptimized ? 'Top 10% Outlier' : 'Below Median',
-                    color: isHigh ? AppColors.outlierJade : AppColors.hazardRuby,
+                    value: widget.isOptimized
+                        ? 'Top 10% Outlier'
+                        : 'Below Median',
+                    color: isHigh
+                        ? AppColors.outlierJade
+                        : AppColors.hazardRuby,
                   ),
                 ],
               ),
@@ -233,10 +247,7 @@ class _RadarHudPainter extends CustomPainter {
   final double sweepAngle;
   final bool isOptimized;
 
-  _RadarHudPainter({
-    required this.sweepAngle,
-    required this.isOptimized,
-  });
+  _RadarHudPainter({required this.sweepAngle, required this.isOptimized});
 
   @override
   void paint(Canvas canvas, Size size) {

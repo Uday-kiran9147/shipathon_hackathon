@@ -54,13 +54,17 @@ class DioClient {
         },
         onResponse: (response, handler) {
           if (kDebugMode) {
-            debugPrint('[Dio Response] ${response.statusCode} <- ${response.requestOptions.path}');
+            debugPrint(
+              '[Dio Response] ${response.statusCode} <- ${response.requestOptions.path}',
+            );
           }
           return handler.next(response);
         },
         onError: (DioException e, handler) {
           if (kDebugMode) {
-            debugPrint('[Dio Error] ${e.type} -> ${e.message} (status: ${e.response?.statusCode})');
+            debugPrint(
+              '[Dio Error] ${e.type} -> ${e.message} (status: ${e.response?.statusCode})',
+            );
           }
           final customException = _handleDioError(e);
           return handler.reject(
@@ -79,7 +83,9 @@ class DioClient {
   void setApiKey(String? key) {
     _apiKey = key;
     if (kDebugMode) {
-      debugPrint('[DioClient] YouTube API Key configured: ${key != null && key.isNotEmpty ? "YES (${key.substring(0, 4)}...)" : "NONE"}');
+      debugPrint(
+        '[DioClient] YouTube API Key configured: ${key != null && key.isNotEmpty ? "YES (${key.substring(0, 4)}...)" : "NONE"}',
+      );
     }
   }
 
@@ -105,7 +111,8 @@ class DioClient {
 
     if (statusCode == 400) {
       return YouTubeApiException(
-        message: 'Invalid request. Please check the channel handle or query parameter.',
+        message:
+            'Invalid request. Please check the channel handle or query parameter.',
         statusCode: 400,
         data: responseData,
       );
@@ -149,7 +156,9 @@ class DioClient {
       if (e.error is YouTubeApiException) {
         throw e.error as YouTubeApiException;
       }
-      throw YouTubeApiException(message: e.message ?? 'Failed to execute GET request');
+      throw YouTubeApiException(
+        message: e.message ?? 'Failed to execute GET request',
+      );
     }
   }
 
@@ -172,7 +181,9 @@ class DioClient {
       if (e.error is YouTubeApiException) {
         throw e.error as YouTubeApiException;
       }
-      throw YouTubeApiException(message: e.message ?? 'Failed to execute POST request');
+      throw YouTubeApiException(
+        message: e.message ?? 'Failed to execute POST request',
+      );
     }
   }
 }

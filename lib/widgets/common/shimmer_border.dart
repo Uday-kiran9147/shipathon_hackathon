@@ -7,11 +7,7 @@ class ShimmerBorder extends StatefulWidget {
   final Widget child;
   final double? borderRadius;
 
-  const ShimmerBorder({
-    super.key,
-    required this.child,
-    this.borderRadius,
-  });
+  const ShimmerBorder({super.key, required this.child, this.borderRadius});
 
   @override
   State<ShimmerBorder> createState() => _ShimmerBorderState();

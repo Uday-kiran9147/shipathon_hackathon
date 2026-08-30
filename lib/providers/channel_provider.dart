@@ -6,8 +6,9 @@ import '../core/services/youtube_api_service.dart';
 import '../models/channel_graph.dart';
 
 class ChannelProvider extends ChangeNotifier {
-  static const String defaultHandle = '@RevenueCat';
+  static const String defaultHandle = '@uk';
   final YouTubeApiService _youtubeService = YouTubeApiService();
+  final Map<String, ChannelGraph> _cachedChannels = {};
 
   ChannelGraph _channel = const ChannelGraph(handle: defaultHandle);
   bool _isSyncing = false;
@@ -20,13 +21,20 @@ class ChannelProvider extends ChangeNotifier {
   String? get configuredApiKey => _configuredApiKey;
   bool get hasApiKey => _youtubeService.hasApiKey;
   bool get isConnected => _channel.isConfigured;
+  Map<String, ChannelGraph> get cachedChannels =>
+      Map.unmodifiable(_cachedChannels);
 
-  ChannelProvider() {
+  ChannelProvider({String? initialHandle}) {
     final envKey = AppConstants.youtubeApiKey;
     if (envKey.isNotEmpty) {
       _configuredApiKey = envKey;
       _youtubeService.configureApiKey(envKey);
-      // syncChannel(defaultHandle);
+    }
+    if (initialHandle != null && initialHandle.trim().isNotEmpty) {
+      final clean = initialHandle.trim().startsWith('@')
+          ? initialHandle.trim()
+          : '@${initialHandle.trim()}';
+      _channel = ChannelGraph(handle: clean);
     }
   }
 
@@ -40,11 +48,29 @@ class ChannelProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Switch to another channel handle with cache-first instant loading
+  Future<bool> switchChannel(String handle) async {
+    final cleanHandle = handle.trim().startsWith('@')
+        ? handle.trim()
+        : '@${handle.trim()}';
+
+    if (_cachedChannels.containsKey(cleanHandle)) {
+      _channel = _cachedChannels[cleanHandle]!;
+      _syncError = null;
+      notifyListeners();
+      return true;
+    }
+
+    return syncChannel(cleanHandle);
+  }
+
   /// Sync YouTube Channel live only via handle
   Future<bool> syncChannel([String? handleOrQuery]) async {
     final targetHandle = (handleOrQuery == null || handleOrQuery.trim().isEmpty)
         ? (_channel.handle.isNotEmpty ? _channel.handle : defaultHandle)
-        : handleOrQuery.trim();
+        : (handleOrQuery.trim().startsWith('@')
+              ? handleOrQuery.trim()
+              : '@${handleOrQuery.trim()}');
 
     _isSyncing = true;
     _syncError = null;
@@ -55,10 +81,12 @@ class ChannelProvider extends ChangeNotifier {
         targetHandle,
       );
       _channel = updatedGraph;
+      _cachedChannels[targetHandle] = updatedGraph;
       _isSyncing = false;
-      // log proven topic clusters
-      log('[ChannelProvider] Initialized with API Key. Default channel: ${channel.topTopicClusters.map((c) => c.toString()).join(', ')}');
-   
+      log(
+        '[ChannelProvider] Synced channel $targetHandle: ${updatedGraph.channelName}',
+      );
+
       notifyListeners();
       return true;
     } catch (e) {
@@ -71,6 +99,7 @@ class ChannelProvider extends ChangeNotifier {
 
   void updateChannel(ChannelGraph updated) {
     _channel = updated;
+    _cachedChannels[updated.handle] = updated;
     notifyListeners();
   }
 

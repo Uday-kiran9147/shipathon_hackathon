@@ -3,14 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
 
-enum BadgeVariant {
-  primary,
-  outlier,
-  hazard,
-  warning,
-  pro,
-  neutral,
-}
+enum BadgeVariant { primary, outlier, hazard, warning, pro, neutral }
 
 /// Responsive Badge / Pill component
 class ResponsiveBadge extends StatelessWidget {
@@ -87,11 +80,14 @@ class ResponsiveBadge extends StatelessWidget {
             Icon(icon, size: 12.sp, color: fg),
             SizedBox(width: 4.w),
           ],
-          Text(
-            text,
-            style: AppTypography.labelSmall.copyWith(
-              color: fg,
-              fontWeight: FontWeight.w800, // Heavy solid typography
+          Flexible(
+            child: Text(
+              text,
+              style: AppTypography.labelSmall.copyWith(
+                color: fg,
+                fontWeight: FontWeight.w800, // Heavy solid typography
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],

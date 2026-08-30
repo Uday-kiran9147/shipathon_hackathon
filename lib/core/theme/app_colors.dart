@@ -10,7 +10,7 @@ class AppColors {
   static const Color surface = Color(0xFFFFFFFF);
   static const Color surfaceSubtle = Color(0xFFF1F4F9);
   static const Color surfaceHighlight = Color(0xFFE8EDF5);
-  
+
   // Borders & Dividers
   // Borders & Dividers
   static const Color borderLight = Color(0xFFE5E9F0);
@@ -18,12 +18,20 @@ class AppColors {
   static const Color borderFocused = Color(0xFFFF0022);
 
   // Brand / Editorial Primary (Aligned with Logo Red & Ink Black)
-  static const Color primaryDark = Color(0xFF181A24);    // Deep Ink / Charcoal Black
-  static const Color primary = Color(0xFFFF0022);        // Vibrant Prevue Red (from logo)
-  static const Color primaryLight = Color(0xFFFF334B);   // Bright Red Glow / Active
-  static const Color primarySubtle = Color(0xFFFFF1F2);  // Soft Red background tint
-  static const Color primaryBorder = Color(0xFFFECDD3);  // Soft Red border
-  static const Color brandBlack = Color(0xFF181A24);     // Deep Black
+  static const Color primaryDark = Color(
+    0xFF181A24,
+  ); // Deep Ink / Charcoal Black
+  static const Color primary = Color(
+    0xFFFF0022,
+  ); // Vibrant Prevue Red (from logo)
+  static const Color primaryLight = Color(
+    0xFFFF334B,
+  ); // Bright Red Glow / Active
+  static const Color primarySubtle = Color(
+    0xFFFFF1F2,
+  ); // Soft Red background tint
+  static const Color primaryBorder = Color(0xFFFECDD3); // Soft Red border
+  static const Color brandBlack = Color(0xFF181A24); // Deep Black
   static const Color indigoAccent = Color(0xFF181A24);
 
   // YouTube / Studio Accent
@@ -55,10 +63,12 @@ class AppColors {
   static const Color proGoldSubtle = Color(0xFFFEF3C7);
 
   // Text / Ink Hierarchy
-  static const Color textInk = Color(0xFF0A0D14);        // Razor-sharp headlines
-  static const Color textPrimary = Color(0xFF0F172A);    // Primary reading
-  static const Color textSecondary = Color(0xFF475569);  // Supporting descriptions
-  static const Color textMuted = Color(0xFF8592A6);      // Timestamps & metadata
+  static const Color textInk = Color(0xFF0A0D14); // Razor-sharp headlines
+  static const Color textPrimary = Color(0xFF0F172A); // Primary reading
+  static const Color textSecondary = Color(
+    0xFF475569,
+  ); // Supporting descriptions
+  static const Color textMuted = Color(0xFF8592A6); // Timestamps & metadata
   static const Color textDisabled = Color(0xFFCBD5E1);
 
   // Gradients

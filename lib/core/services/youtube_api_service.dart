@@ -107,7 +107,8 @@ class YouTubeApiService {
     final channelTitle = snippet['title'] as String? ?? 'YouTube Creator';
     final channelDescription = snippet['description'] as String? ?? '';
     final customUrl = snippet['customUrl'] as String? ?? handle;
-    final avatarUrl = snippet['thumbnails']?['high']?['url'] as String? ??
+    final avatarUrl =
+        snippet['thumbnails']?['high']?['url'] as String? ??
         snippet['thumbnails']?['medium']?['url'] as String? ??
         snippet['thumbnails']?['default']?['url'] as String?;
 
@@ -123,8 +124,9 @@ class YouTubeApiService {
     final allTags = <String>[];
     final allVideoTitles = <String>[];
 
-    int calculatedMedianViews =
-        (totalVideos > 0 && totalViews > 0) ? (totalViews ~/ totalVideos) : 0;
+    int calculatedMedianViews = (totalVideos > 0 && totalViews > 0)
+        ? (totalViews ~/ totalVideos)
+        : 0;
 
     final uploadsPlaylistId =
         contentDetails['relatedPlaylists']?['uploads'] as String?;
@@ -169,7 +171,8 @@ class YouTubeApiService {
 
                 final vTitle = vSnippet['title'] as String? ?? '';
                 final vDesc = vSnippet['description'] as String? ?? '';
-                final vTags = (vSnippet['tags'] as List<dynamic>?)
+                final vTags =
+                    (vSnippet['tags'] as List<dynamic>?)
                         ?.map((t) => t.toString())
                         .toList() ??
                     [];
@@ -183,7 +186,7 @@ class YouTubeApiService {
                     int.tryParse(vStats['likeCount']?.toString() ?? '0') ?? 0;
                 final vComments =
                     int.tryParse(vStats['commentCount']?.toString() ?? '0') ??
-                        0;
+                    0;
                 final rawDuration = vContent['duration'] as String? ?? 'PT10M';
                 final durationFormatted = _parseIsoDuration(rawDuration);
 
@@ -205,11 +208,13 @@ class YouTubeApiService {
                     views: vViews,
                     likes: vLikes,
                     commentCount: vComments,
-                    publishedAt: DateTime.tryParse(
-                            vSnippet['publishedAt']?.toString() ?? '') ??
+                    publishedAt:
+                        DateTime.tryParse(
+                          vSnippet['publishedAt']?.toString() ?? '',
+                        ) ??
                         DateTime.now(),
-                    thumbnailUrl: vSnippet['thumbnails']?['medium']?['url']
-                        as String?,
+                    thumbnailUrl:
+                        vSnippet['thumbnails']?['medium']?['url'] as String?,
                     tags: vTags,
                     durationFormatted: durationFormatted,
                     topComments: topComments,
@@ -230,15 +235,18 @@ class YouTubeApiService {
     }
 
     // Extract Wikipedia Topic Categories directly from YouTube API response
-    final topicCategories = (topicDetails['topicCategories'] as List<dynamic>?)
-            ?.map((u) => u
-                .toString()
-                .split('/')
-                .last
-                .replaceAll('_', ' ')
-                .replaceAll('(sociology)', '')
-                .replaceAll('(genre)', '')
-                .trim())
+    final topicCategories =
+        (topicDetails['topicCategories'] as List<dynamic>?)
+            ?.map(
+              (u) => u
+                  .toString()
+                  .split('/')
+                  .last
+                  .replaceAll('_', ' ')
+                  .replaceAll('(sociology)', '')
+                  .replaceAll('(genre)', '')
+                  .trim(),
+            )
             .where((t) => t.isNotEmpty)
             .toList() ??
         [];
@@ -260,10 +268,14 @@ class YouTubeApiService {
     );
 
     // Calculate Engagement & Audience Insights
-    final totalRecentLikes =
-        recentVideos.fold<int>(0, (sum, v) => sum + v.likes);
-    final totalRecentComments =
-        recentVideos.fold<int>(0, (sum, v) => sum + v.commentCount);
+    final totalRecentLikes = recentVideos.fold<int>(
+      0,
+      (sum, v) => sum + v.likes,
+    );
+    final totalRecentComments = recentVideos.fold<int>(
+      0,
+      (sum, v) => sum + v.commentCount,
+    );
     final avgLikes = recentVideos.isNotEmpty
         ? (totalRecentLikes ~/ recentVideos.length)
         : 0;
@@ -363,7 +375,8 @@ class YouTubeApiService {
 
   /// Fetch live comment threads for a specific video
   Future<List<ChannelComment>> _fetchLiveCommentsForVideo(
-      String videoId) async {
+    String videoId,
+  ) async {
     try {
       final response = await _dioClient.get(
         'commentThreads',
@@ -383,19 +396,19 @@ class YouTubeApiService {
         final snippet = item['snippet'] as Map<String, dynamic>? ?? {};
         final topLevel =
             snippet['topLevelComment']?['snippet'] as Map<String, dynamic>? ??
-                {};
+            {};
 
         final id = item['id'] as String? ?? '';
-        final author =
-            topLevel['authorDisplayName'] as String? ?? 'Viewer';
-        final authorAvatar =
-            topLevel['authorProfileImageUrl'] as String?;
+        final author = topLevel['authorDisplayName'] as String? ?? 'Viewer';
+        final authorAvatar = topLevel['authorProfileImageUrl'] as String?;
         final rawText =
-            topLevel['textOriginal'] as String? ?? topLevel['textDisplay'] as String? ?? '';
+            topLevel['textOriginal'] as String? ??
+            topLevel['textDisplay'] as String? ??
+            '';
         final likes =
             int.tryParse(topLevel['likeCount']?.toString() ?? '0') ?? 0;
-        final publishedAt = DateTime.tryParse(
-                topLevel['publishedAt']?.toString() ?? '') ??
+        final publishedAt =
+            DateTime.tryParse(topLevel['publishedAt']?.toString() ?? '') ??
             DateTime.now();
 
         final cleanText = _decodeHtmlEntities(
@@ -468,7 +481,8 @@ class YouTubeApiService {
     final lower = text.toLowerCase();
 
     // Exclude rhetorical phrases like "can you imagine", "can you believe", etc.
-    final isRhetorical = lower.contains('can you imagine') ||
+    final isRhetorical =
+        lower.contains('can you imagine') ||
         lower.contains('can you believe') ||
         lower.contains('can you feel') ||
         lower.contains('who would have') ||
@@ -606,13 +620,15 @@ class YouTubeApiService {
       requests.add('Step-by-step breakdown on ${topicClusters.first}');
       if (topicClusters.length > 1) {
         requests.add(
-            'Real-world benchmark comparing ${topicClusters[0]} vs ${topicClusters[1]}');
+          'Real-world benchmark comparing ${topicClusters[0]} vs ${topicClusters[1]}',
+        );
       }
     }
 
     // Find highest engagement video topic
-    String topTopic =
-        topicClusters.isNotEmpty ? topicClusters.first : 'Core Tutorials';
+    String topTopic = topicClusters.isNotEmpty
+        ? topicClusters.first
+        : 'Core Tutorials';
     if (recentVideos.isNotEmpty) {
       final sortedByViews = List<ChannelRecentVideo>.from(recentVideos)
         ..sort((a, b) => b.views.compareTo(a.views));
@@ -633,7 +649,7 @@ class YouTubeApiService {
           : [
               'Exceptional clarity',
               'Actionable frameworks',
-              'High-density insights'
+              'High-density insights',
             ],
       averageLikesPerVideo: avgLikes,
       averageCommentsPerVideo: avgComments,
@@ -684,10 +700,12 @@ class YouTubeApiService {
         final clean = comment.text
             .replaceAll(RegExp(r'[?.,!"]'), '')
             .replaceAll(
-                RegExp(
-                    r'(can you please|please make a video on|video on|tutorial on|how to|what is|can you do a video on)',
-                    caseSensitive: false),
-                '')
+              RegExp(
+                r'(can you please|please make a video on|video on|tutorial on|how to|what is|can you do a video on)',
+                caseSensitive: false,
+              ),
+              '',
+            )
             .trim();
         final words = clean.split(RegExp(r'\s+')).take(4).join(' ');
         if (words.length > 5) {
@@ -710,10 +728,11 @@ class YouTubeApiService {
       final frequency = comments.length;
 
       // Demand Velocity Index formula: frequency * (1 + log10(1 + likes))
-      final dvi = frequency *
+      final dvi =
+          frequency *
           (1.0 + (totalLikes > 0 ? (log(1.0 + totalLikes) / ln10) : 0.0));
-      final primaryIntent = comments
-              .any((c) => c.intentCategory == ChannelCommentIntent.request)
+      final primaryIntent =
+          comments.any((c) => c.intentCategory == ChannelCommentIntent.request)
           ? ChannelCommentIntent.request
           : ChannelCommentIntent.question;
 
@@ -732,7 +751,8 @@ class YouTubeApiService {
     }
 
     demandClusters.sort(
-        (a, b) => b.demandVelocityIndex.compareTo(a.demandVelocityIndex));
+      (a, b) => b.demandVelocityIndex.compareTo(a.demandVelocityIndex),
+    );
     return demandClusters;
   }
 
@@ -767,7 +787,7 @@ class YouTubeApiService {
     String vulnerability = '0:12 - 0:18 (Explanatory lull before solution)';
     List<String> outlierFormats = [
       'Deep Dive Masterclass',
-      'Teardown & Benchmark'
+      'Teardown & Benchmark',
     ];
 
     final lowerNiche = niche.toLowerCase();
@@ -781,7 +801,7 @@ class YouTubeApiService {
       outlierFormats = [
         'Architectural Deep Dive',
         'Benchmark Teardown',
-        'Clean Code Short'
+        'Clean Code Short',
       ];
     } else if (lowerNiche.contains('auto') || lowerNiche.contains('motovlog')) {
       hookStyle =
@@ -791,7 +811,7 @@ class YouTubeApiService {
       outlierFormats = [
         'Cost Transparency Teardown',
         'Ownership Truth',
-        'Rider Rule Short'
+        'Rider Rule Short',
       ];
     } else if (lowerNiche.contains('monetization') ||
         lowerNiche.contains('saas') ||
@@ -803,7 +823,7 @@ class YouTubeApiService {
       outlierFormats = [
         'Paywall Case Study',
         'Pricing A/B Teardown',
-        'Monetization Short'
+        'Monetization Short',
       ];
     }
 
@@ -830,13 +850,17 @@ class YouTubeApiService {
     if (desc.contains('no fluff') || desc.contains('straight to the point')) {
       return 'High-density, fast-paced execution with zero filler';
     }
-    if (desc.contains('teardown') || desc.contains('review') || desc.contains('test')) {
+    if (desc.contains('teardown') ||
+        desc.contains('review') ||
+        desc.contains('test')) {
       return 'Rigorous data-backed teardowns and real-world testing';
     }
-    if (niche.toLowerCase().contains('motovlog') || niche.toLowerCase().contains('auto')) {
+    if (niche.toLowerCase().contains('motovlog') ||
+        niche.toLowerCase().contains('auto')) {
       return 'Cinematic first-person lifestyle narratives and ownership truth';
     }
-    if (niche.toLowerCase().contains('dev') || niche.toLowerCase().contains('software')) {
+    if (niche.toLowerCase().contains('dev') ||
+        niche.toLowerCase().contains('software')) {
       return 'Hands-on architectural code walkthroughs and design patterns';
     }
     return 'Authentic, community-driven deep dives with actionable takeaways';
@@ -844,10 +868,13 @@ class YouTubeApiService {
 
   /// Capitalize a tag into a clean title case
   String _capitalizeTag(String text) {
-    return text.split(' ').map((w) {
-      if (w.isEmpty) return '';
-      return '${w[0].toUpperCase()}${w.substring(1)}';
-    }).join(' ');
+    return text
+        .split(' ')
+        .map((w) {
+          if (w.isEmpty) return '';
+          return '${w[0].toUpperCase()}${w.substring(1)}';
+        })
+        .join(' ');
   }
 
   /// Extract clean keyphrases from raw video title
@@ -954,9 +981,9 @@ class YouTubeApiService {
     if (topicCategories.isNotEmpty && topicClusters.isNotEmpty) {
       final primaryCategory = _capitalizeTag(topicCategories.first);
       final primaryCluster = topicClusters.first;
-      if (!primaryCategory
-          .toLowerCase()
-          .contains(primaryCluster.toLowerCase())) {
+      if (!primaryCategory.toLowerCase().contains(
+        primaryCluster.toLowerCase(),
+      )) {
         return '$primaryCategory & $primaryCluster';
       }
       return primaryCategory;
@@ -1014,9 +1041,14 @@ class YouTubeApiService {
             likes: 4850,
             commentCount: 342,
             publishedAt: DateTime.now().subtract(const Duration(days: 4)),
-            thumbnailUrl:
-                'https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
-            tags: ['Spring Boot', 'Java', 'Spring AI', 'Microservices', 'Docker'],
+            thumbnailUrl: 'https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
+            tags: [
+              'Spring Boot',
+              'Java',
+              'Spring AI',
+              'Microservices',
+              'Docker',
+            ],
             durationFormatted: '48:12',
             topComments: [
               ChannelComment(
@@ -1057,8 +1089,7 @@ class YouTubeApiService {
             likes: 7200,
             commentCount: 420,
             publishedAt: DateTime.now().subtract(const Duration(days: 12)),
-            thumbnailUrl:
-                'https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
+            thumbnailUrl: 'https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
             tags: ['Java', 'Spring Boot', 'Clean Code', 'System Design'],
             durationFormatted: '14:25',
             topComments: [
@@ -1147,7 +1178,7 @@ class YouTubeApiService {
           outlierVideoFormats: [
             'Architectural Deep Dive',
             'Benchmark Teardown',
-            'Clean Code Short'
+            'Clean Code Short',
           ],
           retentionVulnerabilityArea:
               '0:10 - 0:24 (Boilerplate project setup and dependency installs)',
@@ -1155,66 +1186,64 @@ class YouTubeApiService {
       );
     }
 
-    if (clean.contains('sriman') || clean.contains('kotaru')) {
+    if (clean.contains('fireship') || clean.contains('jeff')) {
       return ChannelGraph(
-        channelId: 'UCsriman_kotaru_01',
-        channelName: 'Sriman Kotaru',
-        handle: '@SrimanKotaru',
+        channelId: 'UCsfireship_01',
+        channelName: 'Fireship',
+        handle: '@Fireship',
         channelDescription:
-            'Exploring the world on two wheels and four. Superbike road trips, automotive engineering teardowns, and lifestyle vlogging with unfiltered authenticity.',
-        niche: 'Automotive, Superbikes & Lifestyle',
-        subscribers: 1420000,
-        medianViews: 180000,
-        averageLikes: 14200,
-        averageComments: 890,
-        medianCtr: 7.8,
-        totalVideos: 620,
-        totalViews: 240000000,
-        targetAudienceLevel: 'Automotive & Motorcycle Enthusiasts',
+            'High-intensity code tutorials and tech news to help you ship apps faster. JavaScript, Python, Flutter, AI, and full-stack software architecture explained in 100 seconds.',
+        niche: 'Software Engineering, AI & Web Dev',
+        subscribers: 3100000,
+        medianViews: 450000,
+        averageLikes: 38000,
+        averageComments: 2100,
+        medianCtr: 9.4,
+        totalVideos: 580,
+        totalViews: 480000000,
+        targetAudienceLevel: 'Full-Stack Developers & Tech Enthusiasts',
         topTopicClusters: [
-          'Superbike Maintenance Truth',
-          'Long-Distance Moto Touring',
-          'Exotic Cars vs Real Estate',
-          'Track Day Dynamics',
+          'AI Agent Frameworks',
+          'TypeScript & Rust Benchmarks',
+          'Next.js vs SvelteKit',
+          '100 Seconds of Code',
         ],
-        topFormat: 'Cinematic Long-Form Vlogs (15–20 Min)',
+        topFormat: 'High-Velocity Technical Shorts & 100s Explanations',
         avatarUrl:
             'https://yt3.googleusercontent.com/ytc/AIdro_k67f1h3bK-PzJ54mR8ZzU93l_y59jK8L98m7Q=s176-c-k-c0x00ffffff-no-rj',
         isLiveConnected: true,
         signatureCreatorStyle:
-            'Cinematic drone visuals, transparent garage bills, and philosophical storytelling behind the handlebars.',
+            'Rapid-fire deadpan humor, laser-focused code snippets, and zero-fluff architectural diagrams.',
         recentVideos: [
           ChannelRecentVideo(
-            id: 'sk_vid_01',
-            title:
-                'The Real 1-Year Ownership Cost of a German Superbike in India',
+            id: 'fs_vid_01',
+            title: '100 Seconds of Autonomous AI Coding Agents in 2026',
             description:
-                'Line by line dealer invoices, tire wear, insurance, and maintenance reality of living with a 200HP liter bike in daily Indian conditions.',
-            views: 380000,
-            likes: 24500,
-            commentCount: 1420,
-            publishedAt: DateTime.now().subtract(const Duration(days: 6)),
-            thumbnailUrl:
-                'https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
-            tags: ['Superbike', 'BMW S1000RR', 'Ducati', 'Cost Breakdown'],
-            durationFormatted: '18:42',
+                'How autonomous AI coding agents work under the hood. Benchmarking MCP servers, tool calling loops, and self-healing repositories.',
+            views: 620000,
+            likes: 42000,
+            commentCount: 2800,
+            publishedAt: DateTime.now().subtract(const Duration(days: 3)),
+            thumbnailUrl: 'https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
+            tags: ['AI Agents', 'Coding', 'JavaScript', 'Developer Tools'],
+            durationFormatted: '2:14',
             topComments: [
               ChannelComment(
-                id: 'sk_c01',
-                authorDisplayName: '@rider_kiran',
+                id: 'fs_c01',
+                authorDisplayName: '@dev_lead_sarah',
                 text:
-                    'Bhai, can you do a comparison on whether buying a used Ducati Panigale vs a brand new ZX-10R makes financial sense in 2026?',
-                likeCount: 310,
-                publishedAt: DateTime.now().subtract(const Duration(days: 5)),
+                    'Can you do a deep-dive comparison between Cursor and Gemini 2.0 CLI workflows for production monoliths?',
+                likeCount: 540,
+                publishedAt: DateTime.now().subtract(const Duration(days: 2)),
                 intentCategory: ChannelCommentIntent.request,
               ),
               ChannelComment(
-                id: 'sk_c02',
-                authorDisplayName: '@auto_enthusiast_99',
+                id: 'fs_c02',
+                authorDisplayName: '@fullstack_coder',
                 text:
-                    'What track tires do you recommend for BIC track days that won\'t melt after 2 sessions?',
-                likeCount: 95,
-                publishedAt: DateTime.now().subtract(const Duration(days: 4)),
+                    'What backend framework is fastest for processing real-time AI tool calling streaming?',
+                likeCount: 180,
+                publishedAt: DateTime.now().subtract(const Duration(days: 1)),
                 intentCategory: ChannelCommentIntent.question,
               ),
             ],
@@ -1222,72 +1251,162 @@ class YouTubeApiService {
         ],
         audienceInsight: const AudienceInsight(
           topViewerRequests: [
-            'Used Ducati Panigale vs Brand New ZX-10R Financial Truth',
-            'Complete Track Day Prep & Tire Wear Guide',
-            'Garage Maintenance Teardown for 2026',
+            'Cursor vs Gemini CLI Workflow Deep Dive',
+            'Full-Stack AI Agent Memory Architecture in 100 Seconds',
+            'Rust WebAssembly Microservices Benchmark',
           ],
           topDemandClusters: [
             CommentDemandCluster(
-              id: 'cluster_sk_01',
-              topicKeyword: 'Superbike Ownership & Financial Reality',
+              id: 'cluster_fs_01',
+              topicKeyword: 'Autonomous AI Coding Workflows',
               sampleComments: [
                 ChannelComment(
-                  id: 'sk_c01',
-                  authorDisplayName: '@rider_kiran',
+                  id: 'fs_c01',
+                  authorDisplayName: '@dev_lead_sarah',
                   text:
-                      'Bhai, can you do a comparison on whether buying a used Ducati Panigale vs a brand new ZX-10R makes financial sense in 2026?',
-                  likeCount: 310,
+                      'Can you do a deep-dive comparison between Cursor and Gemini 2.0 CLI workflows for production monoliths?',
+                  likeCount: 540,
                   publishedAt: null,
                   intentCategory: ChannelCommentIntent.request,
                 ),
               ],
-              totalUpvotes: 310,
-              commentFrequency: 24,
-              demandVelocityIndex: 5.6,
+              totalUpvotes: 540,
+              commentFrequency: 38,
+              demandVelocityIndex: 7.2,
               primaryIntent: ChannelCommentIntent.request,
             ),
             CommentDemandCluster(
-              id: 'cluster_sk_02',
-              topicKeyword: 'Track Day Dynamics & Tire Prep',
+              id: 'cluster_fs_02',
+              topicKeyword: 'Real-Time AI Tool Streaming',
               sampleComments: [
                 ChannelComment(
-                  id: 'sk_c02',
-                  authorDisplayName: '@auto_enthusiast_99',
+                  id: 'fs_c02',
+                  authorDisplayName: '@fullstack_coder',
                   text:
-                      'What track tires do you recommend for BIC track days that won\'t melt after 2 sessions?',
-                  likeCount: 95,
+                      'What backend framework is fastest for processing real-time AI tool calling streaming?',
+                  likeCount: 180,
                   publishedAt: null,
                   intentCategory: ChannelCommentIntent.question,
                 ),
               ],
-              totalUpvotes: 95,
-              commentFrequency: 11,
-              demandVelocityIndex: 4.1,
+              totalUpvotes: 180,
+              commentFrequency: 19,
+              demandVelocityIndex: 5.4,
               primaryIntent: ChannelCommentIntent.question,
             ),
           ],
-          averageLikesPerVideo: 24500,
-          averageCommentsPerVideo: 1420,
+          averageLikesPerVideo: 42000,
+          averageCommentsPerVideo: 2800,
           praiseKeywords: [
-            'Unfiltered honesty',
-            'Cinematic storytelling',
-            'Exact cost transparency',
+            'Zero fluff',
+            'Deadpan delivery',
+            'Instant visual diagrams',
           ],
           topPerformingTopic:
-              'The Real 1-Year Ownership Cost of a German Superbike in India',
+              '100 Seconds of Autonomous AI Coding Agents in 2026',
         ),
         authenticityProfile: const CreatorAuthenticityProfile(
-          questionToPraiseRatio: 1.2,
-          engagementVelocity: 28.5,
+          questionToPraiseRatio: 1.4,
+          engagementVelocity: 42.0,
           signatureHookStyle:
-              'Line-by-line dealer invoice revelation and garage reality',
+              'Rapid deadpan hook followed immediately by code execution demo',
           outlierVideoFormats: [
-            'Cost Transparency Teardown',
-            'Ownership Truth',
-            'Rider Rule Short'
+            '100 Seconds Explainer',
+            'Tech Tier List',
+            'Viral Dev Short',
           ],
           retentionVulnerabilityArea:
-              '0:06 - 0:18 (Prolonged exhaust revs or scenic drone without thesis)',
+              '0:08 - 0:20 (Extended sponsor segue or complex boilerplate setup)',
+        ),
+      );
+    }
+
+    final rawName = clean.replaceFirst('@', '');
+    final formattedName = rawName.isNotEmpty
+        ? rawName[0].toUpperCase() + rawName.substring(1)
+        : 'Creator';
+
+    if (!clean.contains('revenuecat') && clean.isNotEmpty) {
+      final targetHandle = handle.startsWith('@') ? handle : '@$handle';
+      return ChannelGraph(
+        channelId: 'UC_${rawName.toLowerCase()}_gen',
+        channelName: formattedName,
+        handle: targetHandle,
+        channelDescription:
+            'Creator intelligence graph dynamically synthesized for $targetHandle.',
+        niche: 'Creator Economy & Technology',
+
+        subscribers: 50000,
+        medianViews: 5600,
+        averageLikes: 420,
+        averageComments: 45,
+        medianCtr: 6.2,
+        totalVideos: 80,
+        totalViews: 950000,
+        targetAudienceLevel: 'Audience & Community of $formattedName',
+        topTopicClusters: [
+          '$formattedName Core Insights',
+          'Production Workflow & Systems',
+          'Audience Growth Case Studies',
+        ],
+        topFormat: 'Long-Form & Shorts',
+        avatarUrl:
+            'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+        isLiveConnected: true,
+        signatureCreatorStyle:
+            'Authentic subject-matter expertise with audience engagement.',
+        recentVideos: [
+          ChannelRecentVideo(
+            id: 'gen_vid_01',
+            title: '$formattedName Masterclass: Top Lessons Learned in 2026',
+            description:
+                'In-depth breakdown of workflows, architecture, and creator strategies.',
+            views: 14500,
+            likes: 850,
+            commentCount: 95,
+            publishedAt: DateTime.now().subtract(const Duration(days: 4)),
+            thumbnailUrl: 'https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
+            tags: [formattedName, 'Creator Economy', 'Tutorial'],
+            durationFormatted: '14:20',
+            topComments: [
+              ChannelComment(
+                id: 'gen_c01',
+                authorDisplayName: '@community_member',
+                text:
+                    'Can you please do a deep dive video on $formattedName best practices in 2026?',
+                likeCount: 48,
+                publishedAt: DateTime.now().subtract(const Duration(days: 3)),
+                intentCategory: ChannelCommentIntent.request,
+              ),
+            ],
+          ),
+        ],
+        audienceInsight: AudienceInsight(
+          topViewerRequests: [
+            'Deep dive on $formattedName best practices in 2026',
+            'Step-by-step workflow teardown',
+          ],
+          topDemandClusters: [
+            CommentDemandCluster(
+              id: 'cluster_gen_01',
+              topicKeyword: '$formattedName Best Practices',
+              sampleComments: [
+                ChannelComment(
+                  id: 'gen_c01',
+                  authorDisplayName: '@community_member',
+                  text:
+                      'Can you please do a deep dive video on $formattedName best practices in 2026?',
+                  likeCount: 48,
+                  publishedAt: null,
+                  intentCategory: ChannelCommentIntent.request,
+                ),
+              ],
+              totalUpvotes: 48,
+              commentFrequency: 12,
+              demandVelocityIndex: 4.8,
+              primaryIntent: ChannelCommentIntent.request,
+            ),
+          ],
         ),
       );
     }
@@ -1301,7 +1420,8 @@ class YouTubeApiService {
           'Subscription infrastructure for app developers. In-app purchases, paywalls, retention metrics, and creator economy business intelligence.',
       niche: 'App Monetization, SaaS & Mobile Dev',
       subscribers: 28400,
-      medianViews: 4200,
+      medianViews: 5600,
+
       averageLikes: 240,
       averageComments: 35,
       medianCtr: 5.4,
@@ -1330,8 +1450,7 @@ class YouTubeApiService {
           likes: 640,
           commentCount: 78,
           publishedAt: DateTime.now().subtract(const Duration(days: 5)),
-          thumbnailUrl:
-              'https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
+          thumbnailUrl: 'https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
           tags: ['In App Purchases', 'Paywall', 'iOS', 'Flutter', 'RevenueCat'],
           durationFormatted: '12:15',
           topComments: [
@@ -1420,7 +1539,7 @@ class YouTubeApiService {
         outlierVideoFormats: [
           'Paywall Case Study',
           'Pricing A/B Teardown',
-          'Monetization Short'
+          'Monetization Short',
         ],
         retentionVulnerabilityArea:
             '0:14 - 0:26 (Abstract growth definitions before actual paywall UI)',
@@ -1428,4 +1547,3 @@ class YouTubeApiService {
     );
   }
 }
-

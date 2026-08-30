@@ -42,9 +42,10 @@ class _HookScoreGaugeState extends State<HookScoreGauge>
       vsync: this,
       duration: const Duration(milliseconds: 1200),
     );
-    _scoreAnimation = Tween<double>(begin: 0.0, end: widget.score).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
-    );
+    _scoreAnimation = Tween<double>(
+      begin: 0.0,
+      end: widget.score,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
     _controller.forward();
   }
 
@@ -52,12 +53,10 @@ class _HookScoreGaugeState extends State<HookScoreGauge>
   void didUpdateWidget(covariant HookScoreGauge oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.score != widget.score) {
-      _scoreAnimation = Tween<double>(
-        begin: oldWidget.score,
-        end: widget.score,
-      ).animate(
-        CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
-      );
+      _scoreAnimation = Tween<double>(begin: oldWidget.score, end: widget.score)
+          .animate(
+            CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
+          );
       _controller
         ..reset()
         ..forward();
@@ -123,11 +122,18 @@ class _HookScoreGaugeState extends State<HookScoreGauge>
                     ),
                     SizedBox(width: 8.w),
                     Container(
-                      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 10.w,
+                        vertical: 4.h,
+                      ),
                       decoration: BoxDecoration(
                         color: scoreColor.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(100.r), // Capsule pill
-                        border: Border.all(color: scoreColor.withValues(alpha: 0.3)),
+                        borderRadius: BorderRadius.circular(
+                          100.r,
+                        ), // Capsule pill
+                        border: Border.all(
+                          color: scoreColor.withValues(alpha: 0.3),
+                        ),
                       ),
                       child: Text(
                         widget.tier.multiplierLabel,
@@ -200,15 +206,35 @@ class _HookScoreGaugeState extends State<HookScoreGauge>
                 ),
                 child: Column(
                   children: [
-                    _buildDimensionRow('Hook Strength', currentScore, scoreColor),
+                    _buildDimensionRow(
+                      'Hook Strength',
+                      currentScore,
+                      scoreColor,
+                    ),
                     SizedBox(height: 6.h),
-                    _buildDimensionRow('Audience Resonance', widget.resonanceScore, AppColors.primary),
+                    _buildDimensionRow(
+                      'Audience Resonance',
+                      widget.resonanceScore,
+                      AppColors.primary,
+                    ),
                     SizedBox(height: 6.h),
-                    _buildDimensionRow('Novelty', widget.noveltyScore, AppColors.primaryDark),
+                    _buildDimensionRow(
+                      'Novelty',
+                      widget.noveltyScore,
+                      AppColors.primaryDark,
+                    ),
                     SizedBox(height: 6.h),
-                    _buildDimensionRow('Pacing', widget.pacingScore, AppColors.warningAmber),
+                    _buildDimensionRow(
+                      'Pacing',
+                      widget.pacingScore,
+                      AppColors.warningAmber,
+                    ),
                     SizedBox(height: 6.h),
-                    _buildDimensionRow('Creator Fit', widget.creatorFitScore, AppColors.outlierJade),
+                    _buildDimensionRow(
+                      'Creator Fit',
+                      widget.creatorFitScore,
+                      AppColors.outlierJade,
+                    ),
                   ],
                 ),
               ),

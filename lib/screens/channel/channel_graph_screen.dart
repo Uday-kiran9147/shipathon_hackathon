@@ -5,9 +5,12 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
 import '../../models/channel_graph.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/channel_provider.dart';
 import '../../providers/subscription_provider.dart';
+import '../../widgets/channel/channel_switcher_modal.dart';
 import '../../widgets/common/custom_app_bar.dart';
+
 import '../../widgets/common/solid_heavy_button.dart';
 import '../../widgets/common/tactile_card.dart';
 import '../paywall/creator_pro_paywall_sheet.dart';
@@ -31,7 +34,6 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
     _apiKeyController.dispose();
     super.dispose();
   }
-
 
   void _showVideoDetailsModal(BuildContext context, ChannelRecentVideo video) {
     showModalBottomSheet(
@@ -61,14 +63,20 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                   ),
                 ),
                 Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 8.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 18.w,
+                    vertical: 8.h,
+                  ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.video_camera_back_rounded,
-                              color: AppColors.youtubeRed, size: 20.sp),
+                          Icon(
+                            Icons.video_camera_back_rounded,
+                            color: AppColors.youtubeRed,
+                            size: 20.sp,
+                          ),
                           SizedBox(width: 8.w),
                           Text(
                             'VIDEO DEEP TEARDOWN',
@@ -90,8 +98,10 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                 const Divider(),
                 Expanded(
                   child: SingleChildScrollView(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 18.w, vertical: 10.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 18.w,
+                      vertical: 10.h,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -118,21 +128,25 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                           runSpacing: 6.h,
                           children: [
                             _buildStatChip(
-                                Icons.remove_red_eye_rounded,
-                                '${NumberFormat.compact().format(video.views)} Views',
-                                AppColors.primary),
+                              Icons.remove_red_eye_rounded,
+                              '${NumberFormat.compact().format(video.views)} Views',
+                              AppColors.primary,
+                            ),
                             _buildStatChip(
-                                Icons.thumb_up_rounded,
-                                '${NumberFormat.compact().format(video.likes)} Likes',
-                                AppColors.outlierJade),
+                              Icons.thumb_up_rounded,
+                              '${NumberFormat.compact().format(video.likes)} Likes',
+                              AppColors.outlierJade,
+                            ),
                             _buildStatChip(
-                                Icons.comment_rounded,
-                                '${video.commentCount} Comments',
-                                AppColors.studioCrimson),
+                              Icons.comment_rounded,
+                              '${video.commentCount} Comments',
+                              AppColors.studioCrimson,
+                            ),
                             _buildStatChip(
-                                Icons.timer_rounded,
-                                video.durationFormatted,
-                                AppColors.textSecondary),
+                              Icons.timer_rounded,
+                              video.durationFormatted,
+                              AppColors.textSecondary,
+                            ),
                           ],
                         ),
                         SizedBox(height: 16.h),
@@ -180,12 +194,15 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                             children: video.tags.map((tag) {
                               return Container(
                                 padding: EdgeInsets.symmetric(
-                                    horizontal: 8.w, vertical: 4.h),
+                                  horizontal: 8.w,
+                                  vertical: 4.h,
+                                ),
                                 decoration: BoxDecoration(
                                   color: AppColors.surfaceSubtle,
                                   borderRadius: BorderRadius.circular(6.r),
-                                  border:
-                                      Border.all(color: AppColors.borderLight),
+                                  border: Border.all(
+                                    color: AppColors.borderLight,
+                                  ),
                                 ),
                                 child: Text(
                                   '#$tag',
@@ -364,6 +381,9 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
     final channel = channelProvider.channel;
     final subProvider = context.watch<SubscriptionProvider>();
 
+    final authProvider = context.watch<AuthProvider>();
+    final user = authProvider.user;
+
     if (!_isControllerInitialized) {
       _syncHandleController.text = channel.handle;
       _apiKeyController.text = channelProvider.configuredApiKey ?? '';
@@ -381,6 +401,200 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // CREATOR ACCOUNT & WORKSPACE CARD
+            TactileCard(
+              padding: EdgeInsets.all(14.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 36.w,
+                        height: 36.w,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppColors.primarySubtle,
+                        ),
+                        child: ClipOval(
+                          child: user?.photoUrl != null
+                              ? Image.network(
+                                  user!.photoUrl!,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      Center(
+                                        child: Text(
+                                          user.displayName.isNotEmpty
+                                              ? user.displayName[0]
+                                                    .toUpperCase()
+                                              : 'C',
+                                          style: TextStyle(
+                                            color: AppColors.primary,
+                                            fontWeight: FontWeight.w800,
+                                            fontSize: 14.sp,
+                                          ),
+                                        ),
+                                      ),
+                                )
+                              : Center(
+                                  child: Text(
+                                    (user != null &&
+                                            user.displayName.isNotEmpty)
+                                        ? user.displayName[0].toUpperCase()
+                                        : 'C',
+                                    style: TextStyle(
+                                      color: AppColors.primary,
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 14.sp,
+                                    ),
+                                  ),
+                                ),
+                        ),
+                      ),
+
+                      SizedBox(width: 10.w),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    user?.displayName ?? 'Creator Studio',
+                                    style: AppTypography.titleMedium.copyWith(
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 14.sp,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                if (subProvider.isPro) ...[
+                                  SizedBox(width: 5.w),
+                                  Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 5.w,
+                                      vertical: 2.h,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.proGoldSubtle,
+                                      borderRadius: BorderRadius.circular(
+                                        100.r,
+                                      ),
+                                      border: Border.all(
+                                        color: const Color(0xFFFDE68A),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      'PRO',
+                                      style: AppTypography.labelSmall.copyWith(
+                                        color: AppColors.proGold,
+                                        fontSize: 8.sp,
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                            Text(
+                              user?.email ?? 'Account connected',
+                              style: AppTypography.bodySmall.copyWith(
+                                color: AppColors.textMuted,
+                                fontSize: 11.sp,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          ChannelSwitcherModal.show(context);
+                        },
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 10.w,
+                            vertical: 6.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.canvas,
+                            borderRadius: BorderRadius.circular(8.r),
+                            border: Border.all(color: AppColors.borderLight),
+                          ),
+                          child: Text(
+                            'Channels',
+                            style: AppTypography.labelSmall.copyWith(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 11.sp,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if ((user?.connectedChannels.length ?? 0) > 1) ...[
+                    SizedBox(height: 10.h),
+                    const Divider(),
+                    SizedBox(height: 8.h),
+                    Text(
+                      'CONNECTED WORKSPACES (${user!.connectedChannels.length}/5)',
+                      style: AppTypography.labelSmall.copyWith(
+                        color: AppColors.textMuted,
+                        fontSize: 9.sp,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    SizedBox(height: 6.h),
+                    Wrap(
+                      spacing: 6.w,
+                      runSpacing: 4.h,
+                      children: user.connectedChannels.map((handle) {
+                        final isAct =
+                            channel.handle.toLowerCase() ==
+                            handle.toLowerCase();
+                        return GestureDetector(
+                          onTap: () async {
+                            if (!isAct) {
+                              await authProvider.switchActiveChannel(handle);
+                              await channelProvider.switchChannel(handle);
+                            }
+                          },
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 8.w,
+                              vertical: 4.h,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isAct
+                                  ? AppColors.primary
+                                  : AppColors.canvas,
+                              borderRadius: BorderRadius.circular(6.r),
+                              border: Border.all(
+                                color: isAct
+                                    ? AppColors.primary
+                                    : AppColors.borderLight,
+                              ),
+                            ),
+                            child: Text(
+                              handle,
+                              style: AppTypography.labelSmall.copyWith(
+                                color: isAct ? Colors.white : AppColors.textInk,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 10.sp,
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            SizedBox(height: 12.h),
+
             TactileCard(
               padding: EdgeInsets.all(14.w),
               child: Column(
@@ -393,8 +607,11 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.sync_rounded,
-                                size: 16.sp, color: AppColors.youtubeRed),
+                            Icon(
+                              Icons.sync_rounded,
+                              size: 16.sp,
+                              color: AppColors.youtubeRed,
+                            ),
                             SizedBox(width: 6.w),
                             Flexible(
                               child: Text(
@@ -412,12 +629,16 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                       ),
                       Container(
                         padding: EdgeInsets.symmetric(
-                            horizontal: 8.w, vertical: 3.h),
+                          horizontal: 8.w,
+                          vertical: 3.h,
+                        ),
                         decoration: BoxDecoration(
                           color: channelProvider.hasApiKey
                               ? AppColors.outlierJadeSubtle
                               : AppColors.warningAmberSubtle,
-                          borderRadius: BorderRadius.circular(100.r), // Capsule pill
+                          borderRadius: BorderRadius.circular(
+                            100.r,
+                          ), // Capsule pill
                           border: Border.all(
                             color: channelProvider.hasApiKey
                                 ? AppColors.outlierJadeBorder
@@ -467,8 +688,10 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                           ),
                           decoration: const InputDecoration(
                             hintText: 'Enter channel handle (e.g. @Telusko)',
-                            prefixIcon: Icon(Icons.alternate_email_rounded,
-                                size: 18),
+                            prefixIcon: Icon(
+                              Icons.alternate_email_rounded,
+                              size: 18,
+                            ),
                           ),
                         ),
                       ),
@@ -482,8 +705,7 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                           isLoading: channelProvider.isSyncing,
                           backgroundColor: AppColors.youtubeRed,
                           onPressed: () async {
-                            final handle =
-                                _syncHandleController.text.trim();
+                            final handle = _syncHandleController.text.trim();
                             if (handle.isNotEmpty) {
                               final success = await context
                                   .read<ChannelProvider>()
@@ -494,8 +716,9 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                                   SnackBar(
                                     content: Text(
                                       '✅ Synced YouTube Channel and Audience Intelligence!',
-                                      style: AppTypography.bodySmall
-                                          .copyWith(color: Colors.white),
+                                      style: AppTypography.bodySmall.copyWith(
+                                        color: Colors.white,
+                                      ),
                                     ),
                                     backgroundColor: AppColors.outlierJade,
                                     behavior: SnackBarBehavior.floating,
@@ -507,8 +730,9 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                                     content: Text(
                                       channelProvider.syncError ??
                                           'Failed to sync YouTube channel.',
-                                      style: AppTypography.bodySmall
-                                          .copyWith(color: Colors.white),
+                                      style: AppTypography.bodySmall.copyWith(
+                                        color: Colors.white,
+                                      ),
                                     ),
                                     backgroundColor: AppColors.studioCrimson,
                                     behavior: SnackBarBehavior.floating,
@@ -554,17 +778,18 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                             ),
                           ),
                           child: ClipOval(
-                            child: (channel.avatarUrl != null &&
+                            child:
+                                (channel.avatarUrl != null &&
                                     channel.avatarUrl!.startsWith('http'))
                                 ? Image.network(
                                     channel.avatarUrl!,
                                     fit: BoxFit.cover,
                                     errorBuilder:
                                         (context, error, stackTrace) => Icon(
-                                      Icons.play_circle_fill_rounded,
-                                      color: AppColors.youtubeRed,
-                                      size: 28.sp,
-                                    ),
+                                          Icons.play_circle_fill_rounded,
+                                          color: AppColors.youtubeRed,
+                                          size: 28.sp,
+                                        ),
                                   )
                                 : Icon(
                                     Icons.play_circle_fill_rounded,
@@ -590,8 +815,11 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                                     ),
                                   ),
                                   SizedBox(width: 4.w),
-                                  Icon(Icons.check_circle_rounded,
-                                      size: 15.sp, color: AppColors.primary),
+                                  Icon(
+                                    Icons.check_circle_rounded,
+                                    size: 15.sp,
+                                    color: AppColors.primary,
+                                  ),
                                 ],
                               ),
                               Text(
@@ -646,13 +874,18 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                         decoration: BoxDecoration(
                           color: AppColors.outlierJadeSubtle,
                           borderRadius: BorderRadius.circular(10.r),
-                          border: Border.all(color: AppColors.outlierJadeBorder),
+                          border: Border.all(
+                            color: AppColors.outlierJadeBorder,
+                          ),
                         ),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(Icons.auto_awesome_rounded,
-                                size: 14.sp, color: AppColors.outlierJade),
+                            Icon(
+                              Icons.auto_awesome_rounded,
+                              size: 14.sp,
+                              color: AppColors.outlierJade,
+                            ),
                             SizedBox(width: 6.w),
                             Expanded(
                               child: Text(
@@ -712,7 +945,9 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                   Expanded(
                     child: _buildMetricTile(
                       label: 'AVG LIKES',
-                      value: NumberFormat.compact().format(channel.averageLikes),
+                      value: NumberFormat.compact().format(
+                        channel.averageLikes,
+                      ),
                       icon: Icons.thumb_up_rounded,
                       color: AppColors.studioCrimson,
                     ),
@@ -745,23 +980,30 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                               color: AppColors.primarySubtle,
                               borderRadius: BorderRadius.circular(10.r),
                               border: Border.all(
-                                  color: AppColors.primary
-                                      .withValues(alpha: 0.2)),
+                                color: AppColors.primary.withValues(alpha: 0.2),
+                              ),
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
                                   children: [
-                                    Icon(Icons.psychology_rounded,
-                                        size: 14.sp, color: AppColors.primary),
+                                    Icon(
+                                      Icons.psychology_rounded,
+                                      size: 14.sp,
+                                      color: AppColors.primary,
+                                    ),
                                     SizedBox(width: 4.w),
-                                    Text(
-                                      'AUTHORITY TRUST',
-                                      style: AppTypography.labelSmall.copyWith(
-                                        fontSize: 8.5.sp,
-                                        fontWeight: FontWeight.w800,
-                                        color: AppColors.primaryDark,
+                                    Flexible(
+                                      child: Text(
+                                        'AUTHORITY TRUST',
+                                        style: AppTypography.labelSmall
+                                            .copyWith(
+                                              fontSize: 8.5.sp,
+                                              fontWeight: FontWeight.w800,
+                                              color: AppColors.primaryDark,
+                                            ),
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
                                   ],
@@ -793,27 +1035,35 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                               color: AppColors.outlierJadeSubtle,
                               borderRadius: BorderRadius.circular(10.r),
                               border: Border.all(
-                                  color: AppColors.outlierJadeBorder),
+                                color: AppColors.outlierJadeBorder,
+                              ),
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
                                   children: [
-                                    Icon(Icons.bolt_rounded,
-                                        size: 14.sp,
-                                        color: AppColors.outlierJade),
+                                    Icon(
+                                      Icons.bolt_rounded,
+                                      size: 14.sp,
+                                      color: AppColors.outlierJade,
+                                    ),
                                     SizedBox(width: 4.w),
-                                    Text(
-                                      'DEMAND VELOCITY',
-                                      style: AppTypography.labelSmall.copyWith(
-                                        fontSize: 8.5.sp,
-                                        fontWeight: FontWeight.w800,
-                                        color: const Color(0xFF065F46),
+                                    Flexible(
+                                      child: Text(
+                                        'DEMAND VELOCITY',
+                                        style: AppTypography.labelSmall
+                                            .copyWith(
+                                              fontSize: 8.5.sp,
+                                              fontWeight: FontWeight.w800,
+                                              color: const Color(0xFF065F46),
+                                            ),
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
                                   ],
                                 ),
+
                                 SizedBox(height: 4.h),
                                 Text(
                                   '${channel.authenticityProfile.engagementVelocity} Velocity',
@@ -863,8 +1113,11 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(Icons.warning_amber_rounded,
-                              size: 14.sp, color: AppColors.hazardRuby),
+                          Icon(
+                            Icons.warning_amber_rounded,
+                            size: 14.sp,
+                            color: AppColors.hazardRuby,
+                          ),
                           SizedBox(width: 6.w),
                           Expanded(
                             child: Column(
@@ -880,7 +1133,8 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                                 ),
                                 SizedBox(height: 2.h),
                                 Text(
-                                  channel.authenticityProfile
+                                  channel
+                                      .authenticityProfile
                                       .retentionVulnerabilityArea,
                                   style: AppTypography.bodySmall.copyWith(
                                     color: AppColors.hazardRuby,
@@ -911,17 +1165,23 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'AUDIENCE DEMAND CLUSTERS & INTEL',
-                      style: AppTypography.labelSmall.copyWith(
-                        color: AppColors.textMuted,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.6,
+                    Flexible(
+                      child: Text(
+                        'AUDIENCE DEMAND CLUSTERS & INTEL',
+                        style: AppTypography.labelSmall.copyWith(
+                          color: AppColors.textMuted,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.6,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    SizedBox(width: 6.w),
                     Container(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 6.w,
+                        vertical: 2.h,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.primarySubtle,
                         borderRadius: BorderRadius.circular(6.r),
@@ -937,6 +1197,7 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                     ),
                   ],
                 ),
+
                 SizedBox(height: 8.h),
                 if (channel.audienceInsight.topDemandClusters.isNotEmpty) ...[
                   ...channel.audienceInsight.topDemandClusters.map((cluster) {
@@ -953,18 +1214,20 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                                 Expanded(
                                   child: Row(
                                     children: [
-                                      Icon(Icons.local_fire_department_rounded,
-                                          size: 15.sp,
-                                          color: AppColors.youtubeRed),
+                                      Icon(
+                                        Icons.local_fire_department_rounded,
+                                        size: 15.sp,
+                                        color: AppColors.youtubeRed,
+                                      ),
                                       SizedBox(width: 6.w),
                                       Flexible(
                                         child: Text(
                                           cluster.topicKeyword,
-                                          style:
-                                              AppTypography.titleMedium.copyWith(
-                                            fontWeight: FontWeight.w800,
-                                            fontSize: 12.5.sp,
-                                          ),
+                                          style: AppTypography.titleMedium
+                                              .copyWith(
+                                                fontWeight: FontWeight.w800,
+                                                fontSize: 12.5.sp,
+                                              ),
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
                                         ),
@@ -974,12 +1237,15 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                                 ),
                                 Container(
                                   padding: EdgeInsets.symmetric(
-                                      horizontal: 6.w, vertical: 2.h),
+                                    horizontal: 6.w,
+                                    vertical: 2.h,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: AppColors.outlierJadeSubtle,
                                     borderRadius: BorderRadius.circular(4.r),
                                     border: Border.all(
-                                        color: AppColors.outlierJadeBorder),
+                                      color: AppColors.outlierJadeBorder,
+                                    ),
                                   ),
                                   child: Text(
                                     'DVI ${cluster.demandVelocityIndex} • ${cluster.totalUpvotes} Upvotes',
@@ -1001,8 +1267,9 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                                   decoration: BoxDecoration(
                                     color: AppColors.canvas,
                                     borderRadius: BorderRadius.circular(6.r),
-                                    border:
-                                        Border.all(color: AppColors.borderLight),
+                                    border: Border.all(
+                                      color: AppColors.borderLight,
+                                    ),
                                   ),
                                   child: Row(
                                     crossAxisAlignment:
@@ -1016,12 +1283,12 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                                       Expanded(
                                         child: Text(
                                           '${c.authorDisplayName}: "${c.text}" (${c.likeCount} likes)',
-                                          style:
-                                              AppTypography.bodySmall.copyWith(
-                                            fontSize: 10.sp,
-                                            color: AppColors.textInk,
-                                            height: 1.3,
-                                          ),
+                                          style: AppTypography.bodySmall
+                                              .copyWith(
+                                                fontSize: 10.sp,
+                                                color: AppColors.textInk,
+                                                height: 1.3,
+                                              ),
                                           maxLines: 2,
                                           overflow: TextOverflow.ellipsis,
                                         ),
@@ -1056,8 +1323,11 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Icon(Icons.lightbulb_rounded,
-                                    size: 14.sp, color: AppColors.warningAmber),
+                                Icon(
+                                  Icons.lightbulb_rounded,
+                                  size: 14.sp,
+                                  color: AppColors.warningAmber,
+                                ),
                                 SizedBox(width: 6.w),
                                 Expanded(
                                   child: Text(
@@ -1083,14 +1353,18 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'RECENT UPLOADS & ENGAGEMENT',
-                      style: AppTypography.labelSmall.copyWith(
-                        color: AppColors.textMuted,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.6,
+                    Flexible(
+                      child: Text(
+                        'RECENT UPLOADS & ENGAGEMENT',
+                        style: AppTypography.labelSmall.copyWith(
+                          color: AppColors.textMuted,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.6,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    SizedBox(width: 6.w),
                     Text(
                       'Tap video for full teardown',
                       style: AppTypography.labelSmall.copyWith(
@@ -1110,7 +1384,9 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                         borderRadius: BorderRadius.circular(8.r),
                         child: Padding(
                           padding: EdgeInsets.symmetric(
-                              vertical: 8.h, horizontal: 6.w),
+                            vertical: 8.h,
+                            horizontal: 6.w,
+                          ),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
@@ -1140,21 +1416,22 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                                       children: [
                                         Text(
                                           '${NumberFormat.compact().format(video.views)} views',
-                                          style:
-                                              AppTypography.labelSmall.copyWith(
-                                            color: AppColors.outlierJade,
-                                            fontWeight: FontWeight.w700,
-                                            fontSize: 10.sp,
-                                          ),
+                                          style: AppTypography.labelSmall
+                                              .copyWith(
+                                                color: AppColors.outlierJade,
+                                                fontWeight: FontWeight.w700,
+                                                fontSize: 10.sp,
+                                              ),
                                         ),
                                         if (video.likes > 0) ...[
                                           Text(
                                             '• 👍 ${NumberFormat.compact().format(video.likes)}',
                                             style: AppTypography.labelSmall
                                                 .copyWith(
-                                              color: AppColors.textSecondary,
-                                              fontSize: 10.sp,
-                                            ),
+                                                  color:
+                                                      AppColors.textSecondary,
+                                                  fontSize: 10.sp,
+                                                ),
                                           ),
                                         ],
                                         if (video.commentCount > 0) ...[
@@ -1162,9 +1439,10 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                                             '• 💬 ${video.commentCount}',
                                             style: AppTypography.labelSmall
                                                 .copyWith(
-                                              color: AppColors.textSecondary,
-                                              fontSize: 10.sp,
-                                            ),
+                                                  color:
+                                                      AppColors.textSecondary,
+                                                  fontSize: 10.sp,
+                                                ),
                                           ),
                                         ],
                                       ],
@@ -1172,8 +1450,11 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                                   ],
                                 ),
                               ),
-                              Icon(Icons.chevron_right_rounded,
-                                  size: 18.sp, color: AppColors.textMuted),
+                              Icon(
+                                Icons.chevron_right_rounded,
+                                size: 18.sp,
+                                color: AppColors.textMuted,
+                              ),
                             ],
                           ),
                         ),
@@ -1198,24 +1479,35 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                   runSpacing: 8.h,
                   children: channel.topTopicClusters.map((topic) {
                     return Container(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                      constraints: BoxConstraints(maxWidth: 320.w),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 12.w,
+                        vertical: 6.h,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(100.r), // Capsule topic pill
+                        borderRadius: BorderRadius.circular(
+                          100.r,
+                        ), // Capsule topic pill
                         border: Border.all(color: AppColors.borderLight),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.bubble_chart_rounded,
-                              size: 13.sp, color: AppColors.primary),
+                          Icon(
+                            Icons.bubble_chart_rounded,
+                            size: 13.sp,
+                            color: AppColors.primary,
+                          ),
                           SizedBox(width: 6.w),
-                          Text(
-                            topic,
-                            style: AppTypography.labelSmall.copyWith(
-                              color: AppColors.textPrimary,
-                              fontWeight: FontWeight.w600,
+                          Flexible(
+                            child: Text(
+                              topic,
+                              style: AppTypography.labelSmall.copyWith(
+                                color: AppColors.textPrimary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
@@ -1235,8 +1527,11 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.build_circle_rounded,
-                          color: AppColors.proGold, size: 18.sp),
+                      Icon(
+                        Icons.build_circle_rounded,
+                        color: AppColors.proGold,
+                        size: 18.sp,
+                      ),
                       SizedBox(width: 8.w),
                       Expanded(
                         child: Text(
@@ -1527,8 +1822,11 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
               Expanded(
                 child: Row(
                   children: [
-                    Icon(Icons.table_chart_rounded,
-                        size: 16.sp, color: AppColors.primary),
+                    Icon(
+                      Icons.table_chart_rounded,
+                      size: 16.sp,
+                      color: AppColors.primary,
+                    ),
                     SizedBox(width: 6.w),
                     Flexible(
                       child: Text(
@@ -1580,8 +1878,10 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                   // Table Header Row
                   Container(
                     color: AppColors.surfaceSubtle,
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 10.w,
+                      vertical: 8.h,
+                    ),
                     child: Row(
                       children: [
                         Expanded(
@@ -1636,7 +1936,9 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                   ),
 
                   // Table Body Rows
-                  ...channel.topicPerformanceMultipliers.asMap().entries.map((entry) {
+                  ...channel.topicPerformanceMultipliers.asMap().entries.map((
+                    entry,
+                  ) {
                     final idx = entry.key;
                     final tm = entry.value;
                     final isEven = idx % 2 == 0;
@@ -1675,11 +1977,16 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                       decoration: BoxDecoration(
                         color: isEven ? AppColors.surface : AppColors.canvas,
                         border: Border(
-                          top: BorderSide(color: AppColors.borderLight, width: 0.8),
+                          top: BorderSide(
+                            color: AppColors.borderLight,
+                            width: 0.8,
+                          ),
                         ),
                       ),
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 10.w, vertical: 9.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 10.w,
+                        vertical: 9.h,
+                      ),
                       child: Row(
                         children: [
                           // Topic Name
@@ -1717,7 +2024,9 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                             child: Center(
                               child: Container(
                                 padding: EdgeInsets.symmetric(
-                                    horizontal: 6.w, vertical: 2.h),
+                                  horizontal: 6.w,
+                                  vertical: 2.h,
+                                ),
                                 decoration: BoxDecoration(
                                   color: badgeBg,
                                   borderRadius: BorderRadius.circular(100.r),

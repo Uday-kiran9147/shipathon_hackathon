@@ -16,7 +16,8 @@ class SubscriptionState {
     this.renewalDate,
   });
 
-  bool get canSimulate => isPro || simulationsUsedThisMonth < freeSimulationsLimit;
+  bool get canSimulate =>
+      isPro || simulationsUsedThisMonth < freeSimulationsLimit;
 
   int get simulationsRemaining {
     if (isPro) return 999;

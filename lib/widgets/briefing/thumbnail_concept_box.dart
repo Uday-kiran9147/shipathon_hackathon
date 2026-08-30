@@ -37,7 +37,10 @@ class ThumbnailConceptBox extends StatelessWidget {
                   // Left Side (Problem / Friction)
                   Expanded(
                     child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 10.w,
+                        vertical: 10.h,
+                      ),
                       color: const Color(0xFFFFF1F2),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -45,8 +48,11 @@ class ThumbnailConceptBox extends StatelessWidget {
                         children: [
                           Row(
                             children: [
-                              Icon(Icons.cancel_rounded,
-                                  size: 13.sp, color: AppColors.hazardRuby),
+                              Icon(
+                                Icons.cancel_rounded,
+                                size: 13.sp,
+                                color: AppColors.hazardRuby,
+                              ),
                               SizedBox(width: 4.w),
                               Flexible(
                                 child: Text(
@@ -76,14 +82,14 @@ class ThumbnailConceptBox extends StatelessWidget {
                       ),
                     ),
                   ),
-                  Container(
-                    width: 1,
-                    color: AppColors.borderLight,
-                  ),
+                  Container(width: 1, color: AppColors.borderLight),
                   // Right Side (Curiosity / Solution)
                   Expanded(
                     child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 10.w,
+                        vertical: 10.h,
+                      ),
                       color: const Color(0xFFECFDF5),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -91,8 +97,11 @@ class ThumbnailConceptBox extends StatelessWidget {
                         children: [
                           Row(
                             children: [
-                              Icon(Icons.check_circle_rounded,
-                                  size: 13.sp, color: AppColors.outlierJade),
+                              Icon(
+                                Icons.check_circle_rounded,
+                                size: 13.sp,
+                                color: AppColors.outlierJade,
+                              ),
                               SizedBox(width: 4.w),
                               Flexible(
                                 child: Text(

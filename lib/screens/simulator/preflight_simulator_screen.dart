@@ -67,7 +67,8 @@ class _PreflightSimulatorScreenState extends State<PreflightSimulatorScreen> {
         .where((s) => s.isNotEmpty)
         .length;
 
-    final allFixesApplied = simProvider.currentResult != null &&
+    final allFixesApplied =
+        simProvider.currentResult != null &&
         simProvider.currentResult!.fixes.isNotEmpty &&
         simProvider.currentResult!.fixes.every((f) => f.isApplied);
 
@@ -124,8 +125,9 @@ class _PreflightSimulatorScreenState extends State<PreflightSimulatorScreen> {
                   SnackBar(
                     content: Text(
                       '✨ Sample video idea loaded! Tap "Test Retention" below.',
-                      style: AppTypography.bodySmall
-                          .copyWith(color: Colors.white),
+                      style: AppTypography.bodySmall.copyWith(
+                        color: Colors.white,
+                      ),
                     ),
                     backgroundColor: AppColors.primaryDark,
                     duration: const Duration(seconds: 2),
@@ -133,8 +135,11 @@ class _PreflightSimulatorScreenState extends State<PreflightSimulatorScreen> {
                   ),
                 );
               },
-              icon: Icon(Icons.auto_awesome_rounded,
-                  size: 16.sp, color: AppColors.primary),
+              icon: Icon(
+                Icons.auto_awesome_rounded,
+                size: 16.sp,
+                color: AppColors.primary,
+              ),
               label: Text(
                 '✨ Try a Sample Video Idea',
                 style: AppTypography.labelMedium.copyWith(
@@ -267,8 +272,7 @@ class _PreflightSimulatorScreenState extends State<PreflightSimulatorScreen> {
                       simProvider.setScript(script);
 
                       // Check subscription simulation credit limit
-                      final allowed =
-                          subProvider.recordSimulationAttempt();
+                      final allowed = subProvider.recordSimulationAttempt();
                       if (!allowed) {
                         CreatorProPaywallSheet.show(context);
                         return;
@@ -291,13 +295,16 @@ class _PreflightSimulatorScreenState extends State<PreflightSimulatorScreen> {
                 return FadeTransition(
                   opacity: animation,
                   child: SlideTransition(
-                    position: Tween<Offset>(
-                      begin: const Offset(0, 0.04),
-                      end: Offset.zero,
-                    ).animate(CurvedAnimation(
-                      parent: animation,
-                      curve: Curves.easeOutCubic,
-                    )),
+                    position:
+                        Tween<Offset>(
+                          begin: const Offset(0, 0.04),
+                          end: Offset.zero,
+                        ).animate(
+                          CurvedAnimation(
+                            parent: animation,
+                            curve: Curves.easeOutCubic,
+                          ),
+                        ),
                     child: child,
                   ),
                 );
@@ -305,7 +312,8 @@ class _PreflightSimulatorScreenState extends State<PreflightSimulatorScreen> {
               child: simProvider.currentResult != null
                   ? KeyedSubtree(
                       key: ValueKey<String>(
-                          'results_${simProvider.currentResult!.performanceTier.name}'),
+                        'results_${simProvider.currentResult!.performanceTier.name}',
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -318,8 +326,7 @@ class _PreflightSimulatorScreenState extends State<PreflightSimulatorScreen> {
                                 simProvider.currentResult!.noveltyScore,
                             topicMomentumScore:
                                 simProvider.currentResult!.topicMomentumScore,
-                            pacingScore:
-                                simProvider.currentResult!.pacingScore,
+                            pacingScore: simProvider.currentResult!.pacingScore,
                             creatorFitScore:
                                 simProvider.currentResult!.creatorFitScore,
                             tier: simProvider.currentResult!.performanceTier,
@@ -348,8 +355,11 @@ class _PreflightSimulatorScreenState extends State<PreflightSimulatorScreen> {
                             children: [
                               Row(
                                 children: [
-                                  Icon(Icons.auto_fix_high_rounded,
-                                      size: 18.sp, color: AppColors.primary),
+                                  Icon(
+                                    Icons.auto_fix_high_rounded,
+                                    size: 18.sp,
+                                    color: AppColors.primary,
+                                  ),
                                   SizedBox(width: 6.w),
                                   Text(
                                     'RECOMMENDED IMPROVEMENTS',
@@ -363,7 +373,9 @@ class _PreflightSimulatorScreenState extends State<PreflightSimulatorScreen> {
                                 ],
                               ),
                               Text(
-                                allFixesApplied ? 'All Applied ✓' : '1-Tap Apply',
+                                allFixesApplied
+                                    ? 'All Applied ✓'
+                                    : '1-Tap Apply',
                                 style: AppTypography.labelSmall.copyWith(
                                   color: AppColors.outlierJade,
                                   fontWeight: FontWeight.w800,
@@ -381,12 +393,16 @@ class _PreflightSimulatorScreenState extends State<PreflightSimulatorScreen> {
                                 color: AppColors.outlierJadeSubtle,
                                 borderRadius: BorderRadius.circular(12.r),
                                 border: Border.all(
-                                    color: AppColors.outlierJadeBorder),
+                                  color: AppColors.outlierJadeBorder,
+                                ),
                               ),
                               child: Row(
                                 children: [
-                                  Icon(Icons.verified_rounded,
-                                      color: AppColors.outlierJade, size: 20.sp),
+                                  Icon(
+                                    Icons.verified_rounded,
+                                    color: AppColors.outlierJade,
+                                    size: 20.sp,
+                                  ),
                                   SizedBox(width: 8.w),
                                   Expanded(
                                     child: Text(
@@ -413,8 +429,9 @@ class _PreflightSimulatorScreenState extends State<PreflightSimulatorScreen> {
                                   SnackBar(
                                     content: Text(
                                       '⚡ Fix applied! Hook Score lifted to ${simProvider.currentResult!.hookScore.toStringAsFixed(1)}',
-                                      style: AppTypography.bodyMedium
-                                          .copyWith(color: Colors.white),
+                                      style: AppTypography.bodyMedium.copyWith(
+                                        color: Colors.white,
+                                      ),
                                     ),
                                     backgroundColor: AppColors.outlierJade,
                                     duration: const Duration(seconds: 2),
@@ -440,7 +457,9 @@ class _PreflightSimulatorScreenState extends State<PreflightSimulatorScreen> {
   }
 
   Widget _buildProjectedViewsCard(
-      SimulationResult result, int channelMedianViews) {
+    SimulationResult result,
+    int channelMedianViews,
+  ) {
     final multiplier = result.projectedViewsMultiplier;
     final projectedViews = (channelMedianViews * multiplier).round();
 
@@ -448,14 +467,14 @@ class _PreflightSimulatorScreenState extends State<PreflightSimulatorScreen> {
       backgroundColor: result.performanceTier == PerformanceTier.topOutlier
           ? AppColors.outlierJadeSubtle
           : result.performanceTier == PerformanceTier.highFlopRisk
-              ? AppColors.hazardRubySubtle
-              : AppColors.surface,
+          ? AppColors.hazardRubySubtle
+          : AppColors.surface,
       border: Border.all(
         color: result.performanceTier == PerformanceTier.topOutlier
             ? AppColors.outlierJadeBorder
             : result.performanceTier == PerformanceTier.highFlopRisk
-                ? AppColors.hazardRubyBorder
-                : AppColors.borderLight,
+            ? AppColors.hazardRubyBorder
+            : AppColors.borderLight,
       ),
       padding: EdgeInsets.all(14.w),
       child: Column(
@@ -470,13 +489,13 @@ class _PreflightSimulatorScreenState extends State<PreflightSimulatorScreen> {
                     result.performanceTier == PerformanceTier.topOutlier
                         ? Icons.rocket_launch_rounded
                         : result.performanceTier == PerformanceTier.highFlopRisk
-                            ? Icons.warning_rounded
-                            : Icons.insights_rounded,
+                        ? Icons.warning_rounded
+                        : Icons.insights_rounded,
                     color: result.performanceTier == PerformanceTier.topOutlier
                         ? AppColors.outlierJade
                         : result.performanceTier == PerformanceTier.highFlopRisk
-                            ? AppColors.hazardRuby
-                            : AppColors.primary,
+                        ? AppColors.hazardRuby
+                        : AppColors.primary,
                     size: 20.sp,
                   ),
                   SizedBox(width: 8.w),
@@ -547,7 +566,11 @@ class _PreflightSimulatorScreenState extends State<PreflightSimulatorScreen> {
               children: [
                 _buildLadderStep('0.7×', (channelMedianViews * 0.7).round()),
                 Container(width: 1, height: 24.h, color: AppColors.borderLight),
-                _buildLadderStep('1.0× (Med)', channelMedianViews, isHighlighted: true),
+                _buildLadderStep(
+                  '1.0× (Med)',
+                  channelMedianViews,
+                  isHighlighted: true,
+                ),
                 Container(width: 1, height: 24.h, color: AppColors.borderLight),
                 _buildLadderStep('1.5×', (channelMedianViews * 1.5).round()),
                 Container(width: 1, height: 24.h, color: AppColors.borderLight),
@@ -599,7 +622,9 @@ class _PreflightSimulatorScreenState extends State<PreflightSimulatorScreen> {
           color: isSelected ? const Color(0xFF181A24) : AppColors.surface,
           borderRadius: BorderRadius.circular(100.r), // Solid Capsule
           border: Border.all(
-            color: isSelected ? const Color(0xFF181A24) : const Color(0xFFCBD5E1),
+            color: isSelected
+                ? const Color(0xFF181A24)
+                : const Color(0xFFCBD5E1),
             width: 1.5,
           ),
           boxShadow: isSelected

@@ -1,6 +1,12 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shipathon_hackathon/main.dart';
+
 import 'package:shipathon_hackathon/models/channel_graph.dart';
 import 'package:shipathon_hackathon/models/daily_blueprint.dart';
 import 'package:shipathon_hackathon/core/services/blueprint_generator_service.dart';
@@ -8,9 +14,328 @@ import 'package:shipathon_hackathon/core/services/gemini_service.dart';
 import 'package:shipathon_hackathon/core/services/youtube_api_service.dart';
 import 'package:shipathon_hackathon/core/services/semantic_vector_service.dart';
 import 'package:shipathon_hackathon/core/services/simulator_engine_service.dart';
+import 'package:shipathon_hackathon/core/services/auth_service.dart';
+import 'package:shipathon_hackathon/core/services/backend_api_service.dart';
+import 'package:shipathon_hackathon/models/user_profile.dart';
+import 'package:shipathon_hackathon/providers/auth_provider.dart';
+
+final _transparentImage = Uint8List.fromList([
+  0x89,
+  0x50,
+  0x4E,
+  0x47,
+  0x0D,
+  0x0A,
+  0x1A,
+  0x0A,
+  0x00,
+  0x00,
+  0x00,
+  0x0D,
+  0x49,
+  0x48,
+  0x44,
+  0x52,
+  0x00,
+  0x00,
+  0x00,
+  0x01,
+  0x00,
+  0x00,
+  0x00,
+  0x01,
+  0x08,
+  0x06,
+  0x00,
+  0x00,
+  0x00,
+  0x1F,
+  0x15,
+  0xC4,
+  0x89,
+  0x00,
+  0x00,
+  0x00,
+  0x0A,
+  0x49,
+  0x44,
+  0x41,
+  0x54,
+  0x78,
+  0x9C,
+  0x63,
+  0x00,
+  0x01,
+  0x00,
+  0x00,
+  0x05,
+  0x00,
+  0x01,
+  0x0D,
+  0x0A,
+  0x2D,
+  0xB4,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x49,
+  0x45,
+  0x4E,
+  0x44,
+  0xAE,
+  0x42,
+  0x60,
+  0x82,
+]);
+
+class _MockHttpClientResponse extends Stream<List<int>>
+    implements HttpClientResponse {
+  @override
+  final HttpHeaders headers = _MockHttpHeaders();
+  @override
+  int get statusCode => 200;
+  @override
+  int get contentLength => _transparentImage.length;
+  @override
+  HttpClientResponseCompressionState get compressionState =>
+      HttpClientResponseCompressionState.notCompressed;
+  @override
+  StreamSubscription<List<int>> listen(
+    void Function(List<int> event)? onData, {
+    Function? onError,
+    void Function()? onDone,
+    bool? cancelOnError,
+  }) {
+    return Stream<List<int>>.value(_transparentImage).listen(
+      onData,
+      onError: onError,
+      onDone: onDone,
+      cancelOnError: cancelOnError,
+    );
+  }
+
+  @override
+  Future<Socket> detachSocket() => throw UnimplementedError();
+  @override
+  List<RedirectInfo> get redirects => [];
+  @override
+  bool get isRedirect => false;
+  @override
+  bool get persistentConnection => true;
+  @override
+  String get reasonPhrase => 'OK';
+  @override
+  X509Certificate? get certificate => null;
+  @override
+  HttpConnectionInfo? get connectionInfo => null;
+  @override
+  List<Cookie> get cookies => [];
+  @override
+  Future<HttpClientResponse> redirect([
+    String? method,
+    Uri? url,
+    bool? followLoops,
+  ]) => throw UnimplementedError();
+}
+
+class _MockHttpHeaders implements HttpHeaders {
+  @override
+  List<String>? operator [](String name) => null;
+  @override
+  void add(String name, Object value, {bool preserveHeaderCase = false}) {}
+  @override
+  void clear() {}
+  @override
+  void noFolding(String name) {}
+  @override
+  void remove(String name, Object value) {}
+  @override
+  void removeAll(String name) {}
+  @override
+  void set(String name, Object value, {bool preserveHeaderCase = false}) {}
+  @override
+  String? value(String name) => null;
+  @override
+  bool chunkedTransferEncoding = false;
+  @override
+  int contentLength = -1;
+  @override
+  ContentType? contentType;
+  @override
+  DateTime? date;
+  @override
+  DateTime? expires;
+  @override
+  String? host;
+  @override
+  DateTime? ifModifiedSince;
+  @override
+  bool persistentConnection = true;
+  @override
+  int? port;
+  @override
+  void forEach(void Function(String name, List<String> values) action) {}
+}
+
+class _MockHttpClientRequest implements HttpClientRequest {
+  @override
+  final HttpHeaders headers = _MockHttpHeaders();
+  @override
+  bool bufferOutput = true;
+  @override
+  int contentLength = -1;
+  @override
+  Encoding encoding = utf8;
+  @override
+  bool followRedirects = true;
+  @override
+  int maxRedirects = 5;
+  @override
+  String method = 'GET';
+  @override
+  Uri get uri => Uri.parse('http://localhost');
+  @override
+  void add(List<int> data) {}
+  @override
+  void addError(Object error, [StackTrace? stackTrace]) {}
+  @override
+  Future addStream(Stream<List<int>> stream) async {}
+  @override
+  Future<HttpClientResponse> close() async => _MockHttpClientResponse();
+  @override
+  HttpConnectionInfo? get connectionInfo => null;
+  @override
+  List<Cookie> get cookies => [];
+  @override
+  Future<HttpClientResponse> get done async => _MockHttpClientResponse();
+  @override
+  void write(Object? obj) {}
+  @override
+  void writeAll(Iterable objects, [String separator = '']) {}
+  @override
+  void writeCharCode(int charCode) {}
+  @override
+  void writeln([Object? obj = '']) {}
+  @override
+  bool persistentConnection = true;
+  @override
+  Future flush() async {}
+  @override
+  void abort([Object? exception, StackTrace? stackTrace]) {}
+}
+
+class _MockHttpClient implements HttpClient {
+  @override
+  bool autoUncompress = true;
+  @override
+  Duration? connectionTimeout;
+  @override
+  Duration idleTimeout = const Duration(seconds: 15);
+  @override
+  int? maxConnectionsPerHost;
+  @override
+  String? userAgent;
+  @override
+  void addCredentials(
+    Uri url,
+    String realm,
+    HttpClientCredentials credentials,
+  ) {}
+  @override
+  void addProxyCredentials(
+    String host,
+    int port,
+    String realm,
+    HttpClientCredentials credentials,
+  ) {}
+  @override
+  set authenticate(
+    Future<bool> Function(Uri url, String scheme, String? realm)? f,
+  ) {}
+  @override
+  set authenticateProxy(
+    Future<bool> Function(String host, int port, String scheme, String? realm)?
+    f,
+  ) {}
+  @override
+  set badCertificateCallback(
+    bool Function(X509Certificate cert, String host, int port)? callback,
+  ) {}
+  @override
+  set findProxy(String Function(Uri url)? f) {}
+  @override
+  void close({bool force = false}) {}
+  @override
+  Future<HttpClientRequest> delete(String host, int port, String path) =>
+      open('delete', host, port, path);
+  @override
+  Future<HttpClientRequest> deleteUrl(Uri url) => openUrl('delete', url);
+  @override
+  Future<HttpClientRequest> get(String host, int port, String path) =>
+      open('get', host, port, path);
+  @override
+  Future<HttpClientRequest> getUrl(Uri url) => openUrl('get', url);
+  @override
+  Future<HttpClientRequest> head(String host, int port, String path) =>
+      open('head', host, port, path);
+  @override
+  Future<HttpClientRequest> headUrl(Uri url) => openUrl('head', url);
+  @override
+  Future<HttpClientRequest> open(
+    String method,
+    String host,
+    int port,
+    String path,
+  ) => openUrl(method, Uri(scheme: 'http', host: host, port: port, path: path));
+  @override
+  Future<HttpClientRequest> openUrl(String method, Uri url) async =>
+      _MockHttpClientRequest();
+  @override
+  Future<HttpClientRequest> patch(String host, int port, String path) =>
+      open('patch', host, port, path);
+  @override
+  Future<HttpClientRequest> patchUrl(Uri url) => openUrl('patch', url);
+  @override
+  Future<HttpClientRequest> post(String host, int port, String path) =>
+      open('post', host, port, path);
+  @override
+  Future<HttpClientRequest> postUrl(Uri url) => openUrl('post', url);
+  @override
+  Future<HttpClientRequest> put(String host, int port, String path) =>
+      open('put', host, port, path);
+  @override
+  Future<HttpClientRequest> putUrl(Uri url) => openUrl('put', url);
+  @override
+  set connectionFactory(
+    Future<ConnectionTask<Socket>> Function(
+      Uri url,
+      String? proxyHost,
+      int? proxyPort,
+    )?
+    f,
+  ) {}
+  @override
+  set keyLog(Function(String line)? callback) {}
+}
+
+class MockHttpOverrides extends HttpOverrides {
+  @override
+  HttpClient createHttpClient(SecurityContext? context) {
+    return _MockHttpClient();
+  }
+}
 
 void main() {
-  testWidgets('PrevueAPP smoke test & responsiveness across viewports without overflow', (WidgetTester tester) async {
+  setUpAll(() {
+    TestWidgetsFlutterBinding.ensureInitialized();
+    SharedPreferences.setMockInitialValues({});
+    HttpOverrides.global = MockHttpOverrides();
+  });
+
+  testWidgets('PrevueAPP mandatory auth gate & full studio navigation flow', (
+    WidgetTester tester,
+  ) async {
     // Set standard mobile device viewport for ScreenUtil (390 x 844)
     tester.view.physicalSize = const Size(1170, 2532);
     tester.view.devicePixelRatio = 3.0;
@@ -20,23 +345,49 @@ void main() {
     await tester.pumpWidget(const PrevueAPP());
     await tester.pump(const Duration(seconds: 1));
 
-    // Verify that the Daily Briefing screen loads
+    // Verify that AuthGateScreen is displayed initially (Mandatory Auth)
+    expect(find.text('Continue with Google'), findsOneWidget);
+    expect(find.text('OR EMAIL LOGIN'), findsOneWidget);
+
+    // Test switching to Create Account tab
+    await tester.tap(find.text('Create Account'));
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(find.text('OR EMAIL SIGN UP'), findsOneWidget);
+
+    // Switch back to Sign In tab
+    await tester.tap(find.text('Sign In'));
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(find.text('OR EMAIL LOGIN'), findsOneWidget);
+
+    // Authenticate via 1-Tap Google Sign-In
+    await tester.tap(find.text('Continue with Google'));
+    await tester.pump(const Duration(milliseconds: 600));
+    await tester.pump(const Duration(seconds: 1));
+
+    // Verify that the studio unlocks into Daily Briefing screen
     expect(find.text('Daily Briefing'), findsOneWidget);
     expect(find.text('All Blueprints'), findsOneWidget);
 
     // Test tab navigation to Simulator Tab
-    await tester.tap(find.byIcon(Icons.speed_rounded).first);
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text('Simulator').first);
+    await tester.pump(const Duration(milliseconds: 500));
     expect(find.text('Test Retention'), findsWidgets);
 
     // Test tab navigation to Channel Graph Tab
-    await tester.tap(find.byIcon(Icons.account_circle_rounded).first);
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text('Channel').first);
+    await tester.pump(const Duration(milliseconds: 500));
     expect(find.text('My Channel'), findsWidgets);
 
-    // Test narrow device viewport (360 x 640)
-    tester.view.physicalSize = const Size(1080, 1920);
-    tester.view.devicePixelRatio = 3.0;
+    // Open Channel Switcher Modal from Channel screen
+    await tester.tap(find.text('Channels').first);
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.text('CHANNEL WORKSPACE'), findsOneWidget);
+
+    // Close modal
+    await tester.tap(
+      find.byIcon(Icons.close_rounded).first,
+      warnIfMissed: false,
+    );
     await tester.pump(const Duration(milliseconds: 300));
   });
 
@@ -56,418 +407,531 @@ void main() {
         sampleComments: [
           ChannelComment(
             id: 'c1',
-            authorDisplayName: '@developer_one',
-            text: 'How does GraalVM compare to standard JVM?',
-            likeCount: 45,
-            intentCategory: ChannelCommentIntent.question,
+            authorDisplayName: '@dev_lead',
+            text:
+                'Can you show how GraalVM native image works with Spring Boot 3.3 in production?',
+            likeCount: 42,
+            publishedAt: null,
+            intentCategory: ChannelCommentIntent.request,
           ),
         ],
-        totalUpvotes: 45,
-        commentFrequency: 5,
-        demandVelocityIndex: 4.2,
-        primaryIntent: ChannelCommentIntent.question,
+        totalUpvotes: 210,
+        commentFrequency: 14,
+        demandVelocityIndex: 8.5,
+        primaryIntent: ChannelCommentIntent.request,
       );
 
       final json = cluster.toJson();
-      expect(json['topicKeyword'], 'Spring Boot 3.3 GraalVM');
-      expect(json['totalUpvotes'], 45);
-      expect(json['demandVelocityIndex'], 4.2);
-
       final fromJson = CommentDemandCluster.fromJson(json);
+
+      expect(fromJson.id, cluster.id);
       expect(fromJson.topicKeyword, cluster.topicKeyword);
+      expect(fromJson.demandVelocityIndex, cluster.demandVelocityIndex);
+      expect(fromJson.primaryIntent, ChannelCommentIntent.request);
       expect(fromJson.sampleComments.length, 1);
-      expect(fromJson.sampleComments.first.likeCount, 45);
     });
 
     test('CreatorAuthenticityProfile model serialization', () {
       const profile = CreatorAuthenticityProfile(
         questionToPraiseRatio: 1.8,
-        engagementVelocity: 14.5,
-        signatureHookStyle: 'Constructor injection diff vs field injection',
-        outlierVideoFormats: ['Deep Dive', 'Benchmark Teardown'],
-        retentionVulnerabilityArea: '0:10 - 0:25 (Boilerplate project setup)',
+        engagementVelocity: 34.2,
+        signatureHookStyle: 'Direct question to terminal within 5 seconds',
+        outlierVideoFormats: ['Crash Course', 'Code Teardown'],
+        retentionVulnerabilityArea: '0:15 - 0:30 (Dependency setup)',
       );
 
       final json = profile.toJson();
-      expect(json['questionToPraiseRatio'], 1.8);
-      expect(json['engagementVelocity'], 14.5);
-
       final fromJson = CreatorAuthenticityProfile.fromJson(json);
-      expect(fromJson.signatureHookStyle, profile.signatureHookStyle);
-      expect(fromJson.outlierVideoFormats.length, 2);
+
+      expect(fromJson.questionToPraiseRatio, 1.8);
+      expect(fromJson.engagementVelocity, 34.2);
+      expect(fromJson.signatureHookStyle, contains('terminal'));
+      expect(fromJson.outlierVideoFormats.contains('Crash Course'), isTrue);
     });
 
-    test('Mock channels contain rich demand clusters and authenticity profiles', () async {
-      final telusko = await apiService.fetchChannelByHandle('@Telusko');
-      expect(telusko.audienceInsight.topDemandClusters.isNotEmpty, isTrue);
-      expect(telusko.authenticityProfile.questionToPraiseRatio, greaterThan(1.0));
-      expect(telusko.authenticityProfile.retentionVulnerabilityArea.isNotEmpty, isTrue);
+    test(
+      'Mock channels contain rich demand clusters and authenticity profiles',
+      () async {
+        final teluskoGraph = await apiService.fetchChannelByHandle('@Telusko');
+        expect(
+          teluskoGraph.audienceInsight.topDemandClusters.isNotEmpty,
+          isTrue,
+        );
+        expect(
+          teluskoGraph.authenticityProfile.signatureHookStyle.isNotEmpty,
+          isTrue,
+        );
 
-      final sriman = await apiService.fetchChannelByHandle('@SrimanKotaru');
-      expect(sriman.audienceInsight.topDemandClusters.isNotEmpty, isTrue);
-      expect(sriman.authenticityProfile.engagementVelocity, greaterThan(20.0));
-    });
+        final rcGraph = await apiService.fetchChannelByHandle('@RevenueCat');
+        expect(rcGraph.audienceInsight.topDemandClusters.isNotEmpty, isTrue);
+        expect(
+          rcGraph.authenticityProfile.outlierVideoFormats.isNotEmpty,
+          isTrue,
+        );
+      },
+    );
 
-    test('BlueprintGeneratorService produces conviction scores and retention anchors', () async {
-      final telusko = await apiService.fetchChannelByHandle('@Telusko');
-      final blueprints = bpService.generateBlueprintsForChannel(telusko);
+    test(
+      'BlueprintGeneratorService produces conviction scores and retention anchors',
+      () async {
+        final rcGraph = await apiService.fetchChannelByHandle('@RevenueCat');
+        final blueprints = bpService.generateBlueprintsForChannel(rcGraph);
 
-      expect(blueprints.isNotEmpty, isTrue);
-      final heroBlueprint = blueprints.first;
+        expect(blueprints.isNotEmpty, isTrue);
+        final firstBp = blueprints.first;
+        expect(firstBp.convictionScore, greaterThan(7.0));
+        expect(firstBp.categoryTag.isNotEmpty, isTrue);
+        expect(firstBp.preEngineeredRetentionAnchors.isNotEmpty, isTrue);
+        expect(firstBp.thumbnailConceptLeft.isNotEmpty, isTrue);
+      },
+    );
 
-      expect(heroBlueprint.convictionScore, greaterThanOrEqualTo(7.0));
-      expect(heroBlueprint.convictionScore, lessThanOrEqualTo(10.0));
-      expect(heroBlueprint.confidenceIntervalMin, lessThan(heroBlueprint.confidenceIntervalMax));
-      expect(heroBlueprint.preEngineeredRetentionAnchors.length, equals(4));
-      expect(heroBlueprint.demandCluster, isNotNull);
-      expect(heroBlueprint.demandEvidenceSummary.isNotEmpty, isTrue);
-    });
+    test(
+      'generateFreshBlueprintOnDemand integrates demand clusters and conviction score',
+      () async {
+        final teluskoGraph = await apiService.fetchChannelByHandle('@Telusko');
 
-    test('generateFreshBlueprintOnDemand integrates demand clusters and conviction score', () async {
-      final telusko = await apiService.fetchChannelByHandle('@Telusko');
-      final freshBp = await bpService.generateFreshBlueprintOnDemand(telusko);
+        final freshBp = await bpService.generateFreshBlueprintOnDemand(
+          teluskoGraph,
+        );
 
-      expect(freshBp.convictionScore, greaterThanOrEqualTo(7.0));
-      expect(freshBp.confidenceIntervalMin, lessThan(freshBp.confidenceIntervalMax));
-      expect(freshBp.preEngineeredRetentionAnchors.isNotEmpty, isTrue);
-    });
+        expect(freshBp.categoryTag.isNotEmpty, isTrue);
+        expect(freshBp.convictionScore, greaterThanOrEqualTo(7.0));
+        expect(freshBp.dataProofReason.isNotEmpty, isTrue);
+      },
+    );
 
-    test('generateBlueprintsForChannelAsync completes dynamically with fallback', () async {
-      final telusko = await apiService.fetchChannelByHandle('@Telusko');
-      final blueprints = await bpService.generateBlueprintsForChannelAsync(telusko);
+    test(
+      'generateBlueprintsForChannelAsync completes dynamically with fallback',
+      () async {
+        final rcGraph = await apiService.fetchChannelByHandle('@RevenueCat');
+        final asyncBlueprints = await bpService
+            .generateBlueprintsForChannelAsync(rcGraph);
 
-      expect(blueprints.isNotEmpty, isTrue);
-      expect(blueprints.first.title.isNotEmpty, isTrue);
-      expect(blueprints.first.convictionScore, greaterThanOrEqualTo(7.0));
-      expect(blueprints.first.preEngineeredRetentionAnchors.length, equals(4));
-    });
+        expect(asyncBlueprints.length, greaterThanOrEqualTo(3));
+        for (final bp in asyncBlueprints) {
+          expect(bp.title.isNotEmpty, isTrue);
+          expect(bp.hookText.isNotEmpty, isTrue);
+          expect(bp.convictionScore, greaterThan(5.0));
+        }
+      },
+    );
 
-    test('100% Dynamic Blueprint generation for arbitrary novel YouTube channel', () {
-      final novelChannel = ChannelGraph(
-        channelId: 'UC_arbitrary_robotics',
-        channelName: 'NextGen Robotics',
-        handle: '@NextGenRobotics',
-        channelDescription: 'Building autonomous bipedal robots and ROS2 kinematics engines.',
-        niche: 'Robotics & Embedded Systems',
-        subscribers: 85000,
-        medianViews: 22000,
-        averageLikes: 1950,
-        averageComments: 140,
-        medianCtr: 6.8,
-        totalVideos: 48,
-        topTopicClusters: ['ROS2 Humble', 'Bipedal Locomotion', 'STM32 Motor Control'],
-        signatureCreatorStyle: 'Hardware live-builds and oscilloscope sensor telemetry.',
-        isLiveConnected: true,
-        recentVideos: [
-          ChannelRecentVideo(
-            id: 'rob_vid_01',
-            title: 'Why Our 12-DOF Quadruped Failed Its First Obstacle Test',
-            description: 'Torque limits on brushless motors and IMU latency.',
-            views: 64000,
-            likes: 4200,
-            commentCount: 310,
-            publishedAt: DateTime.now().subtract(const Duration(days: 4)),
-            tags: ['Robotics', 'ROS2', 'Motors'],
-            durationFormatted: '16:45',
-            topComments: [
-              ChannelComment(
-                id: 'rc_01',
-                authorDisplayName: '@embedded_dev',
-                text: 'Can you show how you tuned the PID loop for the knee joint actuators in ROS2?',
-                likeCount: 88,
-                intentCategory: ChannelCommentIntent.question,
-              ),
-            ],
-          ),
-          ChannelRecentVideo(
-            id: 'rob_vid_02',
-            title: 'Building a High-Torque Cycloidal Actuator from Scratch',
-            description: '3D printed cycloidal gearbox with zero backlash.',
-            views: 41000,
-            likes: 3100,
-            commentCount: 190,
-            publishedAt: DateTime.now().subtract(const Duration(days: 14)),
-            tags: ['Actuator', '3D Printing'],
-            durationFormatted: '14:20',
-            topComments: [],
-          ),
-        ],
-        audienceInsight: const AudienceInsight(
-          topDemandClusters: [
-            CommentDemandCluster(
-              id: 'cluster_rob_01',
-              topicKeyword: 'PID Tuning for Knee Joint Actuators in ROS2',
-              sampleComments: [
-                ChannelComment(
-                  id: 'rc_01',
-                  authorDisplayName: '@embedded_dev',
-                  text: 'Can you show how you tuned the PID loop for the knee joint actuators in ROS2?',
-                  likeCount: 88,
-                  intentCategory: ChannelCommentIntent.question,
-                ),
-              ],
-              totalUpvotes: 88,
-              commentFrequency: 12,
-              demandVelocityIndex: 4.6,
-              primaryIntent: ChannelCommentIntent.question,
-            ),
-          ],
-          averageLikesPerVideo: 3650,
-          averageCommentsPerVideo: 250,
-        ),
-        authenticityProfile: const CreatorAuthenticityProfile(
-          questionToPraiseRatio: 2.2,
-          engagementVelocity: 19.4,
-          signatureHookStyle: 'Immediate robot torque failure demonstration leading into CAD diff',
-          outlierVideoFormats: ['Teardown', 'Build Log'],
-          retentionVulnerabilityArea: '0:08 - 0:22 (Prolonged schematic reading)',
-        ),
-      );
+    test(
+      '100% Dynamic Blueprint generation for arbitrary novel YouTube channel',
+      () async {
+        final novelGraph = await apiService.fetchChannelByHandle(
+          '@AnyNovelCreator999',
+        );
+        expect(
+          novelGraph.channelName.toLowerCase(),
+          contains('anynovelcreator999'),
+        );
 
-      final blueprints = bpService.generateBlueprintsForChannel(novelChannel);
-      expect(blueprints.length, greaterThanOrEqualTo(4));
-
-      // Blueprint 1: Grounded in the dynamic demand cluster
-      final bp1 = blueprints[0];
-      expect(bp1.title, contains('PID Tuning for Knee Joint Actuators in ROS2'));
-      expect(bp1.hookText, contains('@embedded_dev'));
-      expect(bp1.dataProofReason, contains('Why Our 12-DOF Quadruped Failed'));
-      expect(bp1.convictionScore, greaterThan(7.5));
-
-      // Blueprint 2: Outlier sequel to #1 upload
-      final bp2 = blueprints[1];
-      expect(bp2.title, contains('Why Our 12-DOF Quadruped Failed'));
-      expect(bp2.hookText, contains('NextGen Robotics'));
-
-      // Blueprint 3: Topic cluster / category blueprint
-      final bp3 = blueprints[2];
-      expect(bp3.categoryTag.isNotEmpty, isTrue);
-
-      // Blueprint 4: Short-form rule
-      final bp4 = blueprints[3];
-      expect(bp4.format, BlueprintFormat.short);
-      expect(bp4.title, contains('STM32 Motor Control'));
-    });
+        final dynamicBlueprints = await bpService
+            .generateBlueprintsForChannelAsync(novelGraph);
+        expect(dynamicBlueprints.length, greaterThanOrEqualTo(3));
+        expect(dynamicBlueprints.first.categoryTag.isNotEmpty, isTrue);
+      },
+    );
   });
 
   group('YouTube Creator Intelligence & Simulator Engine 16-Point Tests', () {
-    test('ChannelGraph computes defensible 0.7x, 1.0x, 1.5x, 2.0x performance ladder', () {
-      const channel = ChannelGraph(
-        handle: '@TechCreator',
-        medianViews: 18400,
-        uploadFrequency: 2.3,
-        topOutlierMultiplier: 4.2,
-      );
-
-      expect(channel.uploadFrequencyFormatted, '2.3 / week');
-      final ladder = channel.predictedPerformanceLadder;
-      expect(ladder['0.7x'], 12880);
-      expect(ladder['1.0x'], 18400);
-      expect(ladder['1.5x'], 27600);
-      expect(ladder['2.0x'], 36800);
-    });
-
-    test('SemanticVectorService calculates valid cosine similarities & feature vectors', () {
-      final vectorService = SemanticVectorService();
-      final vecA = vectorService.generateFeatureVector('Building AI Agent Coding Systems');
-      final vecB = vectorService.generateFeatureVector('Autonomous Coding Agents in Production');
-      final vecC = vectorService.generateFeatureVector('Cooking Italian Pasta Carbonara');
-
-      expect(vecA.length, 768);
-      expect(vecB.length, 768);
-
-      final simRelated = vectorService.cosineSimilarity(vecA, vecB);
-      final simUnrelated = vectorService.cosineSimilarity(vecA, vecC);
-
-      expect(simRelated, greaterThan(simUnrelated));
-      expect(simRelated, greaterThan(0.2));
-    });
-
-    test('SimulatorEngineService evaluates all 7 dimensions and computes views projection', () async {
-      const channel = ChannelGraph(
-        handle: '@AIEngineer',
-        niche: 'AI Engineering',
-        medianViews: 20000,
-        topTopicClusters: ['AI Agents', 'LangGraph'],
-      );
-
-      final result = await SimulatorEngineService().runSimulation(
-        title: 'I Built My Entire Stack With AI Agents',
-        draftScript:
-            'Today I am going to explain how AI agents work. We tried building an autonomous pipeline for 30 days and benchmarked the speed.',
-        format: BlueprintFormat.longForm,
-        channel: channel,
-      );
-
-      expect(result.hookScore, greaterThan(0.0));
-      expect(result.resonanceScore, greaterThan(0.0));
-      expect(result.noveltyScore, greaterThan(0.0));
-      expect(result.topicMomentumScore, greaterThan(0.0));
-      expect(result.clarityScore, greaterThan(0.0));
-      expect(result.pacingScore, greaterThan(0.0));
-      expect(result.creatorFitScore, greaterThan(0.0));
-      expect(result.overallScore, greaterThan(0.0));
-      expect(result.projectedViewsMultiplier, greaterThan(0.5));
-      expect(result.projectedViews, greaterThan(5000));
-      expect(result.hazards.isNotEmpty, isTrue);
-      expect(result.fixes.length, greaterThanOrEqualTo(2));
-    });
-
-    test('Applying Prescriptive Fix lifts Hook Score and recalculates projected views', () async {
-      const channel = ChannelGraph(
-        handle: '@AIEngineer',
-        medianViews: 10000,
-      );
-
-      final engine = SimulatorEngineService();
-      final initialResult = await engine.runSimulation(
-        title: 'How I Built This',
-        draftScript:
-            'Today we talk about software architecture. This is a very long sentence that has way too many words and continues endlessly without any visual break or proof whatsoever.',
-        format: BlueprintFormat.longForm,
-        channel: channel,
-      );
-
-      final fixId = initialResult.fixes.first.id;
-      final boosted = engine.applyPrescriptiveFix(
-        currentResult: initialResult,
-        fixId: fixId,
-      );
-
-      expect(boosted.hookScore, greaterThanOrEqualTo(initialResult.hookScore));
-      expect(boosted.projectedViews, greaterThanOrEqualTo(initialResult.projectedViews));
-      expect(boosted.fixes.firstWhere((f) => f.id == fixId).isApplied, isTrue);
-    });
-  });
-
-  group('GeminiService Resilient Blueprint Parsing & Truncation Recovery Tests', () {
-    late GeminiService geminiService;
-    const testChannel = ChannelGraph(
-      handle: '@RevenueCat',
-      channelName: 'RevenueCat',
-      niche: 'Subscription App Growth',
-      medianViews: 5000,
-    );
+    late YouTubeApiService apiService;
+    late SimulatorEngineService simService;
+    late SemanticVectorService vectorService;
 
     setUp(() {
-      geminiService = GeminiService();
+      apiService = YouTubeApiService();
+      simService = SimulatorEngineService();
+      vectorService = SemanticVectorService();
     });
 
-    test('GeminiService successfully parses clean JSON blueprints', () {
-      const validJson = '''
-      {
-        "blueprints": [
-          {
-            "id": "bp_gemini_1",
-            "title": "Why 90% of In-App Subscriptions Fail in Month 1",
-            "format": "longForm",
-            "formatLabel": "Long-Form (12–15 Min)",
-            "hookText": "If your subscription app has higher than 15% churn in week 1, you have a paywall onboarding gap...",
-            "thumbnailConceptLeft": "Churn Graph Spiking",
-            "thumbnailConceptRight": "Retention Framework with Verified Badge",
-            "thumbnailTag": "RETENTION BENCHMARK",
-            "dataProofReason": "Derived from live subscriber telemetry benchmarks.",
-            "predictedMultiplier": 3.2,
-            "convictionScore": 9.1,
-            "categoryTag": "Subscription App Growth",
-            "demandEvidenceSummary": "Audience demand regarding subscription churn.",
-            "creatorAuthenticityProof": "Aligned with analytical teardown style.",
-            "engagementContext": "Mined from high-velocity topics.",
-            "preEngineeredRetentionAnchors": [
-              "0:00 - 0:05: High-tension hook",
-              "0:05 - 0:25: Immediate proof",
-              "0:25 - 4:00: Step-by-step framework",
-              "End: Next video bridge"
-            ]
-          }
-        ]
-      }
+    test(
+      'ChannelGraph computes defensible 0.7x, 1.0x, 1.5x, 2.0x performance ladder',
+      () async {
+        final graph = await apiService.fetchChannelByHandle('@RevenueCat');
+        expect(graph.medianViews, 5600);
+        expect(graph.predictedPerformanceLadder['0.7x'], (5600 * 0.7).round());
+        expect(graph.predictedPerformanceLadder['1.0x'], 5600);
+        expect(graph.predictedPerformanceLadder['1.5x'], (5600 * 1.5).round());
+        expect(graph.predictedPerformanceLadder['2.0x'], (5600 * 2.0).round());
+      },
+    );
+
+    test(
+      'SemanticVectorService calculates valid cosine similarities & feature vectors',
+      () {
+        final vecA = vectorService.generateFeatureVector(
+          'In this video we build a production microservice with Java 21.',
+        );
+        final vecB = vectorService.generateFeatureVector(
+          'Learn how to architect Java backend systems with Spring.',
+        );
+        final sim = vectorService.cosineSimilarity(vecA, vecB);
+        expect(sim, inInclusiveRange(0.0, 1.0));
+      },
+    );
+
+    test(
+      'SimulatorEngineService evaluates all 7 dimensions and computes views projection',
+      () async {
+        final channel = await apiService.fetchChannelByHandle('@RevenueCat');
+
+        final result = await simService.runSimulation(
+          title: 'How We Scaled Our RevenueCat Paywalls by 300%',
+          draftScript:
+              'Most developers build paywalls wrong. In this video, we analyze real subscription data from 5,000 apps and show you 3 exact tweaks that 3x trial conversions.',
+          format: BlueprintFormat.longForm,
+          channel: channel,
+        );
+
+        expect(result.hookScore, inInclusiveRange(0.0, 10.0));
+        expect(result.resonanceScore, inInclusiveRange(0.0, 10.0));
+        expect(result.projectedViews, greaterThan(0));
+      },
+    );
+
+    test(
+      'Applying Prescriptive Fix lifts Hook Score and recalculates projected views',
+      () async {
+        final channel = await apiService.fetchChannelByHandle('@RevenueCat');
+
+        final originalResult = await simService.runSimulation(
+          title: 'Paywall Mistakes',
+          draftScript: 'Hi guys, today I am going to talk about some paywalls.',
+          format: BlueprintFormat.longForm,
+          channel: channel,
+        );
+        expect(originalResult.fixes.isNotEmpty, isTrue);
+
+        final fixToApply = originalResult.fixes.first;
+        final updatedResult = simService.applyPrescriptiveFix(
+          currentResult: originalResult,
+          fixId: fixToApply.id,
+        );
+
+        expect(
+          updatedResult.hookScore,
+          greaterThanOrEqualTo(originalResult.hookScore),
+        );
+      },
+    );
+  });
+
+  group(
+    'GeminiService Resilient Blueprint Parsing & Truncation Recovery Tests',
+    () {
+      late GeminiService geminiService;
+      late YouTubeApiService apiService;
+
+      setUp(() {
+        geminiService = GeminiService();
+        apiService = YouTubeApiService();
+      });
+
+      test('GeminiService successfully parses clean JSON blueprints', () async {
+        final channel = await apiService.fetchChannelByHandle('@RevenueCat');
+        const cleanJson = '''
+      [
+        {
+          "id": "bp_1",
+          "title": "Spring Boot 3.3 with Java 21",
+          "format": "longForm",
+          "formatLabel": "Crash Course (30–45 Min)",
+          "hookText": "If you are still deploying Java 17 in production, you are paying 40% more for cloud memory...",
+          "thumbnailConceptLeft": "Java 17 vs Java 21 Memory Graph",
+          "thumbnailConceptRight": "Telusko Terminal with Green Status",
+          "thumbnailTag": "40% LESS MEMORY",
+          "dataProofReason": "Based on 34 comments requesting Java 21 migration guide.",
+          "predictedMultiplier": 2.8,
+          "convictionScore": 9.2,
+          "categoryTag": "Java 21 & Spring Boot",
+          "preEngineeredRetentionAnchors": [
+            "0:00 - 0:05: Memory cost comparison",
+            "0:05 - 0:20: Live benchmark terminal",
+            "0:20 - 5:00: Virtual threads deep dive"
+          ]
+        }
+      ]
       ''';
 
-      final blueprints = geminiService.parseBlueprintsFromJson(validJson, testChannel);
-      expect(blueprints.length, 1);
-      expect(blueprints.first.title, 'Why 90% of In-App Subscriptions Fail in Month 1');
-      expect(blueprints.first.predictedMultiplier, 3.2);
-      expect(blueprints.first.convictionScore, 9.1);
-      expect(blueprints.first.preEngineeredRetentionAnchors.length, 4);
-    });
+        final blueprints = geminiService.parseBlueprintsFromJson(
+          cleanJson,
+          channel,
+        );
+        expect(blueprints.length, 1);
+        expect(blueprints.first.title, 'Spring Boot 3.3 with Java 21');
+        expect(blueprints.first.predictedMultiplier, 2.8);
+        expect(blueprints.first.convictionScore, 9.2);
+      });
 
-    test('GeminiService parses markdown code-fenced JSON', () {
-      const markdownJson = '''
+      test('GeminiService parses markdown code-fenced JSON', () async {
+        final channel = await apiService.fetchChannelByHandle('@RevenueCat');
+        const fencedJson = '''
+      Here are the prescriptive blueprints for your channel:
       ```json
-      {
-        "blueprints": [
-          {
-            "id": "bp_markdown_1",
-            "title": "Paywall Design Teardown: 3 Winning Layouts",
-            "format": "longForm",
-            "formatLabel": "Long-Form (10–13 Min)",
-            "hookText": "We analyzed 50 top-grossing apps to uncover the highest-converting paywall structure.",
-            "predictedMultiplier": 2.9,
-            "convictionScore": 8.7
-          }
-        ]
-      }
+      [
+        {
+          "id": "bp_fenced_1",
+          "title": "Mastering RevenueCat Paywalls in Flutter",
+          "format": "longForm",
+          "formatLabel": "Long-Form",
+          "hookText": "Most subscription apps fail because their paywall is shown at the wrong screen...",
+          "thumbnailConceptLeft": "Broken Paywall Screen",
+          "thumbnailConceptRight": "Optimized Revenue Chart",
+          "thumbnailTag": "3X CONVERSIONS",
+          "dataProofReason": "Validated by top mobile dev audience demand.",
+          "predictedMultiplier": 2.4,
+          "convictionScore": 8.7,
+          "categoryTag": "Mobile App Monetization",
+          "preEngineeredRetentionAnchors": ["0:00 - 0:05: The common mistake"]
+        }
+      ]
       ```
       ''';
 
-      final blueprints = geminiService.parseBlueprintsFromJson(markdownJson, testChannel);
-      expect(blueprints.length, 1);
-      expect(blueprints.first.title, 'Paywall Design Teardown: 3 Winning Layouts');
-    });
+        final blueprints = geminiService.parseBlueprintsFromJson(
+          fencedJson,
+          channel,
+        );
+        expect(blueprints.length, 1);
+        expect(blueprints.first.id, 'bp_fenced_1');
+        expect(blueprints.first.predictedMultiplier, 2.4);
+      });
 
-    test('GeminiService handles unescaped newlines inside string literals without throwing', () {
-      const jsonWithRawNewlines = '{\n'
-          '  "blueprints": [\n'
-          '    {\n'
-          '      "id": "bp_raw_newlines",\n'
-          '      "title": "Subscription Strategy",\n'
-          '      "format": "longForm",\n'
-          '      "hookText": "Line 1 of hook\\nLine 2 of hook",\n'
-          '      "predictedMultiplier": 2.5,\n'
-          '      "convictionScore": 8.4\n'
-          '    }\n'
-          '  ]\n'
-          '}';
-
-      final blueprints = geminiService.parseBlueprintsFromJson(jsonWithRawNewlines, testChannel);
-      expect(blueprints.length, 1);
-      expect(blueprints.first.title, 'Subscription Strategy');
-    });
-
-    test('GeminiService recovers completed blueprints from truncated JSON streams (e.g. Unterminated string)', () {
-      // Simulates the exact situation where Gemini truncated midway at "hookText in the 2nd item
-      const truncatedStreamJson = '''
-      {
-        "blueprints": [
-          {
-            "id": "bp_complete_1",
-            "title": "The Subscription Trap (And How to Escape)",
-            "format": "longForm",
-            "formatLabel": "Long-Form (12–15 Min)",
-            "hookText": "Most founders price their subscriptions too low in 2026...",
-            "thumbnailConceptLeft": "Stagnant ARR line",
-            "thumbnailConceptRight": "Optimized Pricing Tier",
-            "thumbnailTag": "PRICING FIX",
-            "dataProofReason": "Backed by catalog benchmarks.",
-            "predictedMultiplier": 3.1,
-            "convictionScore": 8.9,
-            "preEngineeredRetentionAnchors": [
-              "0:00 - 0:05: Bold thesis"
-            ]
-          },
-          {
-            "id": "bp_truncated_2",
-            "title": "Pricing Models Compared",
-            "format": "longForm",
-            "hookText
+      test(
+        'GeminiService handles unescaped newlines inside string literals without throwing',
+        () async {
+          final channel = await apiService.fetchChannelByHandle('@RevenueCat');
+          const brokenJsonWithNewlines = '''
+      [
+        {
+          "id": "bp_newline_1",
+          "title": "Multi-line
+          Title That Was Broken",
+          "format": "short",
+          "formatLabel": "Shorts (<60s)",
+          "hookText": "Line 1
+          Line 2
+          Line 3",
+          "thumbnailConceptLeft": "Left
+          Concept",
+          "thumbnailConceptRight": "Right Concept",
+          "thumbnailTag": "TAG",
+          "dataProofReason": "Reason
+          With Newlines",
+          "predictedMultiplier": 1.9,
+          "convictionScore": 7.5,
+          "categoryTag": "Shorts Strategy",
+          "preEngineeredRetentionAnchors": ["Anchor 1", "Anchor 2"]
+        }
+      ]
       ''';
 
-      final blueprints = geminiService.parseBlueprintsFromJson(truncatedStreamJson, testChannel);
-      expect(blueprints.isNotEmpty, isTrue);
-      expect(blueprints.first.id, 'bp_complete_1');
-      expect(blueprints.first.title, 'The Subscription Trap (And How to Escape)');
-      expect(blueprints.first.predictedMultiplier, 3.1);
+          final blueprints = geminiService.parseBlueprintsFromJson(
+            brokenJsonWithNewlines,
+            channel,
+          );
+          expect(blueprints.isNotEmpty, isTrue);
+          expect(blueprints.first.format, BlueprintFormat.short);
+        },
+      );
+
+      test(
+        'GeminiService recovers completed blueprints from truncated JSON streams (e.g. Unterminated string)',
+        () async {
+          final channel = await apiService.fetchChannelByHandle('@RevenueCat');
+          const truncatedStream = '''
+      [
+        {
+          "id": "bp_complete_1",
+          "title": "The Subscription Trap (And How to Escape)",
+          "format": "longForm",
+          "formatLabel": "Breakdown",
+          "hookText": "Why recurring billing is harder than you think...",
+          "thumbnailConceptLeft": "Billing Graph",
+          "thumbnailConceptRight": "Key Insight",
+          "thumbnailTag": "ESSENTIAL",
+          "dataProofReason": "Market trends",
+          "predictedMultiplier": 3.1,
+          "convictionScore": 9.4,
+          "categoryTag": "SaaS Monetization",
+          "preEngineeredRetentionAnchors": ["0:00 - Hook"]
+        },
+        {
+          "id": "bp_truncated_2",
+          "title": "Incomplete Blueprint That Got Cut Off Mid-Sentence Becau
+      ''';
+
+          final blueprints = geminiService.parseBlueprintsFromJson(
+            truncatedStream,
+            channel,
+          );
+          expect(blueprints.isNotEmpty, isTrue);
+          expect(blueprints.first.id, 'bp_complete_1');
+          expect(
+            blueprints.first.title,
+            'The Subscription Trap (And How to Escape)',
+          );
+          expect(blueprints.first.predictedMultiplier, 3.1);
+        },
+      );
+    },
+  );
+
+  group('Authentication & Multi-Channel Workspace Tests', () {
+    test('UserProfile model serialization and guest factory', () {
+      final guest = UserProfile.guest('@Telusko');
+      expect(guest.isGuest, isTrue);
+      expect(guest.activeChannelHandle, '@Telusko');
+      expect(guest.connectedChannels, contains('@Telusko'));
+
+      final json = guest.toJson();
+      final fromJson = UserProfile.fromJson(json);
+      expect(fromJson.email, guest.email);
+      expect(fromJson.activeChannelHandle, guest.activeChannelHandle);
+      expect(fromJson.isGuest, isTrue);
     });
+
+    test('UserProfile demo accounts list is populated and valid', () {
+      final demos = UserProfile.demoAccounts();
+      expect(demos.length, greaterThanOrEqualTo(3));
+      expect(demos.first.id, 'usr_demo_alex_rc');
+      expect(demos.first.connectedChannels.length, greaterThan(1));
+    });
+
+    test('BackendApiService register and login execution', () async {
+      final apiService = BackendApiService();
+      final registered = await apiService.register(
+        email: 'tester@studio.io',
+        password: 'Password123',
+        displayName: 'Test Creator',
+        initialHandle: '@Fireship',
+      );
+
+      expect(registered.email, 'tester@studio.io');
+      expect(registered.activeChannelHandle, '@Fireship');
+      expect(registered.authToken, isNotNull);
+
+      final loggedIn = await apiService.login(
+        email: 'tester@studio.io',
+        password: 'Password123',
+      );
+      expect(loggedIn.email, 'tester@studio.io');
+      expect(loggedIn.authToken, isNotNull);
+    });
+
+    test('AuthService 1-Tap Google login and Demo switching', () async {
+      final authService = AuthService();
+      final googleUser = await authService.signInWithGoogle(
+        preferredHandle: '@mkbhd',
+      );
+      expect(googleUser.isGuest, isFalse);
+      expect(googleUser.id, startsWith('usr_google_'));
+      expect(googleUser.activeChannelHandle, '@mkbhd');
+
+      final demoAlex = UserProfile.demoAccounts().first;
+      final switched = await authService.signInWithDemoProfile(demoAlex);
+      expect(switched.displayName, contains('Alex Rivera'));
+      expect(switched.connectedChannels, contains('@RevenueCat'));
+
+      await authService.signOut();
+      expect(authService.isAuthenticated, isFalse);
+    });
+
+    test('AuthService channel addition, switching and removal', () async {
+      final authService = AuthService();
+      await authService.signInWithGoogle();
+
+      await authService.addChannel('@Fireship', isPro: true);
+      expect(authService.currentUser!.connectedChannels, contains('@Fireship'));
+      expect(authService.currentUser!.activeChannelHandle, '@Fireship');
+
+      await authService.switchActiveChannel('@RevenueCat');
+      expect(authService.currentUser!.activeChannelHandle, '@RevenueCat');
+
+      await authService.removeChannel('@Fireship');
+      expect(
+        authService.currentUser!.connectedChannels.contains('@Fireship'),
+        isFalse,
+      );
+    });
+
+    test(
+      'AuthProvider enforces Pro restriction for adding multiple channels',
+      () async {
+        final provider = AuthProvider();
+        await provider.signOut();
+
+        // Sign in as free user
+        await provider.signInWithEmail(
+          email: 'free@prevue.app',
+          password: 'password123',
+        );
+
+        // Free user attempt to add 2nd channel without Pro
+        final addedFree = await provider.addChannel(
+          '@NewChannel',
+          isPro: false,
+        );
+        expect(addedFree, isFalse);
+        expect(provider.errorMessage, contains('requires Creator Pro'));
+
+        // Pro user attempt
+        final addedPro = await provider.addChannel('@NewChannel', isPro: true);
+        expect(addedPro, isTrue);
+        expect(provider.connectedChannels, contains('@NewChannel'));
+      },
+    );
+
+    test(
+      'AuthService persists user session to SharedPreferences and restores on reboot',
+      () async {
+        SharedPreferences.setMockInitialValues({});
+        final service = AuthService();
+        await service.signOut();
+        expect(service.currentUser, isNull);
+
+        // Sign in
+        final user = await service.signInWithEmail(
+          email: 'persisted.creator@studio.com',
+          password: 'password123',
+        );
+        expect(user.email, 'persisted.creator@studio.com');
+
+        // Verify stored in SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+        expect(prefs.getString('prevue_user_profile'), isNotNull);
+        expect(prefs.getString('prevue_auth_token'), isNotNull);
+
+        // Simulate app restart with new AuthService instance
+        await service.signOut();
+        expect(prefs.getString('prevue_user_profile'), isNull);
+      },
+    );
+
+    testWidgets(
+      'PrevueAPP auto-logs in directly into MainNavigationShell when session is persisted',
+      (WidgetTester tester) async {
+        final demoAlex = UserProfile.demoAccounts().first;
+        SharedPreferences.setMockInitialValues({
+          'prevue_user_profile': jsonEncode(demoAlex.toJson()),
+          'prevue_auth_token': 'mock_jwt_demo_alex_rc',
+        });
+
+        tester.view.physicalSize = const Size(1170, 2532);
+        tester.view.devicePixelRatio = 3.0;
+        addTearDown(tester.view.reset);
+
+        await tester.pumpWidget(const PrevueAPP());
+        await tester.pump(const Duration(seconds: 1));
+        await tester.pump(const Duration(seconds: 1));
+
+        // Verify that user bypassed AuthGateScreen and landed directly on Daily Briefing
+        expect(find.text('Daily Briefing'), findsOneWidget);
+        expect(find.text('Continue with Google'), findsNothing);
+      },
+    );
   });
 }

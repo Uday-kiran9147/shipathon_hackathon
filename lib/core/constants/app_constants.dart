@@ -8,25 +8,23 @@ class AppConstants {
   // Environment Configured Keys (from .env with safe uninitialized fallback)
   static String get youtubeApiKey =>
       dotenv.isInitialized ? (dotenv.env['YOUTUBE_API_KEY'] ?? '') : '';
-  
-  static String get revenueCatApiKeyApple =>
-      dotenv.isInitialized
-          ? (dotenv.env['REVENUECAT_APPLE_API_KEY'] ?? 'appl_mock_prevue_apple_key')
-          : 'appl_mock_prevue_apple_key';
 
-  static String get revenueCatApiKeyGoogle =>
-      dotenv.isInitialized
-          ? (dotenv.env['REVENUECAT_GOOGLE_API_KEY'] ?? 'goog_mock_prevue_google_key')
-          : 'goog_mock_prevue_google_key';
+  static String get revenueCatApiKeyApple => dotenv.isInitialized
+      ? (dotenv.env['REVENUECAT_APPLE_API_KEY'] ?? 'appl_mock_prevue_apple_key')
+      : 'appl_mock_prevue_apple_key';
+
+  static String get revenueCatApiKeyGoogle => dotenv.isInitialized
+      ? (dotenv.env['REVENUECAT_GOOGLE_API_KEY'] ??
+            'goog_mock_prevue_google_key')
+      : 'goog_mock_prevue_google_key';
 
   static String get geminiApiKey =>
       dotenv.isInitialized ? (dotenv.env['GEMINI_API_KEY'] ?? '') : '';
 
   // Gemini Model Identifier (Single source of truth for Gemini Model)
-  static String get geminiModel =>
-      dotenv.isInitialized
-          ? (dotenv.env['GEMINI_MODEL'] ?? 'gemini-3.6-flash')
-          : 'gemini-3.6-flash';
+  static String get geminiModel => dotenv.isInitialized
+      ? (dotenv.env['GEMINI_MODEL'] ?? 'gemini-3.6-flash')
+      : 'gemini-3.6-flash';
 
   // RevenueCat Configuration
   static const String entitlementPro = 'creator_pro_access';

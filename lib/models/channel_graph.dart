@@ -1,11 +1,5 @@
 /// Categories of viewer intent identified from YouTube comments
-enum ChannelCommentIntent {
-  request,
-  question,
-  feedback,
-  praise,
-  discussion,
-}
+enum ChannelCommentIntent { request, question, feedback, praise, discussion }
 
 /// Model for a live viewer comment fetched from YouTube commentThreads API
 class ChannelComment {
@@ -51,15 +45,15 @@ class ChannelComment {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'authorDisplayName': authorDisplayName,
-        'authorProfileImageUrl': authorProfileImageUrl,
-        'text': text,
-        'likeCount': likeCount,
-        'publishedAt': publishedAt?.toIso8601String(),
-        'intentCategory': intentCategory.name,
-        'isPinned': isPinned,
-      };
+    'id': id,
+    'authorDisplayName': authorDisplayName,
+    'authorProfileImageUrl': authorProfileImageUrl,
+    'text': text,
+    'likeCount': likeCount,
+    'publishedAt': publishedAt?.toIso8601String(),
+    'intentCategory': intentCategory.name,
+    'isPinned': isPinned,
+  };
 }
 
 /// Semantic cluster of multiple audience comments expressing identical demand
@@ -106,14 +100,14 @@ class CommentDemandCluster {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'topicKeyword': topicKeyword,
-        'sampleComments': sampleComments.map((c) => c.toJson()).toList(),
-        'totalUpvotes': totalUpvotes,
-        'commentFrequency': commentFrequency,
-        'demandVelocityIndex': demandVelocityIndex,
-        'primaryIntent': primaryIntent.name,
-      };
+    'id': id,
+    'topicKeyword': topicKeyword,
+    'sampleComments': sampleComments.map((c) => c.toJson()).toList(),
+    'totalUpvotes': totalUpvotes,
+    'commentFrequency': commentFrequency,
+    'demandVelocityIndex': demandVelocityIndex,
+    'primaryIntent': primaryIntent.name,
+  };
 }
 
 /// Creator DNA & Niche Authenticity Profile
@@ -131,7 +125,7 @@ class CreatorAuthenticityProfile {
         'Data-backed tension with immediate code/case proof',
     this.outlierVideoFormats = const [
       'Deep Dive Masterclass',
-      'Teardown & Benchmark'
+      'Teardown & Benchmark',
     ],
     this.retentionVulnerabilityArea =
         '0:12 - 0:18 (Explanatory lull before solution)',
@@ -143,25 +137,27 @@ class CreatorAuthenticityProfile {
           (json['questionToPraiseRatio'] as num?)?.toDouble() ?? 1.0,
       engagementVelocity:
           (json['engagementVelocity'] as num?)?.toDouble() ?? 5.2,
-      signatureHookStyle: json['signatureHookStyle'] as String? ??
+      signatureHookStyle:
+          json['signatureHookStyle'] as String? ??
           'Data-backed tension with immediate code/case proof',
-      outlierVideoFormats: (json['outlierVideoFormats'] as List<dynamic>?)
+      outlierVideoFormats:
+          (json['outlierVideoFormats'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??
           const ['Deep Dive Masterclass', 'Teardown & Benchmark'],
-      retentionVulnerabilityArea: json['retentionVulnerabilityArea']
-              as String? ??
+      retentionVulnerabilityArea:
+          json['retentionVulnerabilityArea'] as String? ??
           '0:12 - 0:18 (Explanatory lull before solution)',
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'questionToPraiseRatio': questionToPraiseRatio,
-        'engagementVelocity': engagementVelocity,
-        'signatureHookStyle': signatureHookStyle,
-        'outlierVideoFormats': outlierVideoFormats,
-        'retentionVulnerabilityArea': retentionVulnerabilityArea,
-      };
+    'questionToPraiseRatio': questionToPraiseRatio,
+    'engagementVelocity': engagementVelocity,
+    'signatureHookStyle': signatureHookStyle,
+    'outlierVideoFormats': outlierVideoFormats,
+    'retentionVulnerabilityArea': retentionVulnerabilityArea,
+  };
 }
 
 /// Model for a recent video fetched live from the creator's YouTube channel
@@ -200,9 +196,11 @@ class ChannelRecentVideo {
 
   /// Top audience requests mined from this video's comments
   List<ChannelComment> get commentRequests => topComments
-      .where((c) =>
-          c.intentCategory == ChannelCommentIntent.request ||
-          c.intentCategory == ChannelCommentIntent.question)
+      .where(
+        (c) =>
+            c.intentCategory == ChannelCommentIntent.request ||
+            c.intentCategory == ChannelCommentIntent.question,
+      )
       .toList();
 
   factory ChannelRecentVideo.fromJson(Map<String, dynamic> json) {
@@ -222,9 +220,8 @@ class ChannelRecentVideo {
           ? DateTime.tryParse(json['publishedAt'] as String) ?? DateTime.now()
           : DateTime.now(),
       thumbnailUrl: json['thumbnailUrl'] as String?,
-      tags: (json['tags'] as List<dynamic>?)
-              ?.map((t) => t.toString())
-              .toList() ??
+      tags:
+          (json['tags'] as List<dynamic>?)?.map((t) => t.toString()).toList() ??
           [],
       durationFormatted: json['durationFormatted'] as String? ?? '10:00',
       topComments: comments,
@@ -232,18 +229,18 @@ class ChannelRecentVideo {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'title': title,
-        'description': description,
-        'views': views,
-        'likes': likes,
-        'commentCount': commentCount,
-        'publishedAt': publishedAt.toIso8601String(),
-        'thumbnailUrl': thumbnailUrl,
-        'tags': tags,
-        'durationFormatted': durationFormatted,
-        'topComments': topComments.map((c) => c.toJson()).toList(),
-      };
+    'id': id,
+    'title': title,
+    'description': description,
+    'views': views,
+    'likes': likes,
+    'commentCount': commentCount,
+    'publishedAt': publishedAt.toIso8601String(),
+    'thumbnailUrl': thumbnailUrl,
+    'tags': tags,
+    'durationFormatted': durationFormatted,
+    'topComments': topComments.map((c) => c.toJson()).toList(),
+  };
 }
 
 /// Audience synthesis and comment intelligence summary
@@ -277,13 +274,15 @@ class AudienceInsight {
         .toList();
 
     return AudienceInsight(
-      topViewerRequests: (json['topViewerRequests'] as List<dynamic>?)
+      topViewerRequests:
+          (json['topViewerRequests'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??
           [],
       topAudienceQuestions: questions,
       topDemandClusters: clusters,
-      praiseKeywords: (json['praiseKeywords'] as List<dynamic>?)
+      praiseKeywords:
+          (json['praiseKeywords'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??
           [],
@@ -294,15 +293,16 @@ class AudienceInsight {
   }
 
   Map<String, dynamic> toJson() => {
-        'topViewerRequests': topViewerRequests,
-        'topAudienceQuestions':
-            topAudienceQuestions.map((q) => q.toJson()).toList(),
-        'topDemandClusters': topDemandClusters.map((c) => c.toJson()).toList(),
-        'praiseKeywords': praiseKeywords,
-        'averageLikesPerVideo': averageLikesPerVideo,
-        'averageCommentsPerVideo': averageCommentsPerVideo,
-        'topPerformingTopic': topPerformingTopic,
-      };
+    'topViewerRequests': topViewerRequests,
+    'topAudienceQuestions': topAudienceQuestions
+        .map((q) => q.toJson())
+        .toList(),
+    'topDemandClusters': topDemandClusters.map((c) => c.toJson()).toList(),
+    'praiseKeywords': praiseKeywords,
+    'averageLikesPerVideo': averageLikesPerVideo,
+    'averageCommentsPerVideo': averageCommentsPerVideo,
+    'topPerformingTopic': topPerformingTopic,
+  };
 }
 
 /// Topic Performance Multiplier relative to channel median views
@@ -329,11 +329,11 @@ class TopicPerformanceMultiplier {
   }
 
   Map<String, dynamic> toJson() => {
-        'topic': topic,
-        'multiple': multiple,
-        'videoCount': videoCount,
-        'averageViews': averageViews,
-      };
+    'topic': topic,
+    'multiple': multiple,
+    'videoCount': videoCount,
+    'averageViews': averageViews,
+  };
 }
 
 /// Channel Graph Baseline model defining the creator's context engine
@@ -387,7 +387,7 @@ class ChannelGraph {
     this.titlePatterns = const [
       'Contrarian thesis with benchmark proof',
       'System teardown & lessons learned',
-      'Cost & architectural breakdown'
+      'Cost & architectural breakdown',
     ],
     this.topicPerformanceMultipliers = const [],
     this.targetAudienceLevel = '',
@@ -434,9 +434,11 @@ class ChannelGraph {
   /// All audience requests specifically mined from comment threads
   List<ChannelComment> get audienceRequests {
     return allRecentComments
-        .where((c) =>
-            c.intentCategory == ChannelCommentIntent.request ||
-            c.intentCategory == ChannelCommentIntent.question)
+        .where(
+          (c) =>
+              c.intentCategory == ChannelCommentIntent.request ||
+              c.intentCategory == ChannelCommentIntent.question,
+        )
         .toList();
   }
 
@@ -484,8 +486,7 @@ class ChannelGraph {
       totalVideos: totalVideos ?? this.totalVideos,
       totalViews: totalViews ?? this.totalViews,
       uploadFrequency: uploadFrequency ?? this.uploadFrequency,
-      topOutlierMultiplier:
-          topOutlierMultiplier ?? this.topOutlierMultiplier,
+      topOutlierMultiplier: topOutlierMultiplier ?? this.topOutlierMultiplier,
       viewsVelocity: viewsVelocity ?? this.viewsVelocity,
       bestVideoLength: bestVideoLength ?? this.bestVideoLength,
       titlePatterns: titlePatterns ?? this.titlePatterns,

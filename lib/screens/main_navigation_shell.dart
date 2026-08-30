@@ -65,13 +65,16 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
               curve: const Interval(0.0, 1.0, curve: Curves.easeOutCubic),
             ),
             child: SlideTransition(
-              position: Tween<Offset>(
-                begin: Offset(isForward ? 0.05 : -0.05, 0),
-                end: Offset.zero,
-              ).animate(CurvedAnimation(
-                parent: animation,
-                curve: Curves.easeOutCubic,
-              )),
+              position:
+                  Tween<Offset>(
+                    begin: Offset(isForward ? 0.05 : -0.05, 0),
+                    end: Offset.zero,
+                  ).animate(
+                    CurvedAnimation(
+                      parent: animation,
+                      curve: Curves.easeOutCubic,
+                    ),
+                  ),
               child: child,
             ),
           );
@@ -92,10 +95,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
             decoration: BoxDecoration(
               color: AppColors.surface,
               borderRadius: BorderRadius.circular(100.r), // Solid Stadium Dock
-              border: Border.all(
-                color: const Color(0xFFE2E8F0),
-                width: 1.8,
-              ),
+              border: Border.all(color: const Color(0xFFE2E8F0), width: 1.8),
               boxShadow: const [
                 // Solid deep ground shadow
                 BoxShadow(
@@ -126,7 +126,10 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                       top: 0,
                       bottom: 0,
                       child: Container(
-                        margin: EdgeInsets.symmetric(horizontal: 2.w, vertical: 2.h),
+                        margin: EdgeInsets.symmetric(
+                          horizontal: 2.w,
+                          vertical: 2.h,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFF181A24), // Solid Dark Black
                           borderRadius: BorderRadius.circular(100.r),
@@ -221,7 +224,10 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
               ? BoxDecoration(
                   color: AppColors.proGoldSubtle,
                   borderRadius: BorderRadius.circular(100.r),
-                  border: Border.all(color: const Color(0xFFFDE68A), width: 1.5),
+                  border: Border.all(
+                    color: const Color(0xFFFDE68A),
+                    width: 1.5,
+                  ),
                 )
               : null,
           child: Column(
@@ -241,7 +247,9 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                       size: 20.sp,
                       color: isProTab
                           ? AppColors.proGold
-                          : (isSelected ? Colors.white : const Color(0xFF64748B)),
+                          : (isSelected
+                                ? Colors.white
+                                : const Color(0xFF64748B)),
                     ),
                   ),
                   AnimatedContainer(
@@ -261,7 +269,8 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                         width: 5.w,
                         height: 5.w,
                         decoration: const BoxDecoration(
-                          color: AppColors.primary, // Signature Logo Red glowing dot
+                          color: AppColors
+                              .primary, // Signature Logo Red glowing dot
                           shape: BoxShape.circle,
                         ),
                       ),

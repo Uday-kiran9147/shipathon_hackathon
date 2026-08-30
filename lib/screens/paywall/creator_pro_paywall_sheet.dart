@@ -65,8 +65,11 @@ class _CreatorProPaywallSheetState extends State<CreatorProPaywallSheet> {
                 children: [
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: Icon(Icons.close_rounded,
-                        size: 20.sp, color: AppColors.textMuted),
+                    icon: Icon(
+                      Icons.close_rounded,
+                      size: 20.sp,
+                      color: AppColors.textMuted,
+                    ),
                   ),
                 ],
               ),
@@ -88,7 +91,9 @@ class _CreatorProPaywallSheetState extends State<CreatorProPaywallSheet> {
                             borderRadius: BorderRadius.circular(18.r),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFFFF0022).withValues(alpha: 0.25),
+                                color: const Color(
+                                  0xFFFF0022,
+                                ).withValues(alpha: 0.25),
                                 blurRadius: 20,
                                 offset: const Offset(0, 8),
                               ),
@@ -99,12 +104,16 @@ class _CreatorProPaywallSheetState extends State<CreatorProPaywallSheet> {
                             child: Image.asset(
                               'assets/images/prevue_logo_v6.png',
                               fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) => Container(
-                                color: const Color(0xFFFF0022),
-                                child: const Center(
-                                  child: Icon(Icons.play_arrow_rounded, color: Colors.white),
-                                ),
-                              ),
+                              errorBuilder: (context, error, stackTrace) =>
+                                  Container(
+                                    color: const Color(0xFFFF0022),
+                                    child: const Center(
+                                      child: Icon(
+                                        Icons.play_arrow_rounded,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
                             ),
                           ),
                         ),
@@ -118,7 +127,9 @@ class _CreatorProPaywallSheetState extends State<CreatorProPaywallSheet> {
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppColors.proGoldAccent.withValues(alpha: 0.4),
+                                  color: AppColors.proGoldAccent.withValues(
+                                    alpha: 0.4,
+                                  ),
                                   blurRadius: 8,
                                   offset: const Offset(0, 2),
                                 ),
@@ -157,22 +168,32 @@ class _CreatorProPaywallSheetState extends State<CreatorProPaywallSheet> {
                     _buildFeatureItem(
                       icon: Icons.all_inclusive_rounded,
                       title: 'Unlimited Pre-Flight Simulations',
-                      subtitle: 'Stress-test all weekly long-form & Shorts scripts.',
+                      subtitle:
+                          'Stress-test all weekly long-form & Shorts scripts.',
+                    ),
+                    _buildFeatureItem(
+                      icon: Icons.hub_rounded,
+                      title: 'Multi-Channel Workspace (Up to 5 Channels)',
+                      subtitle:
+                          'Seamlessly switch and calibrate between all your YouTube channels.',
                     ),
                     _buildFeatureItem(
                       icon: Icons.timeline_rounded,
                       title: '30-Second Retention Hazard Timeline',
-                      subtitle: 'Pinpoint exact drop-off moments before recording.',
+                      subtitle:
+                          'Pinpoint exact drop-off moments before recording.',
                     ),
                     _buildFeatureItem(
                       icon: Icons.auto_fix_high_rounded,
                       title: '3 Prescriptive AI Fixes & Re-Hooker',
-                      subtitle: '1-Click intro cuts and contrast hooks to lift score.',
+                      subtitle:
+                          '1-Click intro cuts and contrast hooks to lift score.',
                     ),
                     _buildFeatureItem(
                       icon: Icons.trending_up_rounded,
                       title: 'Channel Outlier Predictor (3.0×+ Views)',
-                      subtitle: 'Benchmark against your historical audience graph.',
+                      subtitle:
+                          'Benchmark against your historical audience graph.',
                     ),
                     SizedBox(height: 20.h),
 
@@ -207,29 +228,33 @@ class _CreatorProPaywallSheetState extends State<CreatorProPaywallSheet> {
                                     children: [
                                       Text(
                                         'ANNUAL',
-                                        style: AppTypography.labelSmall.copyWith(
-                                          color: _isAnnual
-                                              ? AppColors.primary
-                                              : AppColors.textMuted,
-                                          fontWeight: FontWeight.w800,
-                                        ),
+                                        style: AppTypography.labelSmall
+                                            .copyWith(
+                                              color: _isAnnual
+                                                  ? AppColors.primary
+                                                  : AppColors.textMuted,
+                                              fontWeight: FontWeight.w800,
+                                            ),
                                       ),
                                       Container(
                                         padding: EdgeInsets.symmetric(
-                                            horizontal: 8.w, vertical: 3.h),
+                                          horizontal: 8.w,
+                                          vertical: 3.h,
+                                        ),
                                         decoration: BoxDecoration(
                                           color: AppColors.outlierJade,
-                                          borderRadius:
-                                              BorderRadius.circular(100.r),
+                                          borderRadius: BorderRadius.circular(
+                                            100.r,
+                                          ),
                                         ),
                                         child: Text(
                                           'SAVE ${AppConstants.annualSavingsPercentage}',
                                           style: AppTypography.labelSmall
                                               .copyWith(
-                                            color: Colors.white,
-                                            fontSize: 8.5.sp,
-                                            fontWeight: FontWeight.w800,
-                                          ),
+                                                color: Colors.white,
+                                                fontSize: 8.5.sp,
+                                                fontWeight: FontWeight.w800,
+                                              ),
                                         ),
                                       ),
                                     ],
@@ -317,15 +342,17 @@ class _CreatorProPaywallSheetState extends State<CreatorProPaywallSheet> {
                       loadingText: 'Activating Creator Pro...',
                       onPressed: () async {
                         final success = await subProvider.purchasePackage(
-                            isAnnual: _isAnnual);
+                          isAnnual: _isAnnual,
+                        );
                         if (context.mounted && success) {
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
                                 '🚀 Welcome to Creator Pro! Unlimited simulations unlocked.',
-                                style: AppTypography.bodySmall
-                                    .copyWith(color: Colors.white),
+                                style: AppTypography.bodySmall.copyWith(
+                                  color: Colors.white,
+                                ),
                               ),
                               backgroundColor: AppColors.outlierJade,
                             ),
@@ -341,8 +368,8 @@ class _CreatorProPaywallSheetState extends State<CreatorProPaywallSheet> {
                       children: [
                         TextButton(
                           onPressed: () async {
-                            final success =
-                                await subProvider.restorePurchases();
+                            final success = await subProvider
+                                .restorePurchases();
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
@@ -362,8 +389,7 @@ class _CreatorProPaywallSheetState extends State<CreatorProPaywallSheet> {
                             ),
                           ),
                         ),
-                        Text('•',
-                            style: TextStyle(color: AppColors.textMuted)),
+                        Text('•', style: TextStyle(color: AppColors.textMuted)),
                         TextButton(
                           onPressed: () {
                             subProvider.toggleProStatusDemo();

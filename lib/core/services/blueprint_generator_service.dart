@@ -9,7 +9,8 @@ import 'gemini_service.dart';
 /// Synthesizes authentic creator blueprints via Google Gemini AI Engine,
 /// with robust fallback to dynamic algorithmic synthesis based on live YouTube comments & video metrics.
 class BlueprintGeneratorService {
-  static final BlueprintGeneratorService _instance = BlueprintGeneratorService._internal();
+  static final BlueprintGeneratorService _instance =
+      BlueprintGeneratorService._internal();
   factory BlueprintGeneratorService() => _instance;
   BlueprintGeneratorService._internal();
 
@@ -27,7 +28,8 @@ class BlueprintGeneratorService {
     final authorityScore = (questionToPraiseRatio / 2.5).clamp(0.0, 1.0) * 10.0;
     final ctrScore = (medianCtr / 8.0).clamp(0.0, 1.0) * 10.0;
 
-    final composite = (0.38 * demandScore) +
+    final composite =
+        (0.38 * demandScore) +
         (0.32 * multiplierScore) +
         (0.18 * authorityScore) +
         (0.12 * ctrScore);
@@ -44,7 +46,9 @@ class BlueprintGeneratorService {
 
   /// Generate tailored retention anchors addressing the creator's specific vulnerability
   List<String> _generateRetentionAnchors(
-      CreatorAuthenticityProfile authProfile, String niche) {
+    CreatorAuthenticityProfile authProfile,
+    String niche,
+  ) {
     final hookStyle = authProfile.signatureHookStyle.isNotEmpty
         ? authProfile.signatureHookStyle
         : 'High-tension premise and bold core thesis';
@@ -56,7 +60,7 @@ class BlueprintGeneratorService {
       '0:00 - 0:05: High-tension premise ($hookStyle)',
       '0:05 - 0:25: Immediate visual proof / thesis statement (Avoid $vulnArea)',
       '0:25 - 4:00: Step-by-step resolution without explanatory lulls',
-      'End (Last 15s): Retention bridge to recommended follow-up video'
+      'End (Last 15s): Retention bridge to recommended follow-up video',
     ];
   }
 
@@ -88,10 +92,12 @@ class BlueprintGeneratorService {
     var cleaned = text
         .replaceAll(RegExp(r'[?.,!"]'), '')
         .replaceAll(
-            RegExp(
-                r'(navin sir|bhai|sir|bro|hey|can you please make a video on|can you make a video on|can you please do a deep dive video on|can you do a video on|please make a video on|please make a full video on|tutorial on|deep dive on|deep dive video on|please explain|how does|how do i|how to|what is the difference between|what is)',
-                caseSensitive: false),
-            '')
+          RegExp(
+            r'(navin sir|bhai|sir|bro|hey|can you please make a video on|can you make a video on|can you please do a deep dive video on|can you do a video on|please make a video on|please make a full video on|tutorial on|deep dive on|deep dive video on|please explain|how does|how do i|how to|what is the difference between|what is)',
+            caseSensitive: false,
+          ),
+          '',
+        )
         .trim();
 
     if (cleaned.length > 55) {
@@ -109,7 +115,8 @@ class BlueprintGeneratorService {
 
   /// Asynchronous AI Blueprint Generation via Google Gemini 1.5 Flash (with fallback)
   Future<List<DailyBlueprint>> generateBlueprintsForChannelAsync(
-      ChannelGraph channel) async {
+    ChannelGraph channel,
+  ) async {
     if (!channel.isConfigured || channel.recentVideos.isEmpty) {
       return [];
     }
@@ -117,15 +124,21 @@ class BlueprintGeneratorService {
     // Try Gemini AI first if API key is present
     if (_geminiService.hasApiKey) {
       try {
-        log('[BlueprintGeneratorService] Generating blueprints via ${_geminiService.model} for ${channel.channelName}...');
-        final aiBlueprints =
-            await _geminiService.generateBlueprintsFromChannelGraph(channel);
+        log(
+          '[BlueprintGeneratorService] Generating blueprints via ${_geminiService.model} for ${channel.channelName}...',
+        );
+        final aiBlueprints = await _geminiService
+            .generateBlueprintsFromChannelGraph(channel);
         if (aiBlueprints.isNotEmpty) {
-          log('[BlueprintGeneratorService] Successfully generated ${aiBlueprints.length} blueprints via ${_geminiService.model}.');
+          log(
+            '[BlueprintGeneratorService] Successfully generated ${aiBlueprints.length} blueprints via ${_geminiService.model}.',
+          );
           return aiBlueprints;
         }
       } catch (e) {
-        log('[BlueprintGeneratorService] Gemini generation failed, falling back to dynamic catalog synthesis: $e');
+        log(
+          '[BlueprintGeneratorService] Gemini generation failed, falling back to dynamic catalog synthesis: $e',
+        );
       }
     }
 
@@ -141,8 +154,9 @@ class BlueprintGeneratorService {
 
     final clusters = channel.topTopicClusters;
     final medianV = channel.medianViews > 0 ? channel.medianViews : 1;
-    final channelName =
-        channel.channelName.isNotEmpty ? channel.channelName : channel.handle;
+    final channelName = channel.channelName.isNotEmpty
+        ? channel.channelName
+        : channel.handle;
     final niche = channel.niche;
     final recent = channel.recentVideos;
     final topDemandClusters = channel.audienceInsight.topDemandClusters;
@@ -159,10 +173,12 @@ class BlueprintGeneratorService {
         ((topVideo.views / medianV).clamp(1.6, 4.8) * 10).round() / 10.0;
 
     final primaryCluster = clusters.isNotEmpty ? clusters[0] : niche;
-    final secondaryCluster =
-        clusters.length > 1 ? clusters[1] : 'Advanced $primaryCluster Strategy';
-    final tertiaryCluster =
-        clusters.length > 2 ? clusters[2] : 'Modern $primaryCluster Systems';
+    final secondaryCluster = clusters.length > 1
+        ? clusters[1]
+        : 'Advanced $primaryCluster Strategy';
+    final tertiaryCluster = clusters.length > 2
+        ? clusters[2]
+        : 'Modern $primaryCluster Systems';
 
     final blueprints = <DailyBlueprint>[];
 
@@ -175,7 +191,8 @@ class BlueprintGeneratorService {
           ? topCluster.sampleComments.first
           : null;
 
-      final isShort = topCluster.topicKeyword.length < 35 &&
+      final isShort =
+          topCluster.topicKeyword.length < 35 &&
           topCluster.primaryIntent == ChannelCommentIntent.question;
       final isQuestion =
           topCluster.primaryIntent == ChannelCommentIntent.question;
@@ -202,15 +219,17 @@ class BlueprintGeneratorService {
           id: 'bp_dynamic_demand_01',
           title: title,
           format: isShort ? BlueprintFormat.short : BlueprintFormat.longForm,
-          formatLabel:
-              isShort ? 'YouTube Short (50s)' : 'Long-Form (12–16 Min)',
+          formatLabel: isShort
+              ? 'YouTube Short (50s)'
+              : 'Long-Form (12–16 Min)',
           hookText: hook,
           thumbnailConceptLeft:
               'Pinned viewer comment quote (${topCluster.totalUpvotes} Upvotes badge)',
           thumbnailConceptRight:
               'Full step-by-step solution breakdown with green verified indicator',
-          thumbnailTag:
-              isQuestion ? 'QUESTION BENCHMARK' : 'TOP COMMUNITY DEMAND',
+          thumbnailTag: isQuestion
+              ? 'QUESTION BENCHMARK'
+              : 'TOP COMMUNITY DEMAND',
           dataProofReason:
               'Backed by ${topCluster.commentFrequency} clustered comments with ${topCluster.totalUpvotes} community upvotes (Demand Velocity Index: ${topCluster.demandVelocityIndex.toStringAsFixed(1)}). Anchored to top upload "${topVideo.title}".',
           predictedMultiplier: predictedMult,
@@ -233,7 +252,8 @@ class BlueprintGeneratorService {
     } else if (channel.audienceRequests.isNotEmpty) {
       final reqComment = channel.audienceRequests.first;
       final topic = _extractTopicFromComment(reqComment.text, clusters);
-      final isQuestion = reqComment.intentCategory == ChannelCommentIntent.question;
+      final isQuestion =
+          reqComment.intentCategory == ChannelCommentIntent.question;
 
       final predictedMult = (topMultiplier * 1.1).clamp(2.4, 4.8);
       final intervals = _computeConfidenceInterval(predictedMult);
@@ -304,8 +324,7 @@ class BlueprintGeneratorService {
       sequelTitle =
           '"$cleanTopTitle": The Unfiltered ${DateTime.now().year} Update';
     } else {
-      sequelTitle =
-          'Beyond "$cleanTopTitle": The Production System Teardown';
+      sequelTitle = 'Beyond "$cleanTopTitle": The Production System Teardown';
     }
 
     blueprints.add(
@@ -426,8 +445,7 @@ class BlueprintGeneratorService {
               'Dynamic topic cluster demand for $secondaryCluster.',
           creatorAuthenticityProof:
               'Authentic to your style: "${channel.signatureCreatorStyle}".',
-          engagementContext:
-              'Derived from performance on "${topVideo.title}".',
+          engagementContext: 'Derived from performance on "${topVideo.title}".',
           preEngineeredRetentionAnchors: retentionAnchors,
         ),
       );
@@ -448,7 +466,8 @@ class BlueprintGeneratorService {
     blueprints.add(
       DailyBlueprint(
         id: 'bp_dynamic_short_04',
-        title: 'Stop Doing $tertiaryCluster Like This in ${DateTime.now().year}',
+        title:
+            'Stop Doing $tertiaryCluster Like This in ${DateTime.now().year}',
         format: BlueprintFormat.short,
         formatLabel: 'YouTube Short (45s)',
         hookText:
@@ -479,8 +498,9 @@ class BlueprintGeneratorService {
     if (sortedByViews.length > 1) {
       final secondVideo = sortedByViews[1];
       final cleanSecondTitle = _cleanVideoTitle(secondVideo.title);
-      final secondViewsFormatted =
-          NumberFormat.compact().format(secondVideo.views);
+      final secondViewsFormatted = NumberFormat.compact().format(
+        secondVideo.views,
+      );
       final teardownMult =
           ((secondVideo.views / medianV).clamp(1.8, 3.8) * 10).round() / 10.0;
       final teardownIntervals = _computeConfidenceInterval(teardownMult);
@@ -529,20 +549,27 @@ class BlueprintGeneratorService {
 
   /// AI Generates a brand new bespoke blueprint on demand dynamically via Gemini AI (with fallback)
   Future<DailyBlueprint> generateFreshBlueprintOnDemand(
-      ChannelGraph channel) async {
+    ChannelGraph channel,
+  ) async {
     if (!channel.isConfigured || channel.recentVideos.isEmpty) {
       throw Exception(
-          'Connect your channel to generate blueprints from live uploads.');
+        'Connect your channel to generate blueprints from live uploads.',
+      );
     }
 
     if (_geminiService.hasApiKey) {
       try {
-        log('[BlueprintGeneratorService] Generating single fresh blueprint via ${_geminiService.model}...');
-        final freshBp =
-            await _geminiService.generateSingleFreshBlueprint(channel);
+        log(
+          '[BlueprintGeneratorService] Generating single fresh blueprint via ${_geminiService.model}...',
+        );
+        final freshBp = await _geminiService.generateSingleFreshBlueprint(
+          channel,
+        );
         return freshBp;
       } catch (e) {
-        log('[BlueprintGeneratorService] Fresh blueprint Gemini call failed, using dynamic fallback: $e');
+        log(
+          '[BlueprintGeneratorService] Fresh blueprint Gemini call failed, using dynamic fallback: $e',
+        );
       }
     }
 
@@ -552,8 +579,9 @@ class BlueprintGeneratorService {
         ? clusters[Random().nextInt(clusters.length)]
         : channel.niche;
 
-    final channelName =
-        channel.channelName.isNotEmpty ? channel.channelName : channel.handle;
+    final channelName = channel.channelName.isNotEmpty
+        ? channel.channelName
+        : channel.handle;
 
     final isShort = Random().nextBool();
     final multiplier =
@@ -599,8 +627,9 @@ class BlueprintGeneratorService {
           : 'Conventional assumption with faded visual',
       thumbnailConceptRight:
           'High-contrast proof breakdown with green growth arrow',
-      thumbnailTag:
-          selectedComment != null ? 'COMMUNITY DEMAND' : 'VERIFIED PATTERN',
+      thumbnailTag: selectedComment != null
+          ? 'COMMUNITY DEMAND'
+          : 'VERIFIED PATTERN',
       dataProofReason: channel.medianViews > 0
           ? 'Derived dynamically from your live YouTube catalog, with a projected $multiplier× view velocity over your ${(channel.medianViews / 1000).toStringAsFixed(0)}K median views.'
           : 'High-conviction prescription generated from live channel metadata.',
@@ -621,9 +650,9 @@ class BlueprintGeneratorService {
           ? 'Direct answer to comment with ${selectedComment.likeCount} upvotes.'
           : 'Generated dynamically from top cluster "$randomCluster".',
       preEngineeredRetentionAnchors: _generateRetentionAnchors(
-          channel.authenticityProfile, channel.niche),
+        channel.authenticityProfile,
+        channel.niche,
+      ),
     );
   }
 }
-
-

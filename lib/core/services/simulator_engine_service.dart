@@ -29,11 +29,36 @@ class SimulatorEngineService {
     if (sentences.length <= 1) return 0;
 
     final tensionSignals = [
-      'never', 'stop', 'mistake', 'wrong', 'truth', 'real', 'actually',
-      'secret', 'hidden', 'nobody', 'worst', 'cost', 'fail', 'trap',
-      'dead', 'broke', 'destroyed', 'shocking', 'insane', 'crazy',
-      'detail', 'assumed', 'critical', 'warning', 'breakdown', 'tested',
-      'changes', 'proven', 'truth', 'why',
+      'never',
+      'stop',
+      'mistake',
+      'wrong',
+      'truth',
+      'real',
+      'actually',
+      'secret',
+      'hidden',
+      'nobody',
+      'worst',
+      'cost',
+      'fail',
+      'trap',
+      'dead',
+      'broke',
+      'destroyed',
+      'shocking',
+      'insane',
+      'crazy',
+      'detail',
+      'assumed',
+      'critical',
+      'warning',
+      'breakdown',
+      'tested',
+      'changes',
+      'proven',
+      'truth',
+      'why',
     ];
 
     int bestIdx = 0;
@@ -94,24 +119,43 @@ class SimulatorEngineService {
 
   /// Compress a long sentence to roughly half its word count
   String _compressSentence(String sentence) {
-    final words = sentence.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
+    final words = sentence
+        .split(RegExp(r'\s+'))
+        .where((w) => w.isNotEmpty)
+        .toList();
     if (words.length <= 10) return sentence;
 
     // Remove filler words
     final fillerWords = {
-      'basically', 'actually', 'really', 'just', 'very', 'quite',
-      'simply', 'literally', 'honestly', 'obviously', 'essentially',
-      'definitely', 'probably', 'certainly', 'absolutely',
+      'basically',
+      'actually',
+      'really',
+      'just',
+      'very',
+      'quite',
+      'simply',
+      'literally',
+      'honestly',
+      'obviously',
+      'essentially',
+      'definitely',
+      'probably',
+      'certainly',
+      'absolutely',
     };
 
-    final trimmedWords = words.where((w) => !fillerWords.contains(w.toLowerCase())).toList();
+    final trimmedWords = words
+        .where((w) => !fillerWords.contains(w.toLowerCase()))
+        .toList();
 
     // If still long, take the first 60% of meaningful words
     if (trimmedWords.length > 12) {
       final cutPoint = (trimmedWords.length * 0.6).ceil();
       final compressed = trimmedWords.sublist(0, cutPoint).join(' ');
       // Ensure it ends with punctuation
-      if (!compressed.endsWith('.') && !compressed.endsWith('!') && !compressed.endsWith('?')) {
+      if (!compressed.endsWith('.') &&
+          !compressed.endsWith('!') &&
+          !compressed.endsWith('?')) {
         return '$compressed.';
       }
       return compressed;
@@ -144,7 +188,10 @@ class SimulatorEngineService {
 
     // If the title is a plain statement, convert to contrarian question
     if (!hasQuestion && !hasNumber && !hasParenthetical) {
-      final words = clean.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
+      final words = clean
+          .split(RegExp(r'\s+'))
+          .where((w) => w.isNotEmpty)
+          .toList();
       if (words.length >= 3) {
         final subject = words.take(min(6, words.length)).join(' ');
 
@@ -205,19 +252,47 @@ class SimulatorEngineService {
 
       // Power word in first sentence
       final powerWords = [
-        'never', 'stop', 'mistake', 'why', 'secret', 'truth', 'real', 'cost',
-        'wrong', 'fail', 'hidden', 'detail', 'assumed', 'critical', 'warning',
-        'changes', 'proven', 'breakdown', 'tested', 'shocking', 'formula',
+        'never',
+        'stop',
+        'mistake',
+        'why',
+        'secret',
+        'truth',
+        'real',
+        'cost',
+        'wrong',
+        'fail',
+        'hidden',
+        'detail',
+        'assumed',
+        'critical',
+        'warning',
+        'changes',
+        'proven',
+        'breakdown',
+        'tested',
+        'shocking',
+        'formula',
       ];
       if (powerWords.any((pw) => opener.contains(pw))) hookScore += 1.2;
     }
 
     // B. Fluff detection & penalty
     final fluffPhrases = [
-      'hey guys', 'welcome back', 'in this video', 'today i want to talk',
-      'today we are going to', 'make sure to subscribe', 'like and share',
-      'before we start', 'before we begin', 'so basically', 'in my opinion',
-      'without further ado', 'what is up', 'hey everyone',
+      'hey guys',
+      'welcome back',
+      'in this video',
+      'today i want to talk',
+      'today we are going to',
+      'make sure to subscribe',
+      'like and share',
+      'before we start',
+      'before we begin',
+      'so basically',
+      'in my opinion',
+      'without further ado',
+      'what is up',
+      'hey everyone',
     ];
     String? detectedFluff;
     for (final fluff in fluffPhrases) {
@@ -241,22 +316,41 @@ class SimulatorEngineService {
     // D. Title curiosity analysis
     if (normalizedTitle.contains('?')) hookScore += 0.3;
     if (RegExp(r'\d').hasMatch(normalizedTitle)) hookScore += 0.6;
-    if (normalizedTitle.contains('(') && normalizedTitle.contains(')')) hookScore += 0.5;
+    if (normalizedTitle.contains('(') && normalizedTitle.contains(')')) {
+      hookScore += 0.5;
+    }
     final titlePowerWords = [
-      'why', 'stop', 'never', 'truth', 'real', 'mistake', 'cost', 'secret',
-      'hidden', 'wrong', 'numbers', 'guide', 'definitive', 'breakdown', 'tested',
+      'why',
+      'stop',
+      'never',
+      'truth',
+      'real',
+      'mistake',
+      'cost',
+      'secret',
+      'hidden',
+      'wrong',
+      'numbers',
+      'guide',
+      'definitive',
+      'breakdown',
+      'tested',
     ];
-    if (titlePowerWords.any((pw) => normalizedTitle.contains(pw))) hookScore += 0.6;
+    if (titlePowerWords.any((pw) => normalizedTitle.contains(pw))) {
+      hookScore += 0.6;
+    }
 
     // E. Sentence variety & pacing
     if (sentences.length >= 2) {
       final wordCounts = sentences.map(_wordCount).toList();
-      final hasVariety = wordCounts.any((w) => w <= 10) && wordCounts.any((w) => w >= 12);
+      final hasVariety =
+          wordCounts.any((w) => w <= 10) && wordCounts.any((w) => w >= 12);
       if (hasVariety) hookScore += 0.5;
     }
 
     // F. Visual/production direction present
-    final hasVisualCue = normalizedScript.contains('[visual') ||
+    final hasVisualCue =
+        normalizedScript.contains('[visual') ||
         normalizedScript.contains('[cut') ||
         normalizedScript.contains('[split') ||
         normalizedScript.contains('[graphic') ||
@@ -274,7 +368,10 @@ class SimulatorEngineService {
     // =========================================================================
     double resonanceBonus = 0.0;
     if (channel.niche.isNotEmpty) {
-      final nicheWords = channel.niche.toLowerCase().split(RegExp(r'\s+')).where((w) => w.length > 3);
+      final nicheWords = channel.niche
+          .toLowerCase()
+          .split(RegExp(r'\s+'))
+          .where((w) => w.length > 3);
       for (final nw in nicheWords) {
         if (normalizedTitle.contains(nw) || normalizedScript.contains(nw)) {
           resonanceBonus += 0.4;
@@ -282,7 +379,10 @@ class SimulatorEngineService {
       }
     }
     for (final cluster in channel.topTopicClusters) {
-      final cWords = cluster.toLowerCase().split(RegExp(r'\s+')).where((w) => w.length > 3);
+      final cWords = cluster
+          .toLowerCase()
+          .split(RegExp(r'\s+'))
+          .where((w) => w.length > 3);
       for (final cw in cWords) {
         if (normalizedTitle.contains(cw) || normalizedScript.contains(cw)) {
           resonanceBonus += 0.3;
@@ -291,7 +391,9 @@ class SimulatorEngineService {
     }
 
     final resonanceScore =
-        ((hookScore * 0.9 + resonanceBonus + 0.3).clamp(3.5, 9.9) * 10).round() / 10.0;
+        ((hookScore * 0.9 + resonanceBonus + 0.3).clamp(3.5, 9.9) * 10)
+            .round() /
+        10.0;
 
     // =========================================================================
     // 3. PERFORMANCE TIER
@@ -310,7 +412,9 @@ class SimulatorEngineService {
     // 3. Multi-dimensional Evaluation Scores
     final noveltyScore = 7.9;
     final topicMomentumScore = 8.7;
-    final clarityScore = sentences.any((s) => s.split(' ').length > 22) ? 7.4 : 9.0;
+    final clarityScore = sentences.any((s) => s.split(' ').length > 22)
+        ? 7.4
+        : 9.0;
     final pacingScore = sentences.length >= 3 ? 8.2 : 7.1;
     final creatorFitScore = 9.0;
 
@@ -318,12 +422,13 @@ class SimulatorEngineService {
     // baseline = creator median views
     // multiplier = (topic_score * hook_score * audience_fit * novelty) normalized
     final baseMedian = channel.medianViews > 0 ? channel.medianViews : 18400;
-    final compositeMultiplier = ((topicMomentumScore / 9.0) *
-            (hookScore / 8.5) *
-            (resonanceScore / 8.5) *
-            (noveltyScore / 8.0) *
-            1.42)
-        .clamp(0.4, 4.5);
+    final compositeMultiplier =
+        ((topicMomentumScore / 9.0) *
+                (hookScore / 8.5) *
+                (resonanceScore / 8.5) *
+                (noveltyScore / 8.0) *
+                1.42)
+            .clamp(0.4, 4.5);
     final projectedMultiplier = (compositeMultiplier * 100).round() / 100.0;
     final projectedViews = (baseMedian * projectedMultiplier).round();
 
@@ -407,11 +512,11 @@ class SimulatorEngineService {
             title: 'No Visual Pattern Interrupt',
             explanation:
                 'Pure narration without visual cuts loses 18% of viewers by second 25. Insert a [B-Roll] or [VISUAL CUT] direction after your opening hook.',
-            flaggedScriptLine: sentences.length > 1 ? sentences[1] : sentences.last,
-            whyReason:
-                'Viewer fatigue from uninterrupted static camera frame.',
-            fixSuggestion:
-                'Insert [B-ROLL: Benchmark Graph] at the 0:24 mark.',
+            flaggedScriptLine: sentences.length > 1
+                ? sentences[1]
+                : sentences.last,
+            whyReason: 'Viewer fatigue from uninterrupted static camera frame.',
+            fixSuggestion: 'Insert [B-ROLL: Benchmark Graph] at the 0:24 mark.',
           ),
         );
       }
@@ -450,7 +555,9 @@ class SimulatorEngineService {
         (s) => s.toLowerCase().contains(detectedFluff!),
         orElse: () => sentences.first,
       );
-      final nextContent = sentences.length > 1 ? sentences[1] : 'The data behind this changes everything.';
+      final nextContent = sentences.length > 1
+          ? sentences[1]
+          : 'The data behind this changes everything.';
       fixes.add(
         PrescriptiveFix(
           id: 'fix_hook',
@@ -511,7 +618,8 @@ class SimulatorEngineService {
 
       if (longestWc > 15) {
         final compressed = _compressSentence(longestSentence);
-        final withVisualCut = '$compressed\n[VISUAL CUT: High-contrast proof on screen]';
+        final withVisualCut =
+            '$compressed\n[VISUAL CUT: High-contrast proof on screen]';
 
         fixes.add(
           PrescriptiveFix(
@@ -588,19 +696,20 @@ class SimulatorEngineService {
 
     final targetFix = currentResult.fixes.firstWhere((f) => f.id == fixId);
     final newScore = min(
-        9.8,
-        ((currentResult.hookScore + targetFix.scoreLift) * 10).round() /
-            10.0);
+      9.8,
+      ((currentResult.hookScore + targetFix.scoreLift) * 10).round() / 10.0,
+    );
     final newResonance = min(
-        9.8,
-        ((currentResult.resonanceScore + (targetFix.scoreLift * 0.7)) * 10)
-                .round() /
-            10.0);
+      9.8,
+      ((currentResult.resonanceScore + (targetFix.scoreLift * 0.7)) * 10)
+              .round() /
+          10.0,
+    );
     final newPacing = min(
-        9.8,
-        ((currentResult.pacingScore + (targetFix.scoreLift * 0.5)) * 10)
-                .round() /
-            10.0);
+      9.8,
+      ((currentResult.pacingScore + (targetFix.scoreLift * 0.5)) * 10).round() /
+          10.0,
+    );
 
     // Clear hazards that this fix resolves
     final remainingHazards = currentResult.hazards.where((h) {
@@ -613,7 +722,10 @@ class SimulatorEngineService {
       return true;
     }).toList();
 
-    final newMultiplier = (currentResult.projectedViewsMultiplier * 1.18).clamp(1.0, 4.5);
+    final newMultiplier = (currentResult.projectedViewsMultiplier * 1.18).clamp(
+      1.0,
+      4.5,
+    );
     final formattedMult = (newMultiplier * 100).round() / 100.0;
     final newViews = (currentResult.projectedViews * 1.18).round();
 
@@ -626,8 +738,8 @@ class SimulatorEngineService {
       performanceTier: newScore >= 8.5
           ? PerformanceTier.topOutlier
           : newScore >= 7.0
-              ? PerformanceTier.aboveMedian
-              : currentResult.performanceTier,
+          ? PerformanceTier.aboveMedian
+          : currentResult.performanceTier,
       fixes: updatedFixes,
       hazards: remainingHazards,
     );

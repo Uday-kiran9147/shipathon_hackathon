@@ -1,9 +1,6 @@
 import 'channel_graph.dart';
 
-enum BlueprintFormat {
-  longForm,
-  short,
-}
+enum BlueprintFormat { longForm, short }
 
 /// Model representing a Daily Prescriptive Blueprint ("What to Film Tomorrow")
 class DailyBlueprint {
@@ -56,7 +53,7 @@ class DailyBlueprint {
       '0:00 - 0:05: High-tension contrarian premise',
       '0:05 - 0:25: Immediate visual proof / code diff',
       '0:25 - 4:00: Step-by-step resolution without fluff',
-      'End: Seamless retention bridge to related topic'
+      'End: Seamless retention bridge to related topic',
     ],
   });
 
@@ -117,5 +114,3 @@ class DailyBlueprint {
     );
   }
 }
-
-

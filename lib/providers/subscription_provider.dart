@@ -47,7 +47,9 @@ class SubscriptionProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final success = await _revenueCatService.purchaseProPackage(isAnnual: isAnnual);
+      final success = await _revenueCatService.purchaseProPackage(
+        isAnnual: isAnnual,
+      );
       if (success) {
         _state = _state.copyWith(
           isPro: true,

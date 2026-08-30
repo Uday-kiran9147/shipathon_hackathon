@@ -45,20 +45,23 @@ class _SolidHeavyButtonState extends State<SolidHeavyButton> {
   @override
   Widget build(BuildContext context) {
     final isEnabled = widget.onPressed != null && !widget.isLoading;
-    final bg = widget.backgroundColor ??
+    final bg =
+        widget.backgroundColor ??
         (widget.isSecondary
             ? const Color(0xFF181A24) // Solid Dark Ink
-            : AppColors.primary);     // Solid Vibrant Red
+            : AppColors.primary); // Solid Vibrant Red
 
     final fg = widget.foregroundColor ?? Colors.white;
 
     // Calculate physical bottom ledge color
-    final bottomLedgeColor = widget.shadowColor ??
+    final bottomLedgeColor =
+        widget.shadowColor ??
         (widget.isSecondary
             ? const Color(0xFF000000)
             : const Color(0xFF990014));
 
-    final outlineColor = widget.borderColor ??
+    final outlineColor =
+        widget.borderColor ??
         (widget.isSecondary
             ? const Color(0xFF0A0D14)
             : const Color(0xFFCC0018));
@@ -95,7 +98,9 @@ class _SolidHeavyButtonState extends State<SolidHeavyButton> {
           color: isEnabled ? bg : bg.withValues(alpha: 0.6),
           borderRadius: BorderRadius.circular(100.r), // Solid Stadium Capsule
           border: Border.all(
-            color: isEnabled ? outlineColor : outlineColor.withValues(alpha: 0.5),
+            color: isEnabled
+                ? outlineColor
+                : outlineColor.withValues(alpha: 0.5),
             width: 1.8,
           ),
           boxShadow: isEnabled && !_isPressed
@@ -122,56 +127,63 @@ class _SolidHeavyButtonState extends State<SolidHeavyButton> {
                   ),
                 ],
         ),
-        child: Center(
-          child: widget.isLoading
-              ? Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    SizedBox(
-                      width: 18.w,
-                      height: 18.w,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.5,
-                        valueColor: AlwaysStoppedAnimation<Color>(fg),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16.w),
+          child: Center(
+            child: widget.isLoading
+                ? Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: 18.w,
+                        height: 18.w,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          valueColor: AlwaysStoppedAnimation<Color>(fg),
+                        ),
                       ),
-                    ),
-                    if (widget.loadingText != null) ...[
-                      SizedBox(width: 10.w),
-                      Text(
-                        widget.loadingText!,
-                        style: AppTypography.labelLarge.copyWith(
-                          color: fg,
-                          fontWeight: FontWeight.w900,
-                          fontSize: widget.fontSize ?? 14.5.sp,
-                          letterSpacing: 0.3,
+                      if (widget.loadingText != null) ...[
+                        SizedBox(width: 10.w),
+                        Flexible(
+                          child: Text(
+                            widget.loadingText!,
+                            style: AppTypography.labelLarge.copyWith(
+                              color: fg,
+                              fontWeight: FontWeight.w900,
+                              fontSize: widget.fontSize ?? 14.5.sp,
+                              letterSpacing: 0.3,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ],
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (widget.icon != null) ...[
+                        Icon(widget.icon, size: 20.sp, color: fg),
+                        SizedBox(width: 8.w),
+                      ],
+                      Flexible(
+                        child: Text(
+                          widget.label,
+                          style: AppTypography.labelLarge.copyWith(
+                            color: fg,
+                            fontWeight: FontWeight.w900, // Heavy solid weight
+                            fontSize: widget.fontSize ?? 14.5.sp,
+                            letterSpacing: 0.3,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
-                  ],
-                )
-              : Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (widget.icon != null) ...[
-                      Icon(widget.icon, size: 20.sp, color: fg),
-                      SizedBox(width: 8.w),
-                    ],
-                    Flexible(
-                      child: Text(
-                        widget.label,
-                        style: AppTypography.labelLarge.copyWith(
-                          color: fg,
-                          fontWeight: FontWeight.w900, // Heavy solid weight
-                          fontSize: widget.fontSize ?? 14.5.sp,
-                          letterSpacing: 0.3,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+          ),
         ),
       ),
     );
