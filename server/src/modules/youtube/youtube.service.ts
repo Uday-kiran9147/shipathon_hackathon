@@ -1,4 +1,5 @@
-import { ENV } from '../config/env';
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 
 export interface MinedChannelData {
   channelId: string;
@@ -32,23 +33,27 @@ export interface MinedVideo {
   thumbnailUrl: string;
 }
 
+@Injectable()
 export class YouTubeService {
-  /**
-   * Fetch and calculate complete channel intelligence by handle
-   */
+  private readonly logger = new Logger(YouTubeService.name);
+  private readonly apiKey: string;
+
+  constructor(private configService: ConfigService) {
+    this.apiKey = this.configService.get<string>('youtubeApiKey', '');
+  }
+
   async fetchChannelIntelligence(handle: string): Promise<MinedChannelData> {
     const cleanHandle = handle.startsWith('@') ? handle : `@${handle}`;
 
-    if (!ENV.YOUTUBE_API_KEY) {
+    if (!this.apiKey) {
       return this.getMockChannelData(cleanHandle);
     }
 
     try {
-      // 1. Fetch channel snippet and statistics
       const channelUrl = `https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics,contentDetails,topicDetails&forHandle=${encodeURIComponent(
-        cleanHandle
-      )}&key=${ENV.YOUTUBE_API_KEY}`;
-      
+        cleanHandle,
+      )}&key=${this.apiKey}`;
+
       const res = await fetch(channelUrl);
       const data = await res.json();
 
@@ -69,12 +74,11 @@ export class YouTubeService {
       const totalViews = parseInt(stats.viewCount || '0', 10);
       const totalVideos = parseInt(stats.videoCount || '0', 10);
 
-      // 2. Fetch Recent Uploads
       const uploadsPlaylistId = contentDetails.relatedPlaylists?.uploads;
       let recentVideos: MinedVideo[] = [];
 
       if (uploadsPlaylistId) {
-        const playlistUrl = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet,contentDetails&playlistId=${uploadsPlaylistId}&maxResults=10&key=${ENV.YOUTUBE_API_KEY}`;
+        const playlistUrl = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet,contentDetails&playlistId=${uploadsPlaylistId}&maxResults=10&key=${this.apiKey}`;
         const pRes = await fetch(playlistUrl);
         const pData = await pRes.json();
 
@@ -84,7 +88,7 @@ export class YouTubeService {
           .join(',');
 
         if (videoIds) {
-          const vUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics,contentDetails&id=${videoIds}&key=${ENV.YOUTUBE_API_KEY}`;
+          const vUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics,contentDetails&id=${videoIds}&key=${this.apiKey}`;
           const vRes = await fetch(vUrl);
           const vData = await vRes.json();
 
@@ -103,7 +107,6 @@ export class YouTubeService {
               durationFormatted: `${Math.floor(durationSec / 60)}:${(durationSec % 60)
                 .toString()
                 .padStart(2, '0')}`,
-
               views: parseInt(vStats.viewCount || '0', 10),
               likes: parseInt(vStats.likeCount || '0', 10),
               comments: parseInt(vStats.commentCount || '0', 10),
@@ -114,7 +117,6 @@ export class YouTubeService {
         }
       }
 
-      // 3. Compute Median Views, Upload Frequency, and Topic Multipliers
       const viewsList = recentVideos.map((v) => v.views).filter((v) => v > 0);
       viewsList.sort((a, b) => a - b);
       const medianViews = viewsList.length > 0 ? viewsList[Math.floor(viewsList.length / 2)] : 10000;
@@ -145,8 +147,8 @@ export class YouTubeService {
         outlierMultiplier,
         recentVideos,
       };
-    } catch (e) {
-      console.warn('[YouTube API Warning] Falling back to structured mock data:', e);
+    } catch (e: any) {
+      this.logger.warn(`YouTube API fallback: ${e.message}`);
       return this.getMockChannelData(cleanHandle);
     }
   }
