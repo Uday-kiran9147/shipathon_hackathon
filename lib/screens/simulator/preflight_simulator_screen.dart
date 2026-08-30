@@ -314,14 +314,22 @@ class _PreflightSimulatorScreenState extends State<PreflightSimulatorScreen> {
                             score: simProvider.currentResult!.hookScore,
                             resonanceScore:
                                 simProvider.currentResult!.resonanceScore,
+                            noveltyScore:
+                                simProvider.currentResult!.noveltyScore,
+                            topicMomentumScore:
+                                simProvider.currentResult!.topicMomentumScore,
+                            pacingScore:
+                                simProvider.currentResult!.pacingScore,
+                            creatorFitScore:
+                                simProvider.currentResult!.creatorFitScore,
                             tier: simProvider.currentResult!.performanceTier,
                           ),
                           SizedBox(height: 16.h),
 
-                          // Projected Views Card (Anchored to Channel Baseline)
+                          // Projected Views Card (Anchored to Channel Baseline & Multiplier Model)
                           if (channel.medianViews > 0) ...[
                             _buildProjectedViewsCard(
-                              simProvider.currentResult!.performanceTier,
+                              simProvider.currentResult!,
                               channel.medianViews,
                             ),
                             SizedBox(height: 16.h),
@@ -432,105 +440,147 @@ class _PreflightSimulatorScreenState extends State<PreflightSimulatorScreen> {
   }
 
   Widget _buildProjectedViewsCard(
-      PerformanceTier tier, int channelMedianViews) {
-    double multiplier;
-    switch (tier) {
-      case PerformanceTier.topOutlier:
-        multiplier = 3.2;
-        break;
-      case PerformanceTier.aboveMedian:
-        multiplier = 1.6;
-        break;
-      case PerformanceTier.averageBaseline:
-        multiplier = 1.0;
-        break;
-      case PerformanceTier.highFlopRisk:
-        multiplier = 0.4;
-        break;
-    }
-
+      SimulationResult result, int channelMedianViews) {
+    final multiplier = result.projectedViewsMultiplier;
     final projectedViews = (channelMedianViews * multiplier).round();
 
     return TactileCard(
-      backgroundColor: tier == PerformanceTier.topOutlier
+      backgroundColor: result.performanceTier == PerformanceTier.topOutlier
           ? AppColors.outlierJadeSubtle
-          : tier == PerformanceTier.highFlopRisk
+          : result.performanceTier == PerformanceTier.highFlopRisk
               ? AppColors.hazardRubySubtle
               : AppColors.surface,
       border: Border.all(
-        color: tier == PerformanceTier.topOutlier
+        color: result.performanceTier == PerformanceTier.topOutlier
             ? AppColors.outlierJadeBorder
-            : tier == PerformanceTier.highFlopRisk
+            : result.performanceTier == PerformanceTier.highFlopRisk
                 ? AppColors.hazardRubyBorder
                 : AppColors.borderLight,
       ),
       padding: EdgeInsets.all(14.w),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Row(
-              children: [
-                Icon(
-                  tier == PerformanceTier.topOutlier
-                      ? Icons.rocket_launch_rounded
-                      : tier == PerformanceTier.highFlopRisk
-                          ? Icons.warning_rounded
-                          : Icons.insights_rounded,
-                  color: tier == PerformanceTier.topOutlier
-                      ? AppColors.outlierJade
-                      : tier == PerformanceTier.highFlopRisk
-                          ? AppColors.hazardRuby
-                          : AppColors.primary,
-                  size: 20.sp,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    result.performanceTier == PerformanceTier.topOutlier
+                        ? Icons.rocket_launch_rounded
+                        : result.performanceTier == PerformanceTier.highFlopRisk
+                            ? Icons.warning_rounded
+                            : Icons.insights_rounded,
+                    color: result.performanceTier == PerformanceTier.topOutlier
+                        ? AppColors.outlierJade
+                        : result.performanceTier == PerformanceTier.highFlopRisk
+                            ? AppColors.hazardRuby
+                            : AppColors.primary,
+                    size: 20.sp,
+                  ),
+                  SizedBox(width: 8.w),
+                  Text(
+                    'DEFENSIBLE VIEWS PROJECTION',
+                    style: AppTypography.labelSmall.copyWith(
+                      fontSize: 10.sp,
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.4,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(6.r),
+                  border: Border.all(color: AppColors.borderLight),
                 ),
-                SizedBox(width: 10.w),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'ESTIMATED VIEWS PROJECTION',
-                        style: AppTypography.labelSmall.copyWith(
-                          fontSize: 9.sp,
-                          color: AppColors.textMuted,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      Text(
-                        '${NumberFormat.compact().format(projectedViews)} views ($multiplier× Median)',
-                        style: AppTypography.titleMedium.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.textInk,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
+                child: Text(
+                  'Baseline: ${NumberFormat.compact().format(channelMedianViews)}',
+                  style: AppTypography.labelSmall.copyWith(
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 10.5.sp,
                   ),
                 ),
-              ],
-            ),
-          ),
-          SizedBox(width: 8.w),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(6.r),
-              border: Border.all(color: AppColors.borderLight),
-            ),
-            child: Text(
-              'Median: ${NumberFormat.compact().format(channelMedianViews)}',
-              style: AppTypography.labelSmall.copyWith(
-                color: AppColors.textSecondary,
-                fontWeight: FontWeight.w600,
-                fontSize: 10.sp,
               ),
+            ],
+          ),
+          SizedBox(height: 10.h),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                NumberFormat.compact().format(projectedViews),
+                style: AppTypography.monoScoreLarge.copyWith(
+                  fontSize: 26.sp,
+                  color: AppColors.textInk,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              SizedBox(width: 6.w),
+              Text(
+                'projected views (${multiplier.toStringAsFixed(2)}× median)',
+                style: AppTypography.bodySmall.copyWith(
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 10.h),
+
+          // Defensible 4-Tier Multiplier Ladder (Section 1 & 8)
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+            decoration: BoxDecoration(
+              color: AppColors.canvas,
+              borderRadius: BorderRadius.circular(8.r),
+              border: Border.all(color: AppColors.borderSubtle),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildLadderStep('0.7×', (channelMedianViews * 0.7).round()),
+                Container(width: 1, height: 24.h, color: AppColors.borderLight),
+                _buildLadderStep('1.0× (Med)', channelMedianViews, isHighlighted: true),
+                Container(width: 1, height: 24.h, color: AppColors.borderLight),
+                _buildLadderStep('1.5×', (channelMedianViews * 1.5).round()),
+                Container(width: 1, height: 24.h, color: AppColors.borderLight),
+                _buildLadderStep('2.0×', (channelMedianViews * 2.0).round()),
+              ],
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildLadderStep(String label, int val, {bool isHighlighted = false}) {
+    return Column(
+      children: [
+        Text(
+          label,
+          style: AppTypography.labelSmall.copyWith(
+            fontSize: 10.sp,
+            color: isHighlighted ? AppColors.primary : AppColors.textMuted,
+            fontWeight: isHighlighted ? FontWeight.w800 : FontWeight.w600,
+          ),
+        ),
+        SizedBox(height: 2.h),
+        Text(
+          NumberFormat.compact().format(val),
+          style: AppTypography.monoScoreMedium.copyWith(
+            fontSize: 11.5.sp,
+            color: isHighlighted ? AppColors.primaryDark : AppColors.textInk,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ],
     );
   }
 

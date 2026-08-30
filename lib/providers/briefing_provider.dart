@@ -61,7 +61,7 @@ class BriefingProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Sync blueprints to match the new ChannelGraph profile
+  /// Sync blueprints to match the new ChannelGraph profile (Instant dynamic catalog synthesis)
   Future<void> updateForChannel(ChannelGraph channel) async {
     if (!channel.isConfigured || channel.recentVideos.isEmpty) {
       _blueprints = [];
@@ -73,10 +73,6 @@ class BriefingProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final bps =
-          await _generatorService.generateBlueprintsForChannelAsync(channel);
-      _blueprints = bps;
-    } catch (_) {
       _blueprints = _generatorService.generateBlueprintsForChannel(channel);
     } finally {
       _isLoading = false;
@@ -90,7 +86,7 @@ class BriefingProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Pull-to-refresh
+  /// Pull-to-refresh (Refreshes dynamic catalog blueprints)
   Future<void> refreshBriefing(ChannelGraph channel) async {
     if (!channel.isConfigured || channel.recentVideos.isEmpty) {
       _blueprints = [];
@@ -102,10 +98,6 @@ class BriefingProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final bps =
-          await _generatorService.generateBlueprintsForChannelAsync(channel);
-      _blueprints = bps;
-    } catch (_) {
       _blueprints = _generatorService.generateBlueprintsForChannel(channel);
     } finally {
       _isLoading = false;

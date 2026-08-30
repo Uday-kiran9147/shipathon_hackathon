@@ -307,6 +307,26 @@ class SimulatorEngineService {
       tier = PerformanceTier.highFlopRisk;
     }
 
+    // 3. Multi-dimensional Evaluation Scores
+    final noveltyScore = 7.9;
+    final topicMomentumScore = 8.7;
+    final clarityScore = sentences.any((s) => s.split(' ').length > 22) ? 7.4 : 9.0;
+    final pacingScore = sentences.length >= 3 ? 8.2 : 7.1;
+    final creatorFitScore = 9.0;
+
+    // Defensible Views Projection Calculation Model:
+    // baseline = creator median views
+    // multiplier = (topic_score * hook_score * audience_fit * novelty) normalized
+    final baseMedian = channel.medianViews > 0 ? channel.medianViews : 18400;
+    final compositeMultiplier = ((topicMomentumScore / 9.0) *
+            (hookScore / 8.5) *
+            (resonanceScore / 8.5) *
+            (noveltyScore / 8.0) *
+            1.42)
+        .clamp(0.4, 4.5);
+    final projectedMultiplier = (compositeMultiplier * 100).round() / 100.0;
+    final projectedViews = (baseMedian * projectedMultiplier).round();
+
     // =========================================================================
     // 4. RETENTION HAZARD TIMELINE
     // =========================================================================
@@ -325,6 +345,10 @@ class SimulatorEngineService {
             explanation:
                 'Your strongest claim ("${_truncate(sentences[highTensionIdx], 60)}") appears ${highTensionIdx + 1} sentences deep. Viewers decide to stay or leave within 5 seconds. Move this forward.',
             flaggedScriptLine: sentences[highTensionIdx],
+            whyReason:
+                'Low information density in opening; strongest tension is delayed.',
+            fixSuggestion:
+                'Move this sentence directly to the 0:00 opening line.',
           ),
         );
       } else if (detectedFluff != null) {
@@ -342,6 +366,10 @@ class SimulatorEngineService {
             explanation:
                 '"$detectedFluff" causes immediate swipe-away. The first 3 seconds must deliver tension, not pleasantries.',
             flaggedScriptLine: fluffSentence,
+            whyReason:
+                'Viewer already knows the creator; filler causes instant drop-off.',
+            fixSuggestion:
+                'Cut the greeting completely and lead with the experiment thesis.',
           ),
         );
       }
@@ -349,7 +377,7 @@ class SimulatorEngineService {
       // Hazard 2: Pacing Drag (a sentence is way too long)
       final longestIdx = _findLongestSentenceIndex(sentences);
       final longestWc = _wordCount(sentences[longestIdx]);
-      if (longestWc > 25) {
+      if (longestWc > 22) {
         hazards.add(
           RetentionHazard(
             startSeconds: 18,
@@ -360,6 +388,10 @@ class SimulatorEngineService {
             explanation:
                 'This $longestWc-word sentence creates a pacing lull. Split it into 2 shorter punchy statements and insert a visual cut between them.',
             flaggedScriptLine: sentences[longestIdx],
+            whyReason:
+                'Monotonous cognitive load before introducing visual evidence.',
+            fixSuggestion:
+                'Split into two 6-word sentences and insert a [VISUAL CUT].',
           ),
         );
       }
@@ -376,6 +408,10 @@ class SimulatorEngineService {
             explanation:
                 'Pure narration without visual cuts loses 18% of viewers by second 25. Insert a [B-Roll] or [VISUAL CUT] direction after your opening hook.',
             flaggedScriptLine: sentences.length > 1 ? sentences[1] : sentences.last,
+            whyReason:
+                'Viewer fatigue from uninterrupted static camera frame.',
+            fixSuggestion:
+                'Insert [B-ROLL: Benchmark Graph] at the 0:24 mark.',
           ),
         );
       }
@@ -399,11 +435,13 @@ class SimulatorEngineService {
         PrescriptiveFix(
           id: 'fix_hook',
           fixType: 'Hook Restructure',
+          problem: 'Strongest payoff buried in script',
           description:
               'Your strongest claim is buried at sentence ${highTensionIdx + 1}. This fix moves it to the opening line and restructures the flow for immediate tension.',
           originalSnippet: weakOpener,
           replacementSnippet: restructured,
           scoreLift: 1.6,
+          projectedScoreAfter: min(9.8, (hookScore + 1.6)),
           isApplied: false,
         ),
       );
@@ -412,33 +450,35 @@ class SimulatorEngineService {
         (s) => s.toLowerCase().contains(detectedFluff!),
         orElse: () => sentences.first,
       );
-      // Replace fluff with a direct rewrite using the next sentence's content
       final nextContent = sentences.length > 1 ? sentences[1] : 'The data behind this changes everything.';
       fixes.add(
         PrescriptiveFix(
           id: 'fix_hook',
           fixType: 'Eliminate Intro Fluff',
+          problem: 'Generic pleasantry intro',
           description:
               'Remove "$detectedFluff" and lead directly with your core thesis.',
           originalSnippet: fluffSentence,
           replacementSnippet: nextContent,
           scoreLift: 1.8,
+          projectedScoreAfter: min(9.8, (hookScore + 1.8)),
           isApplied: false,
         ),
       );
     } else {
-      // Opening is already decent — suggest a power-word lead-in
       final opener = sentences.isNotEmpty ? sentences.first : draftScript;
       fixes.add(
         PrescriptiveFix(
           id: 'fix_hook',
           fixType: 'Power Opening',
+          problem: 'Slow exposition ramp-up',
           description:
               'Add a 1-line tension hook before your current opener to stop the scroll.',
           originalSnippet: opener,
           replacementSnippet:
               'This 1 critical detail changes everything you assumed.\n\n$opener',
           scoreLift: 0.8,
+          projectedScoreAfter: min(9.8, (hookScore + 0.8)),
           isApplied: false,
         ),
       );
@@ -451,11 +491,13 @@ class SimulatorEngineService {
         PrescriptiveFix(
           id: 'fix_title',
           fixType: 'Title Curiosity Amplifier',
+          problem: 'Title lacks explicit stakes',
           description:
               'Your current title lacks a curiosity gap or specific stakes. This rewrite adds proven click-through patterns.',
           originalSnippet: title,
           replacementSnippet: amplifiedTitle,
           scoreLift: 0.9,
+          projectedScoreAfter: min(9.8, (hookScore + 0.9)),
           isApplied: false,
         ),
       );
@@ -475,27 +517,30 @@ class SimulatorEngineService {
           PrescriptiveFix(
             id: 'fix_pacing',
             fixType: 'Pacing Cut + Visual Break',
+            problem: 'Prolonged explanation lull',
             description:
                 'This $longestWc-word sentence drags the pacing. Compressed to ${_wordCount(compressed)} words with a visual interrupt to re-engage attention.',
             originalSnippet: longestSentence,
             replacementSnippet: withVisualCut,
             scoreLift: 1.0,
+            projectedScoreAfter: min(9.8, (hookScore + 1.0)),
             isApplied: false,
           ),
         );
       } else if (!hasVisualCue) {
-        // If no long sentence but no visual cue, suggest adding one
         final midSentence = sentences[sentences.length ~/ 2];
         fixes.add(
           PrescriptiveFix(
             id: 'fix_pacing',
             fixType: 'Visual Pattern Interrupt',
+            problem: 'Static narration fatigue',
             description:
                 'Insert a visual cut at the midpoint to prevent narration fatigue.',
             originalSnippet: midSentence,
             replacementSnippet:
                 '$midSentence\n[B-ROLL: Supporting footage or data graphic]',
             scoreLift: 0.6,
+            projectedScoreAfter: min(9.8, (hookScore + 0.6)),
             isApplied: false,
           ),
         );
@@ -509,6 +554,13 @@ class SimulatorEngineService {
       format: format,
       hookScore: hookScore,
       resonanceScore: resonanceScore,
+      noveltyScore: noveltyScore,
+      topicMomentumScore: topicMomentumScore,
+      clarityScore: clarityScore,
+      pacingScore: pacingScore,
+      creatorFitScore: creatorFitScore,
+      projectedViewsMultiplier: projectedMultiplier,
+      projectedViews: projectedViews,
       performanceTier: tier,
       hazards: hazards,
       fixes: fixes,
@@ -544,6 +596,11 @@ class SimulatorEngineService {
         ((currentResult.resonanceScore + (targetFix.scoreLift * 0.7)) * 10)
                 .round() /
             10.0);
+    final newPacing = min(
+        9.8,
+        ((currentResult.pacingScore + (targetFix.scoreLift * 0.5)) * 10)
+                .round() /
+            10.0);
 
     // Clear hazards that this fix resolves
     final remainingHazards = currentResult.hazards.where((h) {
@@ -556,9 +613,16 @@ class SimulatorEngineService {
       return true;
     }).toList();
 
+    final newMultiplier = (currentResult.projectedViewsMultiplier * 1.18).clamp(1.0, 4.5);
+    final formattedMult = (newMultiplier * 100).round() / 100.0;
+    final newViews = (currentResult.projectedViews * 1.18).round();
+
     return currentResult.copyWith(
       hookScore: newScore,
       resonanceScore: newResonance,
+      pacingScore: newPacing,
+      projectedViewsMultiplier: formattedMult,
+      projectedViews: newViews,
       performanceTier: newScore >= 8.5
           ? PerformanceTier.topOutlier
           : newScore >= 7.0

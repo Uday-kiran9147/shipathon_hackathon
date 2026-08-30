@@ -25,8 +25,8 @@ class AppConstants {
   // Gemini Model Identifier (Single source of truth for Gemini Model)
   static String get geminiModel =>
       dotenv.isInitialized
-          ? (dotenv.env['GEMINI_MODEL'] ?? 'gemini-3.1-pro-preview')
-          : 'gemini-3.1-pro-preview';
+          ? (dotenv.env['GEMINI_MODEL'] ?? 'gemini-3.6-flash')
+          : 'gemini-3.6-flash';
 
   // RevenueCat Configuration
   static const String entitlementPro = 'creator_pro_access';

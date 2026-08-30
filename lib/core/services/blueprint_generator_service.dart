@@ -6,7 +6,7 @@ import '../../models/daily_blueprint.dart';
 import 'gemini_service.dart';
 
 /// Category, Audience & Theme Intelligence Blueprint Engine
-/// Synthesizes authentic creator blueprints via Google Gemini 3.7 Flash AI,
+/// Synthesizes authentic creator blueprints via Google Gemini AI Engine,
 /// with robust fallback to dynamic algorithmic synthesis based on live YouTube comments & video metrics.
 class BlueprintGeneratorService {
   static final BlueprintGeneratorService _instance = BlueprintGeneratorService._internal();
@@ -527,7 +527,7 @@ class BlueprintGeneratorService {
     return blueprints;
   }
 
-  /// AI Generates a brand new bespoke blueprint on demand dynamically via Gemini 1.5 Flash (with fallback)
+  /// AI Generates a brand new bespoke blueprint on demand dynamically via Gemini AI (with fallback)
   Future<DailyBlueprint> generateFreshBlueprintOnDemand(
       ChannelGraph channel) async {
     if (!channel.isConfigured || channel.recentVideos.isEmpty) {
@@ -537,7 +537,7 @@ class BlueprintGeneratorService {
 
     if (_geminiService.hasApiKey) {
       try {
-        log('[BlueprintGeneratorService] Generating single fresh blueprint via Gemini 1.5 Flash...');
+        log('[BlueprintGeneratorService] Generating single fresh blueprint via ${_geminiService.model}...');
         final freshBp =
             await _geminiService.generateSingleFreshBlueprint(channel);
         return freshBp;

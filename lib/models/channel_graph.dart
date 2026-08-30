@@ -305,6 +305,37 @@ class AudienceInsight {
       };
 }
 
+/// Topic Performance Multiplier relative to channel median views
+class TopicPerformanceMultiplier {
+  final String topic;
+  final double multiple; // e.g. 2.4x median
+  final int videoCount;
+  final int averageViews;
+
+  const TopicPerformanceMultiplier({
+    required this.topic,
+    required this.multiple,
+    this.videoCount = 1,
+    this.averageViews = 0,
+  });
+
+  factory TopicPerformanceMultiplier.fromJson(Map<String, dynamic> json) {
+    return TopicPerformanceMultiplier(
+      topic: json['topic'] as String? ?? '',
+      multiple: (json['multiple'] as num?)?.toDouble() ?? 1.0,
+      videoCount: json['videoCount'] as int? ?? 1,
+      averageViews: json['averageViews'] as int? ?? 0,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'topic': topic,
+        'multiple': multiple,
+        'videoCount': videoCount,
+        'averageViews': averageViews,
+      };
+}
+
 /// Channel Graph Baseline model defining the creator's context engine
 class ChannelGraph {
   final String? channelId;
@@ -319,6 +350,12 @@ class ChannelGraph {
   final double medianCtr;
   final int totalVideos;
   final int totalViews;
+  final double uploadFrequency; // e.g. 2.3 uploads/week
+  final double topOutlierMultiplier; // e.g. 4.2x median
+  final double viewsVelocity;
+  final String bestVideoLength;
+  final List<String> titlePatterns;
+  final List<TopicPerformanceMultiplier> topicPerformanceMultipliers;
   final String targetAudienceLevel;
   final List<String> topTopicClusters;
   final String topFormat;
@@ -343,6 +380,16 @@ class ChannelGraph {
     this.medianCtr = 0.0,
     this.totalVideos = 0,
     this.totalViews = 0,
+    this.uploadFrequency = 2.3,
+    this.topOutlierMultiplier = 3.8,
+    this.viewsVelocity = 5.2,
+    this.bestVideoLength = '10–14 min',
+    this.titlePatterns = const [
+      'Contrarian thesis with benchmark proof',
+      'System teardown & lessons learned',
+      'Cost & architectural breakdown'
+    ],
+    this.topicPerformanceMultipliers = const [],
     this.targetAudienceLevel = '',
     this.topTopicClusters = const [],
     this.topFormat = 'Long-Form + Shorts',
@@ -358,6 +405,22 @@ class ChannelGraph {
   /// Check if the channel graph contains synced live data
   bool get isConfigured =>
       handle.isNotEmpty && (subscribers > 0 || isLiveConnected);
+
+  /// Formatted upload cadence (e.g. "2.3 / week")
+  String get uploadFrequencyFormatted =>
+      '${uploadFrequency.toStringAsFixed(1)} / week';
+
+  /// Concrete predicted performance ladder based on live channel median views:
+  /// 0.7x, 1.0x, 1.5x, 2.0x
+  Map<String, int> get predictedPerformanceLadder {
+    final base = medianViews > 0 ? medianViews : 10000;
+    return {
+      '0.7x': (base * 0.7).round(),
+      '1.0x': base,
+      '1.5x': (base * 1.5).round(),
+      '2.0x': (base * 2.0).round(),
+    };
+  }
 
   /// All audience comments extracted across recent videos
   List<ChannelComment> get allRecentComments {
@@ -390,6 +453,12 @@ class ChannelGraph {
     double? medianCtr,
     int? totalVideos,
     int? totalViews,
+    double? uploadFrequency,
+    double? topOutlierMultiplier,
+    double? viewsVelocity,
+    String? bestVideoLength,
+    List<String>? titlePatterns,
+    List<TopicPerformanceMultiplier>? topicPerformanceMultipliers,
     String? targetAudienceLevel,
     List<String>? topTopicClusters,
     String? topFormat,
@@ -414,6 +483,14 @@ class ChannelGraph {
       medianCtr: medianCtr ?? this.medianCtr,
       totalVideos: totalVideos ?? this.totalVideos,
       totalViews: totalViews ?? this.totalViews,
+      uploadFrequency: uploadFrequency ?? this.uploadFrequency,
+      topOutlierMultiplier:
+          topOutlierMultiplier ?? this.topOutlierMultiplier,
+      viewsVelocity: viewsVelocity ?? this.viewsVelocity,
+      bestVideoLength: bestVideoLength ?? this.bestVideoLength,
+      titlePatterns: titlePatterns ?? this.titlePatterns,
+      topicPerformanceMultipliers:
+          topicPerformanceMultipliers ?? this.topicPerformanceMultipliers,
       targetAudienceLevel: targetAudienceLevel ?? this.targetAudienceLevel,
       topTopicClusters: topTopicClusters ?? this.topTopicClusters,
       topFormat: topFormat ?? this.topFormat,

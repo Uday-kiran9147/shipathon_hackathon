@@ -14,8 +14,17 @@ class HookScoreGauge extends StatefulWidget {
     super.key,
     required this.score,
     required this.resonanceScore,
+    this.noveltyScore = 7.9,
+    this.topicMomentumScore = 8.6,
+    this.pacingScore = 7.8,
+    this.creatorFitScore = 9.0,
     required this.tier,
   });
+
+  final double noveltyScore;
+  final double topicMomentumScore;
+  final double pacingScore;
+  final double creatorFitScore;
 
   @override
   State<HookScoreGauge> createState() => _HookScoreGaugeState();
@@ -77,9 +86,9 @@ class _HookScoreGaugeState extends State<HookScoreGauge>
 
         String ratingText;
         if (currentScore >= 8.5) {
-          ratingText = '🌟 Excellent Retention (Top Outlier)';
+          ratingText = '🌟 Top Outlier (High Retention)';
         } else if (currentScore >= 7.0) {
-          ratingText = '👍 Good Hook (Above Average)';
+          ratingText = '👍 Strong Hook (Above Median)';
         } else if (currentScore >= 5.0) {
           ratingText = '⚖️ Average (Some Drop-off Expected)';
         } else {
@@ -87,7 +96,7 @@ class _HookScoreGaugeState extends State<HookScoreGauge>
         }
 
         return Container(
-          padding: EdgeInsets.all(20.w),
+          padding: EdgeInsets.all(18.w),
           decoration: BoxDecoration(
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(18.r),
@@ -101,13 +110,10 @@ class _HookScoreGaugeState extends State<HookScoreGauge>
                 physics: const BouncingScrollPhysics(),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisAlignment: ratingText.length > 30
-                      ? MainAxisAlignment.start
-                      : MainAxisAlignment.spaceBetween,
-                  spacing: 8.w,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'RETENTION STRENGTH',
+                      'PRE-FLIGHT SIMULATOR RADAR',
                       style: AppTypography.labelSmall.copyWith(
                         color: AppColors.textPrimary,
                         fontWeight: FontWeight.w800,
@@ -115,6 +121,7 @@ class _HookScoreGaugeState extends State<HookScoreGauge>
                         letterSpacing: 0.5,
                       ),
                     ),
+                    SizedBox(width: 8.w),
                     Container(
                       padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
                       decoration: BoxDecoration(
@@ -127,24 +134,24 @@ class _HookScoreGaugeState extends State<HookScoreGauge>
                         style: AppTypography.labelSmall.copyWith(
                           color: scoreColor,
                           fontWeight: FontWeight.w800,
-                          fontSize: 12.sp,
+                          fontSize: 11.5.sp,
                         ),
                       ),
                     ),
                   ],
                 ),
               ),
-              SizedBox(height: 18.h),
+              SizedBox(height: 16.h),
               // Gauge Circular Dial
               Stack(
                 alignment: Alignment.center,
                 children: [
                   SizedBox(
-                    width: 140.w,
-                    height: 140.w,
+                    width: 130.w,
+                    height: 130.w,
                     child: CircularProgressIndicator(
                       value: currentScore / 10.0,
-                      strokeWidth: 12.w,
+                      strokeWidth: 11.w,
                       strokeCap: StrokeCap.round,
                       backgroundColor: AppColors.surfaceSubtle,
                       valueColor: AlwaysStoppedAnimation<Color>(scoreColor),
@@ -157,14 +164,14 @@ class _HookScoreGaugeState extends State<HookScoreGauge>
                         currentScore.toStringAsFixed(1),
                         style: AppTypography.monoScoreLarge.copyWith(
                           color: AppColors.textInk,
-                          fontSize: 36.sp,
+                          fontSize: 34.sp,
                         ),
                       ),
                       Text(
-                        'HOOK SCORE / 10',
+                        'OVERALL SCORE / 10',
                         style: AppTypography.labelSmall.copyWith(
                           color: AppColors.textSecondary,
-                          fontSize: 11.sp,
+                          fontSize: 10.sp,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -172,91 +179,85 @@ class _HookScoreGaugeState extends State<HookScoreGauge>
                   ),
                 ],
               ),
-              SizedBox(height: 12.h),
+              SizedBox(height: 10.h),
               Text(
                 ratingText,
                 style: AppTypography.titleMedium.copyWith(
                   fontWeight: FontWeight.w800,
                   color: scoreColor,
-                  fontSize: 14.sp,
+                  fontSize: 13.5.sp,
                 ),
               ),
               SizedBox(height: 14.h),
-              // Secondary Metric Bars: Audience Resonance & Tier
-              Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
-                      decoration: BoxDecoration(
-                        color: AppColors.canvas,
-                        borderRadius: BorderRadius.circular(12.r),
-                        border: Border.all(color: AppColors.borderLight),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'AUDIENCE INTEREST',
-                            style: AppTypography.labelSmall.copyWith(
-                              color: AppColors.textSecondary,
-                              fontSize: 11.sp,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          SizedBox(height: 4.h),
-                          Text(
-                            '${widget.resonanceScore.toStringAsFixed(1)} / 10.0',
-                            style: AppTypography.titleMedium.copyWith(
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 10.w),
-                  Expanded(
-                    child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
-                      decoration: BoxDecoration(
-                        color: AppColors.canvas,
-                        borderRadius: BorderRadius.circular(12.r),
-                        border: Border.all(color: AppColors.borderLight),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'PERFORMANCE TIER',
-                            style: AppTypography.labelSmall.copyWith(
-                              color: AppColors.textSecondary,
-                              fontSize: 11.sp,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          SizedBox(height: 4.h),
-                          Text(
-                            widget.tier.title,
-                            style: AppTypography.bodySmall.copyWith(
-                              fontWeight: FontWeight.w800,
-                              color: scoreColor,
-                              fontSize: 12.5.sp,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
+
+              // Multi-Dimensional Radar Dimensions Grid (Section 7)
+              Container(
+                padding: EdgeInsets.all(12.w),
+                decoration: BoxDecoration(
+                  color: AppColors.canvas,
+                  borderRadius: BorderRadius.circular(12.r),
+                  border: Border.all(color: AppColors.borderLight),
+                ),
+                child: Column(
+                  children: [
+                    _buildDimensionRow('Hook Strength', currentScore, scoreColor),
+                    SizedBox(height: 6.h),
+                    _buildDimensionRow('Audience Resonance', widget.resonanceScore, AppColors.primary),
+                    SizedBox(height: 6.h),
+                    _buildDimensionRow('Novelty', widget.noveltyScore, AppColors.primaryDark),
+                    SizedBox(height: 6.h),
+                    _buildDimensionRow('Pacing', widget.pacingScore, AppColors.warningAmber),
+                    SizedBox(height: 6.h),
+                    _buildDimensionRow('Creator Fit', widget.creatorFitScore, AppColors.outlierJade),
+                  ],
+                ),
               ),
             ],
           ),
         );
       },
+    );
+  }
+
+  Widget _buildDimensionRow(String label, double val, Color barColor) {
+    return Row(
+      children: [
+        SizedBox(
+          width: 110.w,
+          child: Text(
+            label,
+            style: AppTypography.labelSmall.copyWith(
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w700,
+              fontSize: 11.sp,
+            ),
+          ),
+        ),
+        Expanded(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(4.r),
+            child: LinearProgressIndicator(
+              value: (val / 10.0).clamp(0.0, 1.0),
+              minHeight: 6.h,
+              backgroundColor: AppColors.surfaceSubtle,
+              valueColor: AlwaysStoppedAnimation<Color>(barColor),
+            ),
+          ),
+        ),
+        SizedBox(width: 8.w),
+        SizedBox(
+          width: 28.w,
+          child: Text(
+            val.toStringAsFixed(1),
+            textAlign: TextAlign.end,
+            style: AppTypography.monoScoreMedium.copyWith(
+              fontSize: 11.5.sp,
+              color: AppColors.textInk,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

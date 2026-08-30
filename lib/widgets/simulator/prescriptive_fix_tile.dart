@@ -31,103 +31,160 @@ class PrescriptiveFixTile extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header: Fix Type + Score Lift Badge
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      fix.isApplied
-                          ? Icons.check_circle_rounded
-                          : Icons.auto_fix_high_rounded,
-                      size: 18.sp,
-                      color: fix.isApplied
-                          ? AppColors.outlierJade
-                          : AppColors.primary,
+          // Header: High Impact + Fix Type + Score Lift Badge
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                    decoration: BoxDecoration(
+                      color: AppColors.hazardRubySubtle,
+                      borderRadius: BorderRadius.circular(4.r),
+                      border: Border.all(color: AppColors.hazardRubyBorder),
                     ),
-                    SizedBox(width: 8.w),
-                    Text(
-                      fix.fixType,
-                      style: AppTypography.titleMedium.copyWith(
+                    child: Text(
+                      'HIGH IMPACT',
+                      style: AppTypography.labelSmall.copyWith(
+                        color: AppColors.hazardRuby,
                         fontWeight: FontWeight.w800,
-                        color: AppColors.textInk,
+                        fontSize: 9.5.sp,
                       ),
                     ),
-                  ],
-                ),
-                SizedBox(width: 8.w),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-                  decoration: BoxDecoration(
-                    color: AppColors.outlierJadeSubtle,
-                    borderRadius: BorderRadius.circular(100.r), // Capsule pill
-                    border: Border.all(color: AppColors.outlierJadeBorder),
                   ),
-                  child: Text(
-                    '+${fix.scoreLift.toStringAsFixed(1)} SCORE LIFT',
-                    style: AppTypography.labelSmall.copyWith(
-                      color: AppColors.outlierJade,
+                  SizedBox(width: 8.w),
+                  Text(
+                    fix.fixType,
+                    style: AppTypography.titleMedium.copyWith(
                       fontWeight: FontWeight.w800,
-                      fontSize: 11.sp,
+                      color: AppColors.textInk,
                     ),
                   ),
+                ],
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                decoration: BoxDecoration(
+                  color: AppColors.outlierJadeSubtle,
+                  borderRadius: BorderRadius.circular(100.r), // Capsule pill
+                  border: Border.all(color: AppColors.outlierJadeBorder),
                 ),
-              ],
-            ),
+                child: Text(
+                  '+${fix.scoreLift.toStringAsFixed(1)} HOOK LIFT',
+                  style: AppTypography.labelSmall.copyWith(
+                    color: AppColors.outlierJade,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 10.5.sp,
+                  ),
+                ),
+              ),
+            ],
           ),
           SizedBox(height: 6.h),
           Text(
-            fix.description,
+            fix.problem,
             style: AppTypography.bodySmall.copyWith(
               color: AppColors.textSecondary,
-              fontSize: 13.sp,
+              fontWeight: FontWeight.w600,
+              fontSize: 12.sp,
             ),
           ),
           SizedBox(height: 10.h),
 
-          // Before & After Diff Box
+          // BEFORE & AFTER Side-by-Side / Diff Block
           Container(
             padding: EdgeInsets.all(12.w),
             decoration: BoxDecoration(
               color: AppColors.canvas,
               borderRadius: BorderRadius.circular(10.r),
-              border: Border.all(color: AppColors.borderSubtle),
+              border: Border.all(color: AppColors.borderLight),
             ),
-            child: Row(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'FIX: ',
-                  style: AppTypography.labelSmall.copyWith(
-                    color: AppColors.outlierJade,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 12.sp,
-                  ),
-                ),
-                Expanded(
-                  child: Text(
-                    fix.replacementSnippet,
-                    style: AppTypography.bodyMedium.copyWith(
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.w600,
-                      height: 1.35,
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'BEFORE: ',
+                      style: AppTypography.labelSmall.copyWith(
+                        color: AppColors.hazardRuby,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 11.sp,
+                      ),
                     ),
-                  ),
+                    Expanded(
+                      child: Text(
+                        '"${fix.originalSnippet}"',
+                        style: AppTypography.bodySmall.copyWith(
+                          color: AppColors.textSecondary,
+                          fontStyle: FontStyle.italic,
+                          height: 1.3,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 8.h),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'AFTER:   ',
+                      style: AppTypography.labelSmall.copyWith(
+                        color: AppColors.outlierJade,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 11.sp,
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        '"${fix.replacementSnippet}"',
+                        style: AppTypography.bodyMedium.copyWith(
+                          color: AppColors.textInk,
+                          fontWeight: FontWeight.w700,
+                          height: 1.35,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
-          SizedBox(height: 14.h),
+          SizedBox(height: 10.h),
+
+          // Projected Score Lift Indicator
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Projected score after applying: ${fix.projectedScoreAfter.toStringAsFixed(1)}',
+                style: AppTypography.labelSmall.copyWith(
+                  color: AppColors.outlierJade,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 11.sp,
+                ),
+              ),
+              if (fix.isApplied)
+                Text(
+                  'Applied ✓',
+                  style: AppTypography.labelSmall.copyWith(
+                    color: AppColors.outlierJade,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 11.sp,
+                  ),
+                ),
+            ],
+          ),
+          SizedBox(height: 10.h),
 
           // Action Button
           SolidHeavyButton(
             label: fix.isApplied ? 'Improvement Applied ✓' : 'Apply 1-Tap Improvement',
             icon: fix.isApplied ? Icons.done_all_rounded : Icons.bolt_rounded,
-            height: 48.h,
+            height: 46.h,
             backgroundColor: fix.isApplied ? AppColors.outlierJade : AppColors.primary,
             shadowColor: fix.isApplied ? const Color(0xFF065F46) : const Color(0xFF990014),
             borderColor: fix.isApplied ? const Color(0xFF047857) : const Color(0xFFCC0018),

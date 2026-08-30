@@ -899,6 +899,12 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
               ),
               SizedBox(height: 16.h),
 
+              // TOPIC PERFORMANCE MULTIPLIERS TABLE (Section 1 & 3)
+              if (channel.topicPerformanceMultipliers.isNotEmpty) ...[
+                _buildTopicPerformanceTable(channel),
+                SizedBox(height: 16.h),
+              ],
+
               // AUDIENCE VOICE & LIVE COMMENTS HUB WITH DEMAND CLUSTERS
               if (channel.audienceInsight.topDemandClusters.isNotEmpty ||
                   channel.audienceRequests.isNotEmpty) ...[
@@ -1505,6 +1511,266 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
               ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildTopicPerformanceTable(ChannelGraph channel) {
+    return TactileCard(
+      padding: EdgeInsets.all(14.w),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    Icon(Icons.table_chart_rounded,
+                        size: 16.sp, color: AppColors.primary),
+                    SizedBox(width: 6.w),
+                    Flexible(
+                      child: Text(
+                        'TOPIC PERFORMANCE MULTIPLIERS',
+                        style: AppTypography.labelSmall.copyWith(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.5,
+                          fontSize: 11.sp,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(width: 8.w),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                decoration: BoxDecoration(
+                  color: AppColors.primarySubtle,
+                  borderRadius: BorderRadius.circular(6.r),
+                  border: Border.all(color: AppColors.borderLight),
+                ),
+                child: Text(
+                  'Median: ${NumberFormat.compact().format(channel.medianViews)}',
+                  style: AppTypography.labelSmall.copyWith(
+                    color: AppColors.primaryDark,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 10.5.sp,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12.h),
+
+          // Structured Data Table
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10.r),
+              border: Border.all(color: AppColors.borderLight),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(10.r),
+              child: Column(
+                children: [
+                  // Table Header Row
+                  Container(
+                    color: AppColors.surfaceSubtle,
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          flex: 5,
+                          child: Text(
+                            'TOPIC / CLUSTER',
+                            style: AppTypography.labelSmall.copyWith(
+                              fontSize: 9.5.sp,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          flex: 3,
+                          child: Text(
+                            'MULTIPLE',
+                            textAlign: TextAlign.center,
+                            style: AppTypography.labelSmall.copyWith(
+                              fontSize: 9.5.sp,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          flex: 3,
+                          child: Text(
+                            'EST. VIEWS',
+                            textAlign: TextAlign.center,
+                            style: AppTypography.labelSmall.copyWith(
+                              fontSize: 9.5.sp,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          flex: 3,
+                          child: Text(
+                            'SIGNAL',
+                            textAlign: TextAlign.end,
+                            style: AppTypography.labelSmall.copyWith(
+                              fontSize: 9.5.sp,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Table Body Rows
+                  ...channel.topicPerformanceMultipliers.asMap().entries.map((entry) {
+                    final idx = entry.key;
+                    final tm = entry.value;
+                    final isEven = idx % 2 == 0;
+                    final isTopOutlier = tm.multiple >= 2.0;
+                    final isAboveMedian = tm.multiple >= 1.3;
+                    final isBelowMedian = tm.multiple < 1.0;
+
+                    Color badgeBg;
+                    Color badgeBorder;
+                    Color badgeText;
+                    String signalLabel;
+
+                    if (isTopOutlier) {
+                      badgeBg = AppColors.outlierJadeSubtle;
+                      badgeBorder = AppColors.outlierJadeBorder;
+                      badgeText = AppColors.outlierJade;
+                      signalLabel = '🚀 Outlier';
+                    } else if (isAboveMedian) {
+                      badgeBg = AppColors.primarySubtle;
+                      badgeBorder = AppColors.primaryBorder;
+                      badgeText = AppColors.primaryDark;
+                      signalLabel = '🟢 High';
+                    } else if (isBelowMedian) {
+                      badgeBg = AppColors.hazardRubySubtle;
+                      badgeBorder = AppColors.hazardRubyBorder;
+                      badgeText = AppColors.hazardRuby;
+                      signalLabel = '🔴 Low';
+                    } else {
+                      badgeBg = AppColors.warningAmberSubtle;
+                      badgeBorder = AppColors.warningAmberBorder;
+                      badgeText = AppColors.warningAmber;
+                      signalLabel = '🟡 Baseline';
+                    }
+
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: isEven ? AppColors.surface : AppColors.canvas,
+                        border: Border(
+                          top: BorderSide(color: AppColors.borderLight, width: 0.8),
+                        ),
+                      ),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 10.w, vertical: 9.h),
+                      child: Row(
+                        children: [
+                          // Topic Name
+                          Expanded(
+                            flex: 5,
+                            child: Row(
+                              children: [
+                                Icon(
+                                  isTopOutlier
+                                      ? Icons.trending_up_rounded
+                                      : Icons.topic_outlined,
+                                  size: 14.sp,
+                                  color: badgeText,
+                                ),
+                                SizedBox(width: 5.w),
+                                Expanded(
+                                  child: Text(
+                                    tm.topic,
+                                    style: AppTypography.bodySmall.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.textInk,
+                                      fontSize: 11.5.sp,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          // Multiplier Badge
+                          Expanded(
+                            flex: 3,
+                            child: Center(
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 6.w, vertical: 2.h),
+                                decoration: BoxDecoration(
+                                  color: badgeBg,
+                                  borderRadius: BorderRadius.circular(100.r),
+                                  border: Border.all(color: badgeBorder),
+                                ),
+                                child: Text(
+                                  '${tm.multiple}×',
+                                  style: AppTypography.labelSmall.copyWith(
+                                    color: badgeText,
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 10.5.sp,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          // Estimated Views
+                          Expanded(
+                            flex: 3,
+                            child: Text(
+                              NumberFormat.compact().format(tm.averageViews),
+                              textAlign: TextAlign.center,
+                              style: AppTypography.monoScoreMedium.copyWith(
+                                fontSize: 11.5.sp,
+                                color: AppColors.textInk,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+
+                          // Signal Pill
+                          Expanded(
+                            flex: 3,
+                            child: Text(
+                              signalLabel,
+                              textAlign: TextAlign.end,
+                              style: AppTypography.labelSmall.copyWith(
+                                color: badgeText,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 10.sp,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

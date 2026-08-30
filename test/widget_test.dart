@@ -4,7 +4,10 @@ import 'package:shipathon_hackathon/main.dart';
 import 'package:shipathon_hackathon/models/channel_graph.dart';
 import 'package:shipathon_hackathon/models/daily_blueprint.dart';
 import 'package:shipathon_hackathon/core/services/blueprint_generator_service.dart';
+import 'package:shipathon_hackathon/core/services/gemini_service.dart';
 import 'package:shipathon_hackathon/core/services/youtube_api_service.dart';
+import 'package:shipathon_hackathon/core/services/semantic_vector_service.dart';
+import 'package:shipathon_hackathon/core/services/simulator_engine_service.dart';
 
 void main() {
   testWidgets('PrevueAPP smoke test & responsiveness across viewports without overflow', (WidgetTester tester) async {
@@ -244,6 +247,227 @@ void main() {
       final bp4 = blueprints[3];
       expect(bp4.format, BlueprintFormat.short);
       expect(bp4.title, contains('STM32 Motor Control'));
+    });
+  });
+
+  group('YouTube Creator Intelligence & Simulator Engine 16-Point Tests', () {
+    test('ChannelGraph computes defensible 0.7x, 1.0x, 1.5x, 2.0x performance ladder', () {
+      const channel = ChannelGraph(
+        handle: '@TechCreator',
+        medianViews: 18400,
+        uploadFrequency: 2.3,
+        topOutlierMultiplier: 4.2,
+      );
+
+      expect(channel.uploadFrequencyFormatted, '2.3 / week');
+      final ladder = channel.predictedPerformanceLadder;
+      expect(ladder['0.7x'], 12880);
+      expect(ladder['1.0x'], 18400);
+      expect(ladder['1.5x'], 27600);
+      expect(ladder['2.0x'], 36800);
+    });
+
+    test('SemanticVectorService calculates valid cosine similarities & feature vectors', () {
+      final vectorService = SemanticVectorService();
+      final vecA = vectorService.generateFeatureVector('Building AI Agent Coding Systems');
+      final vecB = vectorService.generateFeatureVector('Autonomous Coding Agents in Production');
+      final vecC = vectorService.generateFeatureVector('Cooking Italian Pasta Carbonara');
+
+      expect(vecA.length, 768);
+      expect(vecB.length, 768);
+
+      final simRelated = vectorService.cosineSimilarity(vecA, vecB);
+      final simUnrelated = vectorService.cosineSimilarity(vecA, vecC);
+
+      expect(simRelated, greaterThan(simUnrelated));
+      expect(simRelated, greaterThan(0.2));
+    });
+
+    test('SimulatorEngineService evaluates all 7 dimensions and computes views projection', () async {
+      const channel = ChannelGraph(
+        handle: '@AIEngineer',
+        niche: 'AI Engineering',
+        medianViews: 20000,
+        topTopicClusters: ['AI Agents', 'LangGraph'],
+      );
+
+      final result = await SimulatorEngineService().runSimulation(
+        title: 'I Built My Entire Stack With AI Agents',
+        draftScript:
+            'Today I am going to explain how AI agents work. We tried building an autonomous pipeline for 30 days and benchmarked the speed.',
+        format: BlueprintFormat.longForm,
+        channel: channel,
+      );
+
+      expect(result.hookScore, greaterThan(0.0));
+      expect(result.resonanceScore, greaterThan(0.0));
+      expect(result.noveltyScore, greaterThan(0.0));
+      expect(result.topicMomentumScore, greaterThan(0.0));
+      expect(result.clarityScore, greaterThan(0.0));
+      expect(result.pacingScore, greaterThan(0.0));
+      expect(result.creatorFitScore, greaterThan(0.0));
+      expect(result.overallScore, greaterThan(0.0));
+      expect(result.projectedViewsMultiplier, greaterThan(0.5));
+      expect(result.projectedViews, greaterThan(5000));
+      expect(result.hazards.isNotEmpty, isTrue);
+      expect(result.fixes.length, greaterThanOrEqualTo(2));
+    });
+
+    test('Applying Prescriptive Fix lifts Hook Score and recalculates projected views', () async {
+      const channel = ChannelGraph(
+        handle: '@AIEngineer',
+        medianViews: 10000,
+      );
+
+      final engine = SimulatorEngineService();
+      final initialResult = await engine.runSimulation(
+        title: 'How I Built This',
+        draftScript:
+            'Today we talk about software architecture. This is a very long sentence that has way too many words and continues endlessly without any visual break or proof whatsoever.',
+        format: BlueprintFormat.longForm,
+        channel: channel,
+      );
+
+      final fixId = initialResult.fixes.first.id;
+      final boosted = engine.applyPrescriptiveFix(
+        currentResult: initialResult,
+        fixId: fixId,
+      );
+
+      expect(boosted.hookScore, greaterThanOrEqualTo(initialResult.hookScore));
+      expect(boosted.projectedViews, greaterThanOrEqualTo(initialResult.projectedViews));
+      expect(boosted.fixes.firstWhere((f) => f.id == fixId).isApplied, isTrue);
+    });
+  });
+
+  group('GeminiService Resilient Blueprint Parsing & Truncation Recovery Tests', () {
+    late GeminiService geminiService;
+    const testChannel = ChannelGraph(
+      handle: '@RevenueCat',
+      channelName: 'RevenueCat',
+      niche: 'Subscription App Growth',
+      medianViews: 5000,
+    );
+
+    setUp(() {
+      geminiService = GeminiService();
+    });
+
+    test('GeminiService successfully parses clean JSON blueprints', () {
+      const validJson = '''
+      {
+        "blueprints": [
+          {
+            "id": "bp_gemini_1",
+            "title": "Why 90% of In-App Subscriptions Fail in Month 1",
+            "format": "longForm",
+            "formatLabel": "Long-Form (12–15 Min)",
+            "hookText": "If your subscription app has higher than 15% churn in week 1, you have a paywall onboarding gap...",
+            "thumbnailConceptLeft": "Churn Graph Spiking",
+            "thumbnailConceptRight": "Retention Framework with Verified Badge",
+            "thumbnailTag": "RETENTION BENCHMARK",
+            "dataProofReason": "Derived from live subscriber telemetry benchmarks.",
+            "predictedMultiplier": 3.2,
+            "convictionScore": 9.1,
+            "categoryTag": "Subscription App Growth",
+            "demandEvidenceSummary": "Audience demand regarding subscription churn.",
+            "creatorAuthenticityProof": "Aligned with analytical teardown style.",
+            "engagementContext": "Mined from high-velocity topics.",
+            "preEngineeredRetentionAnchors": [
+              "0:00 - 0:05: High-tension hook",
+              "0:05 - 0:25: Immediate proof",
+              "0:25 - 4:00: Step-by-step framework",
+              "End: Next video bridge"
+            ]
+          }
+        ]
+      }
+      ''';
+
+      final blueprints = geminiService.parseBlueprintsFromJson(validJson, testChannel);
+      expect(blueprints.length, 1);
+      expect(blueprints.first.title, 'Why 90% of In-App Subscriptions Fail in Month 1');
+      expect(blueprints.first.predictedMultiplier, 3.2);
+      expect(blueprints.first.convictionScore, 9.1);
+      expect(blueprints.first.preEngineeredRetentionAnchors.length, 4);
+    });
+
+    test('GeminiService parses markdown code-fenced JSON', () {
+      const markdownJson = '''
+      ```json
+      {
+        "blueprints": [
+          {
+            "id": "bp_markdown_1",
+            "title": "Paywall Design Teardown: 3 Winning Layouts",
+            "format": "longForm",
+            "formatLabel": "Long-Form (10–13 Min)",
+            "hookText": "We analyzed 50 top-grossing apps to uncover the highest-converting paywall structure.",
+            "predictedMultiplier": 2.9,
+            "convictionScore": 8.7
+          }
+        ]
+      }
+      ```
+      ''';
+
+      final blueprints = geminiService.parseBlueprintsFromJson(markdownJson, testChannel);
+      expect(blueprints.length, 1);
+      expect(blueprints.first.title, 'Paywall Design Teardown: 3 Winning Layouts');
+    });
+
+    test('GeminiService handles unescaped newlines inside string literals without throwing', () {
+      const jsonWithRawNewlines = '{\n'
+          '  "blueprints": [\n'
+          '    {\n'
+          '      "id": "bp_raw_newlines",\n'
+          '      "title": "Subscription Strategy",\n'
+          '      "format": "longForm",\n'
+          '      "hookText": "Line 1 of hook\\nLine 2 of hook",\n'
+          '      "predictedMultiplier": 2.5,\n'
+          '      "convictionScore": 8.4\n'
+          '    }\n'
+          '  ]\n'
+          '}';
+
+      final blueprints = geminiService.parseBlueprintsFromJson(jsonWithRawNewlines, testChannel);
+      expect(blueprints.length, 1);
+      expect(blueprints.first.title, 'Subscription Strategy');
+    });
+
+    test('GeminiService recovers completed blueprints from truncated JSON streams (e.g. Unterminated string)', () {
+      // Simulates the exact situation where Gemini truncated midway at "hookText in the 2nd item
+      const truncatedStreamJson = '''
+      {
+        "blueprints": [
+          {
+            "id": "bp_complete_1",
+            "title": "The Subscription Trap (And How to Escape)",
+            "format": "longForm",
+            "formatLabel": "Long-Form (12–15 Min)",
+            "hookText": "Most founders price their subscriptions too low in 2026...",
+            "thumbnailConceptLeft": "Stagnant ARR line",
+            "thumbnailConceptRight": "Optimized Pricing Tier",
+            "thumbnailTag": "PRICING FIX",
+            "dataProofReason": "Backed by catalog benchmarks.",
+            "predictedMultiplier": 3.1,
+            "convictionScore": 8.9,
+            "preEngineeredRetentionAnchors": [
+              "0:00 - 0:05: Bold thesis"
+            ]
+          },
+          {
+            "id": "bp_truncated_2",
+            "title": "Pricing Models Compared",
+            "format": "longForm",
+            "hookText
+      ''';
+
+      final blueprints = geminiService.parseBlueprintsFromJson(truncatedStreamJson, testChannel);
+      expect(blueprints.isNotEmpty, isTrue);
+      expect(blueprints.first.id, 'bp_complete_1');
+      expect(blueprints.first.title, 'The Subscription Trap (And How to Escape)');
+      expect(blueprints.first.predictedMultiplier, 3.1);
     });
   });
 }

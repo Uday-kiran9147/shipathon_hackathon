@@ -211,7 +211,7 @@ class _RetentionHazardScrubberState extends State<RetentionHazardScrubber> {
             ],
           ),
 
-          // Active Hazard Breakdown Card
+          // Active Hazard Breakdown Card (Section 9)
           if (activeHazard != null) ...[
             SizedBox(height: 6.h),
             Container(
@@ -235,11 +235,11 @@ class _RetentionHazardScrubberState extends State<RetentionHazardScrubber> {
                             SizedBox(width: 6.w),
                             Flexible(
                               child: Text(
-                                'DROP-OFF SPOT: ${activeHazard.timestampRange}',
+                                '${activeHazard.timestampRange} — HIGH RISK',
                                 style: AppTypography.labelSmall.copyWith(
                                   color: AppColors.hazardRuby,
                                   fontWeight: FontWeight.w800,
-                                  fontSize: 11.sp,
+                                  fontSize: 11.5.sp,
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -247,7 +247,6 @@ class _RetentionHazardScrubberState extends State<RetentionHazardScrubber> {
                           ],
                         ),
                       ),
-                      SizedBox(width: 6.w),
                       Container(
                         padding:
                             EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
@@ -256,7 +255,7 @@ class _RetentionHazardScrubberState extends State<RetentionHazardScrubber> {
                           borderRadius: BorderRadius.circular(6.r),
                         ),
                         child: Text(
-                          '${activeHazard.dropOffRiskPercentage}% DROP-OFF',
+                          '${activeHazard.dropOffRiskPercentage}% DROP-OFF RISK',
                           style: AppTypography.labelSmall.copyWith(
                             color: Colors.white,
                             fontSize: 10.sp,
@@ -266,23 +265,73 @@ class _RetentionHazardScrubberState extends State<RetentionHazardScrubber> {
                       ),
                     ],
                   ),
-                  SizedBox(height: 6.h),
-                  Text(
-                    activeHazard.title,
-                    style: AppTypography.titleMedium.copyWith(
-                      color: AppColors.textInk,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 14.sp,
+                  SizedBox(height: 8.h),
+                  // Flagged Sentence in Quotes
+                  Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.all(8.w),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8.r),
+                      border: Border.all(color: AppColors.hazardRubyBorder),
+                    ),
+                    child: Text(
+                      '"${activeHazard.flaggedScriptLine}"',
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.textInk,
+                        fontWeight: FontWeight.w700,
+                        fontStyle: FontStyle.italic,
+                      ),
                     ),
                   ),
+                  SizedBox(height: 8.h),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Why: ',
+                        style: AppTypography.labelSmall.copyWith(
+                          color: AppColors.hazardRuby,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 11.sp,
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          activeHazard.whyReason,
+                          style: AppTypography.bodySmall.copyWith(
+                            color: AppColors.textSecondary,
+                            height: 1.3,
+                            fontSize: 12.sp,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                   SizedBox(height: 4.h),
-                  Text(
-                    activeHazard.explanation,
-                    style: AppTypography.bodySmall.copyWith(
-                      color: AppColors.textSecondary,
-                      height: 1.35,
-                      fontSize: 12.5.sp,
-                    ),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Fix:   ',
+                        style: AppTypography.labelSmall.copyWith(
+                          color: AppColors.outlierJade,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 11.sp,
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          activeHazard.fixSuggestion,
+                          style: AppTypography.bodySmall.copyWith(
+                            color: const Color(0xFF065F46),
+                            fontWeight: FontWeight.w700,
+                            height: 1.3,
+                            fontSize: 12.sp,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

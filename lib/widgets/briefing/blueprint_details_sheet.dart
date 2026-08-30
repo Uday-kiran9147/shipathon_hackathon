@@ -164,11 +164,15 @@ class BlueprintDetailsSheet extends StatelessWidget {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                'Est. speaking time: 4.8s • 0% filler words',
-                                style: AppTypography.labelSmall.copyWith(
-                                  color: AppColors.outlierJade,
-                                  fontWeight: FontWeight.w700,
+                              Flexible(
+                                child: Text(
+                                  'Est. speaking time: 4.8s • 0% filler words',
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppTypography.labelSmall.copyWith(
+                                    color: AppColors.outlierJade,
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
                               ),
                               GestureDetector(
@@ -222,41 +226,36 @@ class BlueprintDetailsSheet extends StatelessWidget {
                     ),
                     SizedBox(height: 16.h),
 
-                    // Section 3: 4-Step Narrative Structure & Tailored Retention Anchors
+                    // Section 3: 4-Step Production Runbook
                     _buildSectionHeader(
-                      icon: Icons.list_alt_rounded,
-                      title: 'PRE-ENGINEERED RETENTION ANCHORS & PACING',
+                      icon: Icons.movie_creation_outlined,
+                      title: 'PRODUCTION RUNBOOK (0:00–0:30+ PACING)',
                     ),
                     SizedBox(height: 8.h),
-                    ...blueprint.preEngineeredRetentionAnchors.asMap().entries.map((entry) {
-                      final idx = entry.key;
-                      final anchor = entry.value;
-                      final parts = anchor.split(': ');
-                      final timestamp = parts.isNotEmpty ? parts.first : '0:00';
-                      final desc = parts.length > 1 ? parts.sublist(1).join(': ') : anchor;
-
-                      Color stepColor;
-                      switch (idx % 4) {
-                        case 0:
-                          stepColor = AppColors.primary;
-                          break;
-                        case 1:
-                          stepColor = AppColors.warningAmber;
-                          break;
-                        case 2:
-                          stepColor = AppColors.outlierJade;
-                          break;
-                        default:
-                          stepColor = AppColors.indigoAccent;
-                      }
-
-                      return _buildPacingStep(
-                        timestamp: timestamp,
-                        title: 'Phase ${idx + 1}',
-                        desc: desc,
-                        color: stepColor,
-                      );
-                    }),
+                    _buildPacingStep(
+                      timestamp: '0–5 sec',
+                      title: '01 — Hook',
+                      desc: blueprint.hookText,
+                      color: AppColors.primary,
+                    ),
+                    _buildPacingStep(
+                      timestamp: '5–15 sec',
+                      title: '02 — Context',
+                      desc: 'Explain the problem / conventional bottleneck without introductory fluff.',
+                      color: AppColors.warningAmber,
+                    ),
+                    _buildPacingStep(
+                      timestamp: '15–30 sec',
+                      title: '03 — Payoff',
+                      desc: 'Show the interesting result / benchmark proof before viewer drop-off.',
+                      color: AppColors.outlierJade,
+                    ),
+                    _buildPacingStep(
+                      timestamp: '30+ sec',
+                      title: '04 — Escalation',
+                      desc: 'Introduce the experiment, technical breakdown, or unexpected twist.',
+                      color: AppColors.indigoAccent,
+                    ),
                     SizedBox(height: 16.h),
 
                     // Section 4: Data-Backed "Why" Proof & Mathematical Conviction
@@ -582,8 +581,8 @@ ${blueprint.dataProofReason}
                         SizedBox(width: 10.w),
                         Expanded(
                           child: SolidHeavyButton(
-                            label: 'Run Simulator',
-                            icon: Icons.speed_rounded,
+                            label: 'Run Simulation →',
+                            icon: Icons.rocket_launch_rounded,
                             height: 48.h,
                             onPressed: () {
                               final simProvider =
@@ -617,12 +616,16 @@ ${blueprint.dataProofReason}
       children: [
         Icon(icon, size: 14.sp, color: AppColors.textMuted),
         SizedBox(width: 6.w),
-        Text(
-          title,
-          style: AppTypography.labelSmall.copyWith(
-            color: AppColors.textMuted,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 0.6,
+        Flexible(
+          child: Text(
+            title,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: AppTypography.labelSmall.copyWith(
+              color: AppColors.textMuted,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.6,
+            ),
           ),
         ),
       ],

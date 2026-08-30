@@ -10,6 +10,7 @@ import '../../providers/channel_provider.dart';
 import '../../widgets/briefing/blueprint_card.dart';
 import '../../widgets/common/custom_app_bar.dart';
 import '../../widgets/common/solid_heavy_button.dart';
+import '../../widgets/common/tactile_card.dart';
 
 /// Daily Prescriptive Briefing Screen ("What to Film Tomorrow")
 class DailyBriefingScreen extends StatefulWidget {
@@ -64,8 +65,8 @@ class _DailyBriefingScreenState extends State<DailyBriefingScreen> {
                     color: AppColors.primary,
                     size: 22.sp,
                   ),
-            tooltip: 'Generate Fresh AI Ideas',
-            onPressed: briefingProvider.isGeneratingFresh
+            tooltip: 'Generate Fresh AI Idea',
+            onPressed: briefingProvider.isGeneratingFresh || !channel.isConfigured
                 ? null
                 : () async {
                     try {
@@ -74,17 +75,40 @@ class _DailyBriefingScreenState extends State<DailyBriefingScreen> {
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text(
-                              '✨ Generated fresh idea: ${newBp.title}',
-                              style: AppTypography.bodyMedium
-                                  .copyWith(color: Colors.white),
+                            content: Row(
+                              children: [
+                                const Icon(Icons.auto_awesome,
+                                    color: Colors.white, size: 18),
+                                SizedBox(width: 8.w),
+                                Expanded(
+                                  child: Text(
+                                    '✨ Fresh AI Idea: ${newBp.title}',
+                                    style: AppTypography.bodyMedium.copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
                             ),
                             backgroundColor: AppColors.primaryDark,
                             behavior: SnackBarBehavior.floating,
                           ),
                         );
                       }
-                    } catch (_) {}
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Could not generate idea: $e'),
+                            backgroundColor: AppColors.hazardRuby,
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      }
+                    }
                   },
           ),
         ],
@@ -104,7 +128,13 @@ class _DailyBriefingScreenState extends State<DailyBriefingScreen> {
 
               // Creator Studio Persona Card
               _buildCreatorPersonaCard(context, channel),
-              SizedBox(height: 16.h),
+              SizedBox(height: 14.h),
+
+              // Dedicated AI Fresh Idea Action Card
+              if (channel.isConfigured) ...[
+                _buildAiIdeaBanner(context, briefingProvider, channel),
+                SizedBox(height: 14.h),
+              ],
 
               // Format & Saved Filter Pills
               SingleChildScrollView(
@@ -330,22 +360,26 @@ class _DailyBriefingScreenState extends State<DailyBriefingScreen> {
       );
     }
 
+    final medianFormatted = NumberFormat.compact().format(channel.medianViews);
+    final subsFormatted = NumberFormat.compact().format(channel.subscribers);
+
     return Container(
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16.r),
+        borderRadius: BorderRadius.circular(18.r),
         border: Border.all(color: AppColors.borderLight),
         boxShadow: AppColors.cardElevation,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Row 1: Avatar + Name + Verified + Subscribers
           Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Avatar
               CircleAvatar(
-                radius: 22.r,
+                radius: 24.r,
                 backgroundColor: AppColors.primarySubtle,
                 backgroundImage: (channel.avatarUrl != null &&
                         channel.avatarUrl!.isNotEmpty)
@@ -372,10 +406,13 @@ class _DailyBriefingScreenState extends State<DailyBriefingScreen> {
                       children: [
                         Flexible(
                           child: Text(
-                            channel.channelName,
-                            style: AppTypography.titleMedium.copyWith(
+                            channel.channelName.isNotEmpty
+                                ? channel.channelName
+                                : channel.handle,
+                            style: AppTypography.titleLarge.copyWith(
                               fontWeight: FontWeight.w800,
-                              fontSize: 16.sp,
+                              fontSize: 16.5.sp,
+                              letterSpacing: -0.3,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -385,17 +422,17 @@ class _DailyBriefingScreenState extends State<DailyBriefingScreen> {
                         Icon(
                           Icons.verified_rounded,
                           color: AppColors.primary,
-                          size: 16.sp,
+                          size: 17.sp,
                         ),
                       ],
                     ),
                     SizedBox(height: 2.h),
                     Text(
-                      '${channel.handle} • ${channel.niche}',
+                      '${channel.handle} • $subsFormatted subscribers',
                       style: AppTypography.bodySmall.copyWith(
                         color: AppColors.textSecondary,
                         fontWeight: FontWeight.w600,
-                        fontSize: 12.sp,
+                        fontSize: 12.5.sp,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -405,32 +442,167 @@ class _DailyBriefingScreenState extends State<DailyBriefingScreen> {
               ),
             ],
           ),
-          SizedBox(height: 12.h),
+          SizedBox(height: 14.h),
+
+          // Row 2: Grid of Median Views & Upload Frequency
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
             decoration: BoxDecoration(
               color: AppColors.canvas,
-              borderRadius: BorderRadius.circular(100.r), // Capsule stats pill
+              borderRadius: BorderRadius.circular(12.r),
               border: Border.all(color: AppColors.borderLight),
             ),
-            child: Row(
+            child: Column(
               children: [
-                Icon(Icons.insights_rounded,
-                    size: 16.sp, color: AppColors.outlierJade),
-                SizedBox(width: 8.w),
-                Expanded(
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Median views',
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Text(
+                      medianFormatted,
+                      style: AppTypography.titleMedium.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textInk,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 6.h),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Upload frequency',
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Text(
+                      channel.uploadFrequencyFormatted,
+                      style: AppTypography.titleMedium.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.primaryDark,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: 10.h),
+
+          // Divider & Bottom Row: Content analyzed + Top outlier
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceSubtle,
+              borderRadius: BorderRadius.circular(12.r),
+              border: Border.all(color: AppColors.borderLight),
+            ),
+            child: Wrap(
+              spacing: 8.w,
+              runSpacing: 8.h,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.video_library_outlined,
+                        size: 15.sp, color: AppColors.textMuted),
+                    SizedBox(width: 6.w),
+                    Text(
+                      'Content analyzed',
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    SizedBox(width: 6.w),
+                    Text(
+                      '${channel.totalVideos > 0 ? channel.totalVideos : channel.recentVideos.length} videos',
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.textInk,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+                Container(
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                  decoration: BoxDecoration(
+                    color: AppColors.outlierJadeSubtle,
+                    borderRadius: BorderRadius.circular(6.r),
+                    border: Border.all(color: AppColors.outlierJadeBorder),
+                  ),
                   child: Text(
-                    '${NumberFormat.compact().format(channel.subscribers)} Subscribers • ~${NumberFormat.compact().format(channel.medianViews)} Avg Views',
-                    style: AppTypography.bodySmall.copyWith(
-                      color: AppColors.textInk,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12.sp,
+                    'Top Outlier: ${channel.topOutlierMultiplier}× median',
+                    style: AppTypography.labelSmall.copyWith(
+                      color: AppColors.outlierJade,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 10.5.sp,
                     ),
                   ),
                 ),
               ],
             ),
           ),
+
+          // Topic Performance Pill Indicators
+          if (channel.topicPerformanceMultipliers.isNotEmpty) ...[
+            SizedBox(height: 10.h),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: channel.topicPerformanceMultipliers.take(4).map((t) {
+                  return Container(
+                    margin: EdgeInsets.only(right: 6.w),
+                    padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                    decoration: BoxDecoration(
+                      color: t.multiple >= 1.5
+                          ? AppColors.outlierJadeSubtle
+                          : AppColors.canvas,
+                      borderRadius: BorderRadius.circular(100.r),
+                      border: Border.all(
+                        color: t.multiple >= 1.5
+                            ? AppColors.outlierJadeBorder
+                            : AppColors.borderLight,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          t.topic,
+                          style: AppTypography.labelSmall.copyWith(
+                            fontSize: 10.5.sp,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textInk,
+                          ),
+                        ),
+                        SizedBox(width: 4.w),
+                        Text(
+                          '→ ${t.multiple}×',
+                          style: AppTypography.labelSmall.copyWith(
+                            fontSize: 10.5.sp,
+                            fontWeight: FontWeight.w800,
+                            color: t.multiple >= 1.5
+                                ? AppColors.outlierJade
+                                : AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -577,6 +749,119 @@ class _DailyBriefingScreenState extends State<DailyBriefingScreen> {
                 widget.onNavigateTab!(2); // Go to Channel Graph Tab
               }
             },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAiIdeaBanner(
+    BuildContext context,
+    BriefingProvider briefingProvider,
+    ChannelGraph channel,
+  ) {
+    return TactileCard(
+      onTap: briefingProvider.isGeneratingFresh
+          ? null
+          : () async {
+              try {
+                final newBp =
+                    await briefingProvider.generateFreshBlueprint(channel);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Row(
+                        children: [
+                          const Icon(Icons.auto_awesome,
+                              color: Colors.white, size: 18),
+                          SizedBox(width: 8.w),
+                          Expanded(
+                            child: Text(
+                              '✨ Fresh AI Idea: ${newBp.title}',
+                              style: AppTypography.bodyMedium.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      backgroundColor: AppColors.primaryDark,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Could not generate idea: $e'),
+                      backgroundColor: AppColors.hazardRuby,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }
+              }
+            },
+      backgroundColor: const Color(0xFFEFF6FF),
+      border: Border.all(color: const Color(0xFFBFDBFE), width: 1.5),
+      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(8.w),
+            decoration: BoxDecoration(
+              color: AppColors.primary,
+              borderRadius: BorderRadius.circular(10.r),
+            ),
+            child: briefingProvider.isGeneratingFresh
+                ? SizedBox(
+                    width: 18.w,
+                    height: 18.w,
+                    child: const CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : Icon(
+                    Icons.auto_awesome_rounded,
+                    color: Colors.white,
+                    size: 18.sp,
+                  ),
+          ),
+          SizedBox(width: 12.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  briefingProvider.isGeneratingFresh
+                      ? 'Synthesizing Fresh AI Blueprint...'
+                      : 'Generate Fresh AI Idea',
+                  style: AppTypography.titleMedium.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.primaryDark,
+                  ),
+                ),
+                SizedBox(height: 2.h),
+                Text(
+                  briefingProvider.isGeneratingFresh
+                      ? 'Mining live comments & creator DNA via Gemini AI'
+                      : 'Tap to brainstorm a brand-new high-retention video concept',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.textSecondary,
+                    fontSize: 11.5.sp,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(
+            Icons.chevron_right_rounded,
+            color: AppColors.primary,
+            size: 20.sp,
           ),
         ],
       ),
