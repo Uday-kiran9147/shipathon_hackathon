@@ -2,8 +2,11 @@ name: Deploy to EC2
 
 on:
   push:
-    branches: [main,dev]
+    branches: [main, dev]
   workflow_dispatch: # manual trigger
+
+env:
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: "true"
 
 jobs:
   build:
@@ -17,7 +20,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "24.18.0"
+          node-version: "20"
           cache: "npm"
           cache-dependency-path: server/package-lock.json
 
