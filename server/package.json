@@ -4,13 +4,12 @@
   "description": "Prevue: YouTube Creator Intelligence, Vector Search & Pre-Flight Simulator Backend (NestJS)",
   "main": "dist/main.js",
   "scripts": {
+    "start:dev": "cross-env NODE_ENV=development nest start --watch",
+    "dev": "cross-env NODE_ENV=development nest start --watch",
     "build": "nest build",
-    "format": "prettier --write \"src/**/*.ts\"",
-    "start": "nest start",
-    "dev": "nest start --watch",
-    "start:dev": "nest start --watch",
-    "start:debug": "nest start --debug --watch",
-    "start:prod": "node dist/main"
+    "start:prod": "cross-env NODE_ENV=production node dist/main",
+    "env:encode": "node scripts/generate-env.js --encode",
+    "env:decode": "node scripts/generate-env.js --decode"
   },
   "keywords": [
     "youtube",
@@ -39,11 +38,12 @@
     "rxjs": "^7.8.1"
   },
   "devDependencies": {
-    "@nestjs/cli": "^10.3.2",
+    "@nestjs/cli": "^12.0.0",
     "@nestjs/schematics": "^10.1.1",
     "@types/express": "^4.17.21",
     "@types/node": "^20.12.7",
     "@types/pg": "^8.11.5",
+    "cross-env": "^10.1.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.5"
   }

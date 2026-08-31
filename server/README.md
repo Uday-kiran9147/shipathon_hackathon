@@ -1,32 +1,38 @@
-# Prevue Backend Server
+# Prevue Backend Server (NestJS 10.x)
 
-Production Node.js + TypeScript backend server for **Prevue (YouTube Creator Intelligence & Pre-Flight Simulator)** with PostgreSQL and `pgvector` semantic vector search.
+Production-grade **NestJS** backend server for **Prevue (YouTube Creator Intelligence & Pre-Flight Simulator)** with PostgreSQL and `pgvector` semantic vector search.
 
 ---
 
-## 🚀 Quickstart
+## 🚀 Architecture Overview
 
-### 1. Start PostgreSQL with pgvector (Docker)
-```bash
-docker run -d \
-  --name prevue-postgres \
-  -e POSTGRES_USER=postgres \
-  -e POSTGRES_PASSWORD=postgres \
-  -e POSTGRES_DB=prevue_db \
-  -p 5432:5432 \
-  pgvector/pgvector:pg16
-```
+The backend is built with **NestJS 10.x** modular architecture:
+- **`DatabaseModule`**: Global connection pool managing PostgreSQL and `pgvector` extension lifecycle.
+- **`HealthModule`**: Endpoint monitoring and service uptime status (`GET /health`).
+- **`YouTubeModule`**: Channel intelligence mining, upload metrics, topic multiples, and median view calculations (`POST /api/channel/sync`).
+- **`BriefingModule`**: Gemini 3.7 Flash powered Category & Theme Intelligence Daily Blueprint generator (`POST /api/briefing/generate`).
+- **`SimulatorModule`**: Pre-Flight Simulator 7-dimension scoring engine, 30s retention hazard timeline, views projection, and 3 prescriptive fixes (`POST /api/simulator/evaluate`).
+- **`VectorModule`**: Cosine distance similarity search for outlier videos & audience demand comments (`POST /api/vector/search-outliers`, `POST /api/vector/demand-clusters`).
 
-### 2. Apply Schema
-```bash
-psql -h localhost -U postgres -d prevue_db -f schema.sql
-```
+---
 
-### 3. Install & Start Server
+## 🛠️ Quickstart
+
+### 1. Install Dependencies
 ```bash
 cd server
 npm install
-npm run dev
+```
+
+### 2. Start Server (Development with Hot-Reload)
+```bash
+npm run start:dev
+```
+
+### 3. Build & Run for Production
+```bash
+npm run build
+npm run start:prod
 ```
 
 Server will run at `http://localhost:3000`.
@@ -35,8 +41,9 @@ Server will run at `http://localhost:3000`.
 
 ## 📡 API Endpoints
 
-- `GET /health` - Server health check
-- `POST /api/channel/sync` - Sync YouTube channel metadata, upload frequency, & topic multiples
-- `POST /api/vector/search-outliers` - Cosine distance search for historical outlier videos
+- `GET /health` - Server health & framework status
+- `POST /api/channel/sync` - Sync YouTube channel metadata & compute median baseline
 - `POST /api/briefing/generate` - Category & Theme Intelligence Daily Blueprint generator (Gemini 3.7 Flash)
-- `POST /api/simulator/evaluate` - Pre-Flight Simulator 7-dimension scoring, views projection, & 30s retention hazard timeline
+- `POST /api/simulator/evaluate` - Pre-Flight Simulator 7-dimension scoring & 30s retention hazard scrubber
+- `POST /api/vector/search-outliers` - Cosine distance search for historical outlier videos
+- `POST /api/vector/demand-clusters` - Semantic audience demand search

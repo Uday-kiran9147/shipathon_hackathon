@@ -60,12 +60,19 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
   private isConnected = false;
 
   constructor(private configService: ConfigService) {
-    const connectionString = this.configService.get<string>('databaseUrl');
+    const connectionString = this.configService.get<string>('DATABASE_URL');
+    this.logger.log(`Connecting to PostgreSQL with connection string: ${connectionString}`);
+    const isCloudDb =
+      connectionString?.includes('neon.tech') ||
+      connectionString?.includes('aws') ||
+      connectionString?.includes('sslmode=');
+
     this.pool = new Pool({
       connectionString,
       max: 20,
       idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 2000,
+      connectionTimeoutMillis: 15000,
+      ssl: isCloudDb ? { rejectUnauthorized: false } : undefined,
     });
 
     this.pool.on('connect', async (client: PoolClient) => {
@@ -80,74 +87,107 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleInit() {
-    try {
-      const client = await this.pool.connect();
+    const maxRetries = 3;
+    let attempt = 0;
 
-      // 1. Create Core Tables (Users, Creators, Videos)
-      await client.query(`
-        CREATE TABLE IF NOT EXISTS users (
-          id VARCHAR(64) PRIMARY KEY,
-          email VARCHAR(255) UNIQUE NOT NULL,
-          password_hash VARCHAR(255),
-          display_name VARCHAR(255) NOT NULL,
-          photo_url TEXT,
-          connected_channels TEXT[] DEFAULT ARRAY['@RevenueCat'],
-          active_channel_handle VARCHAR(100) DEFAULT '@RevenueCat',
-          is_guest BOOLEAN DEFAULT FALSE,
-          created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-          updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-        );
-
-        CREATE TABLE IF NOT EXISTS creators (
-          id VARCHAR(64) PRIMARY KEY,
-          youtube_channel_id VARCHAR(64) UNIQUE NOT NULL,
-          handle VARCHAR(100) NOT NULL,
-          title VARCHAR(255) NOT NULL,
-          description TEXT,
-          avatar_url TEXT,
-          subscriber_count BIGINT DEFAULT 0,
-          total_views BIGINT DEFAULT 0,
-          total_videos INTEGER DEFAULT 0,
-          upload_frequency NUMERIC(5,2) DEFAULT 0,
-          median_views BIGINT DEFAULT 0,
-          avg_views BIGINT DEFAULT 0,
-          niche VARCHAR(100),
-          signature_hook_style TEXT,
-          created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-          updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-        );
-
-        CREATE TABLE IF NOT EXISTS videos (
-          id VARCHAR(64) PRIMARY KEY,
-          creator_id VARCHAR(64),
-          youtube_video_id VARCHAR(64) UNIQUE NOT NULL,
-          title TEXT NOT NULL,
-          description TEXT,
-          published_at TIMESTAMP WITH TIME ZONE,
-          duration_seconds INTEGER DEFAULT 0,
-          views BIGINT DEFAULT 0,
-          likes BIGINT DEFAULT 0,
-          comments BIGINT DEFAULT 0,
-          thumbnail_url TEXT,
-          created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-        );
-      `);
-
-      this.isConnected = true;
-      this.logger.log('✅ Connected to PostgreSQL: "users", "creators" & "videos" tables ready.');
-
-      // 2. Optional pgvector check
+    while (attempt < maxRetries) {
+      attempt++;
       try {
-        await client.query('CREATE EXTENSION IF NOT EXISTS vector;');
-        this.logger.log('✅ pgvector extension enabled for vector similarity.');
-      } catch {
-        this.logger.debug('Note: pgvector extension not installed on local PostgreSQL (using in-memory cosine fallback for vector queries).');
-      }
+        const client = await this.pool.connect();
 
-      client.release();
-    } catch (err: any) {
-      this.isConnected = false;
-      this.logger.warn(`⚠️ PostgreSQL unavailable (running in graceful mock/in-memory mode): ${err.message}`);
+        // 1. Create Core Tables (Users, Creators, Videos)
+        await client.query(`
+          CREATE TABLE IF NOT EXISTS users (
+            id VARCHAR(64) PRIMARY KEY,
+            email VARCHAR(255) UNIQUE NOT NULL,
+            password_hash VARCHAR(255),
+            display_name VARCHAR(255) NOT NULL,
+            photo_url TEXT,
+            connected_channels TEXT[] DEFAULT ARRAY['@RevenueCat'],
+            active_channel_handle VARCHAR(100) DEFAULT '@RevenueCat',
+            is_guest BOOLEAN DEFAULT FALSE,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+            updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+          );
+
+          CREATE TABLE IF NOT EXISTS creators (
+            id VARCHAR(64) PRIMARY KEY,
+            youtube_channel_id VARCHAR(64) UNIQUE NOT NULL,
+            handle VARCHAR(100) NOT NULL,
+            title VARCHAR(255) NOT NULL,
+            description TEXT,
+            avatar_url TEXT,
+            subscriber_count BIGINT DEFAULT 0,
+            total_views BIGINT DEFAULT 0,
+            total_videos INTEGER DEFAULT 0,
+            upload_frequency NUMERIC(5,2) DEFAULT 0,
+            median_views BIGINT DEFAULT 0,
+            avg_views BIGINT DEFAULT 0,
+            niche VARCHAR(100),
+            signature_hook_style TEXT,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+            updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+          );
+
+          CREATE TABLE IF NOT EXISTS videos (
+            id VARCHAR(64) PRIMARY KEY,
+            creator_id VARCHAR(64),
+            youtube_video_id VARCHAR(64) UNIQUE NOT NULL,
+            title TEXT NOT NULL,
+            description TEXT,
+            published_at TIMESTAMP WITH TIME ZONE,
+            duration_seconds INTEGER DEFAULT 0,
+            views BIGINT DEFAULT 0,
+            likes BIGINT DEFAULT 0,
+            comments BIGINT DEFAULT 0,
+            thumbnail_url TEXT,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+          );
+        `);
+
+        this.isConnected = true;
+        this.logger.log('✅ Connected to PostgreSQL: "users", "creators" & "videos" tables ready.');
+
+        // 2. Optional pgvector check
+        try {
+          await client.query('CREATE EXTENSION IF NOT EXISTS vector;');
+          await client.query(`
+            CREATE TABLE IF NOT EXISTS video_embeddings (
+              id VARCHAR(64) PRIMARY KEY,
+              creator_id VARCHAR(64) NOT NULL,
+              video_id VARCHAR(64) NOT NULL,
+              performance_multiple NUMERIC(6,2) DEFAULT 1.0,
+              combined_embedding vector(768),
+              created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+            );
+
+            CREATE TABLE IF NOT EXISTS comment_embeddings (
+              id VARCHAR(64) PRIMARY KEY,
+              creator_id VARCHAR(64) NOT NULL,
+              author_name VARCHAR(255),
+              comment_text TEXT NOT NULL,
+              like_count INTEGER DEFAULT 0,
+              intent_category VARCHAR(64) DEFAULT 'general',
+              embedding vector(768),
+              created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+            );
+          `);
+          this.logger.log('✅ pgvector extension and vector tables enabled for vector similarity.');
+        } catch {
+          this.logger.debug('Note: pgvector extension not installed on local PostgreSQL (using in-memory cosine fallback for vector queries).');
+        }
+
+        client.release();
+        return;
+      } catch (err: any) {
+        if (attempt < maxRetries) {
+          this.logger.warn(`Connection attempt ${attempt} failed: ${err.message}. Retrying in 2s...`);
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+        } else {
+          this.isConnected = false;
+          this.logger.warn(`⚠️ PostgreSQL unavailable (running in graceful mock/in-memory mode): ${err.message}`);
+        }
+      }
     }
   }
 

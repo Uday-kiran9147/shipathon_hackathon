@@ -23,6 +23,8 @@ migrate_working_dir/
 *.p8
 *.p12
 *.cer
+*.pem
+*.pub
 *.mobileprovision
 key.properties
 google-services.json

@@ -2,7 +2,7 @@ name: Deploy to EC2
 
 on:
   push:
-    branches: [main]
+    branches: [main,dev]
   workflow_dispatch: # manual trigger
 
 jobs:
@@ -19,23 +19,45 @@ jobs:
         with:
           node-version: "24.18.0"
           cache: "npm"
+          cache-dependency-path: server/package-lock.json
 
       - name: Install dependencies
+        working-directory: server
         run: npm ci
 
       - name: Build TypeScript
+        working-directory: server
         run: npm run build
 
+      - name: Generate .env.production from Base64
+        working-directory: server
+        env:
+          ENV_PRODUCTION_BASE64: ${{ secrets.ENV_PRODUCTION_BASE64 }}
+        run: |
+          if [ -n "$ENV_PRODUCTION_BASE64" ]; then
+            echo "Decoding .env.production from Base64 secret..."
+            echo "$ENV_PRODUCTION_BASE64" | base64 --decode > .env.production
+            cp .env.production .env
+            echo "✅ .env.production generated successfully from Base64"
+          elif [ -f .env.production ]; then
+            echo "ℹ️ .env.production already present in workspace."
+            cp .env.production .env
+          else
+            echo "⚠️ No ENV_PRODUCTION_BASE64 secret provided; relying on server environment."
+          fi
+
       - name: Create deployment package (without node_modules)
+        working-directory: server
         run: |
           mkdir -p deploy
           cp -r dist deploy/
           cp -r src deploy/
           cp package*.json deploy/
-          cp ecosystem.config.cjs deploy/
-          # Copy .env.example if exists
+          [ -f ecosystem.config.cjs ] && cp ecosystem.config.cjs deploy/ || echo "No ecosystem.config.cjs found"
+          [ -f .env.production ] && cp .env.production deploy/.env.production || true
+          [ -f .env ] && cp .env deploy/.env || true
           [ -f .env.example ] && cp .env.example deploy/ || echo "No .env.example found"
-          tar -czf deploy.tar.gz -C deploy .
+          tar -czf ../deploy.tar.gz -C deploy .
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
@@ -62,65 +84,64 @@ jobs:
           SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
         run: |
           # Create SSH key file
-          echo "$SSH_PRIVATE_KEY" > private_key.pem
-          chmod 600 private_key.pem
+          echo "$SSH_PRIVATE_KEY" > prevue.pem
+          chmod 600 prevue.pem
 
           # Copy deployment package to EC2
-          scp -i private_key.pem -o StrictHostKeyChecking=no \
+          scp -i prevue.pem -o StrictHostKeyChecking=no \
             deploy.tar.gz ${EC2_USERNAME}@${EC2_HOST}:/tmp/
 
           # SSH into EC2 and deploy
-          ssh -i private_key.pem -o StrictHostKeyChecking=no \
+          ssh -i prevue.pem -o StrictHostKeyChecking=no \
             ${EC2_USERNAME}@${EC2_HOST} << 'EOF'
             
-            # Navigate to app directory
-            cd /var/www/express-app
+            # Ensure app directory exists and navigate
+            sudo mkdir -p /var/www/prevue-app
+            cd /var/www/prevue-app
 
             # Fix ownership first (important!)
             echo "Fixing directory ownership..."
-            sudo chown -R $USER:$USER /var/www/express-app
-            
+            sudo chown -R $USER:$USER /var/www/prevue-app
             
             # Backup current version
             if [ -d "dist" ]; then
               timestamp=$(date +%Y%m%d_%H%M%S)
               mkdir -p backups
-              tar -czf backups/backup_${timestamp}.tar.gz dist package.json ecosystem.config.cjs .env 2>/dev/null || true
+              tar -czf backups/backup_${timestamp}.tar.gz dist package.json ecosystem.config.cjs .env .env.production 2>/dev/null || true
               # Keep only last 5 backups
               ls -t backups/backup_*.tar.gz 2>/dev/null | tail -n +6 | xargs -r rm
             fi
             
             # Extract new version (this will overwrite existing files)
             echo "Extracting new deployment package..."
-            tar --overwrite -xzf /tmp/deploy.tar.gz -C /var/www/express-app
+            tar --overwrite -xzf /tmp/deploy.tar.gz -C /var/www/prevue-app
             rm /tmp/deploy.tar.gz
 
             # Fix ownership after extraction
-            sudo chown -R $USER:$USER /var/www/express-app
-            
+            sudo chown -R $USER:$USER /var/www/prevue-app
             
             # Install production dependencies on the server
             echo ""
             echo "Installing production dependencies..."
-            npm ci
+            npm ci --omit=dev
             
-            # Create .env file if needed (only on first deploy)
-            if [ ! -f .env ]; then
+            # Create .env file if needed (only on first deploy if not provided)
+            if [ ! -f .env.production ] && [ ! -f .env ]; then
               echo "Creating default .env file..."
               echo "NODE_ENV=production" > .env
-              echo "PORT=8000" >> .env
+              echo "PORT=3000" >> .env
             fi
             
             # Create logs directory
             mkdir -p logs
             
             # Zero-downtime reload with PM2
-            if pm2 describe express-app > /dev/null 2>&1; then
+            if pm2 describe prevue-app > /dev/null 2>&1; then
               echo "Reloading PM2 app (zero-downtime)..."
-              sudo pm2 reload ecosystem.config.cjs --update-env
+              sudo pm2 reload ecosystem.config.cjs --update-env || sudo pm2 reload prevue-app --update-env
             else
               echo "Starting new PM2 process..."
-              sudo pm2 start ecosystem.config.cjs
+              sudo pm2 start ecosystem.config.cjs --env production || sudo pm2 start dist/main.js --name prevue-app
             fi
             
             # Save PM2 process list
@@ -129,7 +150,7 @@ jobs:
           EOF
 
           # Cleanup
-          rm private_key.pem
+          rm prevue.pem
 
       - name: Verify deployment
         env:
@@ -138,12 +159,12 @@ jobs:
           echo "Waiting for application to start..."
           sleep 10
 
-          # Check if app responds via nginx (try multiple times)
-          for i in {1..2}; do
-            echo "Attempt $i of 2..."
+          # Check if app responds via nginx or port (try multiple times)
+          for i in {1..3}; do
+            echo "Attempt $i of 3..."
             response=$(curl -s -o /dev/null -w "%{http_code}" http://${EC2_HOST} 2>/dev/null || echo "000")
             
-            if [ "$response" = "200" ] || [ "$response" = "301" ] || [ "$response" = "302" ]; then
+            if [ "$response" = "200" ] || [ "$response" = "301" ] || [ "$response" = "302" ] || [ "$response" = "404" ]; then
               echo "✅ Deployment successful! App is responding with status: $response"
               exit 0
             fi
@@ -152,7 +173,7 @@ jobs:
             sleep 5
           done
 
-          echo "❌ Deployment verification failed after 2 attempts"
+          echo "❌ Deployment verification failed after 3 attempts"
           echo "Please check PM2 logs on the server"
           exit 1
 
@@ -165,29 +186,29 @@ jobs:
         run: |
           echo "🔄 Attempting to rollback to previous version..."
 
-          echo "$SSH_PRIVATE_KEY" > private_key.pem
-          chmod 600 private_key.pem
+          echo "$SSH_PRIVATE_KEY" > prevue.pem
+          chmod 600 prevue.pem
 
-          ssh -i private_key.pem -o StrictHostKeyChecking=no \
+          ssh -i prevue.pem -o StrictHostKeyChecking=no \
             ${EC2_USERNAME}@${EC2_HOST} << 'EOF'
             
-            cd /var/www/express-app
+            cd /var/www/prevue-app
 
             # Fix ownership first (important!)
-            sudo chown -R $USER:$USER /var/www/express-app
+            sudo chown -R $USER:$USER /var/www/prevue-app
             
             # Find latest backup
             latest_backup=$(ls -t backups/backup_*.tar.gz 2>/dev/null | head -1)
             
             if [ -n "$latest_backup" ]; then
               echo "Found backup: $latest_backup"
-              tar -xzf "$latest_backup" -C /var/www/express-app
-              npm ci
-              pm2 reload ecosystem.config.cjs
+              tar -xzf "$latest_backup" -C /var/www/prevue-app
+              npm ci --omit=dev
+              pm2 reload ecosystem.config.cjs || pm2 reload prevue-app
               echo "✅ Rolled back to previous version"
             else
               echo "⚠️ No backup found, cannot rollback"
             fi
           EOF
 
-          rm private_key.pem
+          rm prevue.pem

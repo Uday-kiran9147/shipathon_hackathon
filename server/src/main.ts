@@ -22,13 +22,15 @@ async function bootstrap() {
     }),
   );
 
-  const port = configService.get<number>('port', 3000);
+  const port = configService.get<number>('PORT', 3000);
+  const nodeEnv = configService.get<string>('NODE_ENV', 'production');
+  const geminiModel = configService.get<string>('GEMINI_MODEL', 'gemini-3.7-flash');
   await app.listen(port, '0.0.0.0');
-
 
   console.log(`=======================================================`);
   console.log(`🚀 Prevue NestJS Backend Server running on http://localhost:${port}`);
-  console.log(`🤖 AI Engine: Gemini 3.7 Flash`);
+  console.log(`🌍 Environment: ${nodeEnv.toUpperCase()}`);
+  console.log(`🤖 AI Engine: ${geminiModel}`);
   console.log(`📊 Vector DB: PostgreSQL + pgvector`);
   console.log(`=======================================================`);
 }
