@@ -3,6 +3,8 @@ name: Deploy to EC2
 on:
   push:
     branches: [main, dev]
+    paths:
+      - 'server/**'
   workflow_dispatch: # manual trigger
 
 jobs:
