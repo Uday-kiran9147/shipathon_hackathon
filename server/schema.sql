@@ -18,8 +18,34 @@ CREATE TABLE IF NOT EXISTS users (
     active_channel_handle VARCHAR(100) DEFAULT '@RevenueCat',
     is_guest BOOLEAN DEFAULT FALSE,
     is_pro BOOLEAN DEFAULT FALSE,
+    simulations_used_this_month INT DEFAULT 0,
+    free_simulations_limit INT DEFAULT 3,
+    trial_ends_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Pre-Flight Simulations Table
+CREATE TABLE IF NOT EXISTS simulations (
+    id VARCHAR(64) PRIMARY KEY,
+    user_id VARCHAR(64) REFERENCES users(id) ON DELETE CASCADE,
+    channel_handle VARCHAR(100) NOT NULL,
+    title TEXT NOT NULL,
+    draft_script TEXT NOT NULL,
+    format VARCHAR(32) DEFAULT 'longForm',
+    hook_score NUMERIC(3,1) NOT NULL,
+    resonance_score NUMERIC(3,1) NOT NULL,
+    novelty_score NUMERIC(3,1) NOT NULL,
+    topic_momentum_score NUMERIC(3,1) NOT NULL,
+    clarity_score NUMERIC(3,1) NOT NULL,
+    pacing_score NUMERIC(3,1) NOT NULL,
+    creator_fit_score NUMERIC(3,1) NOT NULL,
+    projected_views_multiplier NUMERIC(4,2) NOT NULL,
+    projected_views BIGINT NOT NULL,
+    performance_tier VARCHAR(32) NOT NULL,
+    hazards JSONB DEFAULT '[]'::jsonb,
+    fixes JSONB DEFAULT '[]'::jsonb,
+    created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- 1. Creators Master Table

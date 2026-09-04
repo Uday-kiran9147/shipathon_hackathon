@@ -8,6 +8,9 @@ class UserProfile {
   final String activeChannelHandle;
   final bool isGuest;
   final bool isPro;
+  final int simulationsUsedThisMonth;
+  final int freeSimulationsLimit;
+  final DateTime? trialEndsAt;
   final String? authToken;
   final DateTime createdAt;
 
@@ -20,9 +23,20 @@ class UserProfile {
     this.activeChannelHandle = '@uk',
     this.isGuest = false,
     this.isPro = false,
+    this.simulationsUsedThisMonth = 0,
+    this.freeSimulationsLimit = 3,
+    this.trialEndsAt,
     this.authToken,
     required this.createdAt,
   });
+
+  int get simulationsRemaining {
+    if (isPro) return 999;
+    final remaining = freeSimulationsLimit - simulationsUsedThisMonth;
+    return remaining > 0 ? remaining : 0;
+  }
+
+  bool get canSimulate => isPro || simulationsRemaining > 0;
 
   /// Factory for initial anonymous guest creator session
   factory UserProfile.guest([String initialHandle = '@uk']) {
@@ -35,6 +49,8 @@ class UserProfile {
       activeChannelHandle: initialHandle,
       isGuest: true,
       isPro: false,
+      simulationsUsedThisMonth: 0,
+      freeSimulationsLimit: 3,
       authToken: null,
       createdAt: DateTime.now(),
     );
@@ -53,6 +69,8 @@ class UserProfile {
         activeChannelHandle: '@RevenueCat',
         isGuest: false,
         isPro: true,
+        simulationsUsedThisMonth: 0,
+        freeSimulationsLimit: 3,
         authToken: 'mock_jwt_demo_alex_rc',
         createdAt: DateTime(2025, 1, 15),
       ),
@@ -66,6 +84,8 @@ class UserProfile {
         activeChannelHandle: '@Fireship',
         isGuest: false,
         isPro: true,
+        simulationsUsedThisMonth: 1,
+        freeSimulationsLimit: 3,
         authToken: 'mock_jwt_demo_fireship',
         createdAt: DateTime(2025, 2, 1),
       ),
@@ -79,6 +99,8 @@ class UserProfile {
         activeChannelHandle: '@Telusko',
         isGuest: false,
         isPro: false,
+        simulationsUsedThisMonth: 0,
+        freeSimulationsLimit: 3,
         authToken: 'mock_jwt_demo_telusko',
         createdAt: DateTime(2025, 3, 10),
       ),
@@ -94,6 +116,9 @@ class UserProfile {
     String? activeChannelHandle,
     bool? isGuest,
     bool? isPro,
+    int? simulationsUsedThisMonth,
+    int? freeSimulationsLimit,
+    DateTime? trialEndsAt,
     String? authToken,
     DateTime? createdAt,
   }) {
@@ -106,6 +131,10 @@ class UserProfile {
       activeChannelHandle: activeChannelHandle ?? this.activeChannelHandle,
       isGuest: isGuest ?? this.isGuest,
       isPro: isPro ?? this.isPro,
+      simulationsUsedThisMonth:
+          simulationsUsedThisMonth ?? this.simulationsUsedThisMonth,
+      freeSimulationsLimit: freeSimulationsLimit ?? this.freeSimulationsLimit,
+      trialEndsAt: trialEndsAt ?? this.trialEndsAt,
       authToken: authToken ?? this.authToken,
       createdAt: createdAt ?? this.createdAt,
     );
@@ -119,6 +148,7 @@ class UserProfile {
         : const ['@RevenueCat'];
 
     final rawCreatedAt = json['createdAt'] ?? json['created_at'];
+    final rawTrialEnds = json['trialEndsAt'] ?? json['trial_ends_at'];
 
     return UserProfile(
       id: (json['id'] ?? json['sub']) as String? ?? 'guest_user',
@@ -133,6 +163,17 @@ class UserProfile {
           (channels.isNotEmpty ? channels.first : '@RevenueCat'),
       isGuest: json['isGuest'] as bool? ?? json['is_guest'] as bool? ?? false,
       isPro: json['isPro'] as bool? ?? json['is_pro'] as bool? ?? false,
+      simulationsUsedThisMonth:
+          (json['simulationsUsedThisMonth'] ??
+                  json['simulations_used_this_month']) as int? ??
+              0,
+      freeSimulationsLimit:
+          (json['freeSimulationsLimit'] ?? json['free_simulations_limit'])
+              as int? ??
+              3,
+      trialEndsAt: rawTrialEnds != null
+          ? DateTime.tryParse(rawTrialEnds.toString())
+          : null,
       authToken: (json['authToken'] ?? json['token']) as String?,
       createdAt: rawCreatedAt != null
           ? DateTime.tryParse(rawCreatedAt.toString()) ?? DateTime.now()
@@ -150,6 +191,11 @@ class UserProfile {
     'isGuest': isGuest,
     'isPro': isPro,
     'is_pro': isPro,
+    'simulationsUsedThisMonth': simulationsUsedThisMonth,
+    'simulations_used_this_month': simulationsUsedThisMonth,
+    'freeSimulationsLimit': freeSimulationsLimit,
+    'free_simulations_limit': freeSimulationsLimit,
+    'trialEndsAt': trialEndsAt?.toIso8601String(),
     'authToken': authToken,
     'createdAt': createdAt.toIso8601String(),
   };

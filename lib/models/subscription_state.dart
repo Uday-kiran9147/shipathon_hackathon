@@ -56,4 +56,36 @@ class SubscriptionState {
       freeSimulationsLimit: AppConstants.freeSimulationsPerMonth,
     );
   }
+
+  factory SubscriptionState.fromUserProfile(dynamic user) {
+    if (user == null) return SubscriptionState.initialFree();
+    return SubscriptionState(
+      isPro: user.isPro as bool? ?? false,
+      simulationsUsedThisMonth: user.simulationsUsedThisMonth as int? ?? 0,
+      freeSimulationsLimit: user.freeSimulationsLimit as int? ??
+          AppConstants.freeSimulationsPerMonth,
+      trialEndsAt: user.trialEndsAt as DateTime?,
+    );
+  }
+
+  factory SubscriptionState.fromJson(Map<String, dynamic> json) {
+    return SubscriptionState(
+      isPro: json['isPro'] as bool? ?? json['is_pro'] as bool? ?? false,
+      simulationsUsedThisMonth:
+          (json['simulationsUsedThisMonth'] ??
+                  json['simulations_used_this_month']) as int? ??
+              0,
+      freeSimulationsLimit:
+          (json['freeSimulationsLimit'] ?? json['free_simulations_limit'])
+              as int? ??
+              AppConstants.freeSimulationsPerMonth,
+      activePackageId: json['activePackageId'] as String?,
+      renewalDate: json['renewalDate'] != null
+          ? DateTime.tryParse(json['renewalDate'].toString())
+          : null,
+      trialEndsAt: json['trialEndsAt'] != null
+          ? DateTime.tryParse(json['trialEndsAt'].toString())
+          : null,
+    );
+  }
 }

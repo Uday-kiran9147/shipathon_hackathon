@@ -52,22 +52,31 @@ export class AuthService {
     this.logger.log(`💾 [AuthService] Writing new user to PostgreSQL "users" table: email="${newUser.email}", handle="${newUser.active_channel_handle}"`);
     const saved = await this.db.upsertUser(newUser);
     this.logger.log(`✅ [AuthService] PostgreSQL row saved successfully for ID="${saved?.id || newUser.id}"`);
-    const token = this.generateToken(saved || newUser);
+    const effectiveUser = saved || newUser;
+    const token = this.generateToken(effectiveUser);
+    const isPro = effectiveUser.is_pro ?? false;
+    const limit = effectiveUser.free_simulations_limit ?? 3;
+    const used = effectiveUser.simulations_used_this_month ?? 0;
+    const remaining = isPro ? 9999 : Math.max(0, limit - used);
 
     return {
       success: true,
       token,
       user: {
-        id: saved?.id || newUser.id,
-        email: saved?.email || newUser.email,
-        displayName: saved?.display_name || newUser.display_name,
-        photoUrl: saved?.photo_url || null,
-        connectedChannels: saved?.connected_channels || newUser.connected_channels,
-        activeChannelHandle: saved?.active_channel_handle || newUser.active_channel_handle,
+        id: effectiveUser.id,
+        email: effectiveUser.email,
+        displayName: effectiveUser.display_name,
+        photoUrl: effectiveUser.photo_url || null,
+        connectedChannels: effectiveUser.connected_channels,
+        activeChannelHandle: effectiveUser.active_channel_handle,
         isGuest: false,
-        isPro: saved?.is_pro ?? false,
+        isPro: isPro,
+        simulationsUsedThisMonth: used,
+        freeSimulationsLimit: limit,
+        simulationsRemaining: remaining,
+        trialEndsAt: effectiveUser.trial_ends_at,
         authToken: token,
-        createdAt: saved?.created_at || new Date(),
+        createdAt: effectiveUser.created_at || new Date(),
       },
     };
   }
@@ -88,6 +97,10 @@ export class AuthService {
 
     this.logger.log(`✅ [AuthService] Password verified in PostgreSQL for: "${dto.email}"`);
     const token = this.generateToken(user);
+    const isPro = user.is_pro ?? false;
+    const limit = user.free_simulations_limit ?? 3;
+    const used = user.simulations_used_this_month ?? 0;
+    const remaining = isPro ? 9999 : Math.max(0, limit - used);
 
     return {
       success: true,
@@ -100,7 +113,11 @@ export class AuthService {
         connectedChannels: user.connected_channels,
         activeChannelHandle: user.active_channel_handle,
         isGuest: user.is_guest,
-        isPro: user.is_pro ?? false,
+        isPro: isPro,
+        simulationsUsedThisMonth: used,
+        freeSimulationsLimit: limit,
+        simulationsRemaining: remaining,
+        trialEndsAt: user.trial_ends_at,
         authToken: token,
         createdAt: user.created_at || new Date(),
       },
@@ -127,11 +144,17 @@ export class AuthService {
         active_channel_handle: cleanHandle,
         is_guest: false,
         is_pro: false,
+        simulations_used_this_month: 0,
+        free_simulations_limit: 3,
       };
       await this.db.upsertUser(user);
     }
 
     const token = this.generateToken(user);
+    const isPro = user.is_pro ?? false;
+    const limit = user.free_simulations_limit ?? 3;
+    const used = user.simulations_used_this_month ?? 0;
+    const remaining = isPro ? 9999 : Math.max(0, limit - used);
 
     return {
       success: true,
@@ -144,7 +167,11 @@ export class AuthService {
         connectedChannels: user.connected_channels,
         activeChannelHandle: user.active_channel_handle,
         isGuest: user.is_guest,
-        isPro: user.is_pro ?? false,
+        isPro: isPro,
+        simulationsUsedThisMonth: used,
+        freeSimulationsLimit: limit,
+        simulationsRemaining: remaining,
+        trialEndsAt: user.trial_ends_at,
         authToken: token,
         createdAt: user.created_at || new Date(),
       },

@@ -50,9 +50,10 @@ export interface SimulationResultPayload {
 @Injectable()
 export class SimulatorService {
   evaluateScript(input: EvaluateSimulationDto): SimulationResultPayload {
-    const sentences = this.splitSentences(input.script);
-    const title = input.title.trim();
-    const script = input.script.trim();
+    const rawScript = input.script || input.draftScript || '';
+    const sentences = this.splitSentences(rawScript);
+    const title = (input.title || 'Untitled Draft').trim();
+    const script = rawScript.trim();
     const median = Math.max(1000, input.medianViews || 18400);
 
     // 1. Hook Strength Scoring (0 - 10)

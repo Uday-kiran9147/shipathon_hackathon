@@ -1,11 +1,14 @@
 import 'package:flutter/foundation.dart';
+import '../core/services/backend_api_service.dart';
 import '../core/services/simulator_engine_service.dart';
 import '../models/channel_graph.dart';
 import '../models/daily_blueprint.dart';
 import '../models/simulation_result.dart';
+import 'subscription_provider.dart';
 
 class SimulatorProvider extends ChangeNotifier {
   final SimulatorEngineService _engineService = SimulatorEngineService();
+  final BackendApiService _backendApiService = BackendApiService();
 
   String _titleInput = '';
   String _scriptInput = '';
@@ -46,12 +49,36 @@ class SimulatorProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Execute pre-flight simulation
-  Future<SimulationResult> runSimulation(ChannelGraph channel) async {
+  /// Execute pre-flight simulation with PostgreSQL server tracking
+  Future<SimulationResult> runSimulation(
+    ChannelGraph channel, {
+    SubscriptionProvider? subscriptionProvider,
+  }) async {
     _isAnalyzing = true;
     notifyListeners();
 
     try {
+      // 1. Attempt backend simulation with PostgreSQL limit enforcement
+      final backendResponse = await _backendApiService.runSimulationOnBackend(
+        title: _titleInput,
+        draftScript: _scriptInput,
+        format: _selectedFormat,
+        channel: channel,
+      );
+
+      if (backendResponse != null && subscriptionProvider != null) {
+        if (backendResponse['simulationsUsedThisMonth'] != null) {
+          subscriptionProvider.updateSimulationUsage(
+            simulationsUsedThisMonth:
+                backendResponse['simulationsUsedThisMonth'] as int,
+            freeSimulationsLimit:
+                backendResponse['freeSimulationsLimit'] as int?,
+            isPro: backendResponse['isPro'] as bool?,
+          );
+        }
+      }
+
+      // 2. Compute full client-side metrics and hazards
       final result = await _engineService.runSimulation(
         title: _titleInput,
         draftScript: _scriptInput,

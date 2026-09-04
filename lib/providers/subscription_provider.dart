@@ -44,6 +44,33 @@ class SubscriptionProvider extends ChangeNotifier {
     return true;
   }
 
+  /// Update server-tracked simulation usage counter
+  void updateSimulationUsage({
+    required int simulationsUsedThisMonth,
+    int? freeSimulationsLimit,
+    bool? isPro,
+  }) {
+    _state = _state.copyWith(
+      simulationsUsedThisMonth: simulationsUsedThisMonth,
+      freeSimulationsLimit: freeSimulationsLimit ?? _state.freeSimulationsLimit,
+      isPro: isPro ?? _state.isPro,
+    );
+    notifyListeners();
+  }
+
+  /// Sync subscription & free trial state with user profile
+  void syncWithUser(dynamic user) {
+    if (user == null) return;
+    _state = _state.copyWith(
+      isPro: (user.isPro as bool?) ?? _state.isPro,
+      simulationsUsedThisMonth:
+          (user.simulationsUsedThisMonth as int?) ?? _state.simulationsUsedThisMonth,
+      freeSimulationsLimit:
+          (user.freeSimulationsLimit as int?) ?? _state.freeSimulationsLimit,
+    );
+    notifyListeners();
+  }
+
   /// Purchase Creator Pro package
   Future<bool> purchasePackage({required bool isAnnual}) async {
     _isPurchasing = true;

@@ -19,8 +19,33 @@ export interface UserRecord {
   active_channel_handle: string;
   is_guest: boolean;
   is_pro?: boolean;
+  simulations_used_this_month?: number;
+  free_simulations_limit?: number;
+  trial_ends_at?: Date | null;
   created_at?: Date;
   updated_at?: Date;
+}
+
+export interface SimulationRecord {
+  id: string;
+  user_id: string;
+  channel_handle: string;
+  title: string;
+  draft_script: string;
+  format?: string;
+  hook_score: number;
+  resonance_score: number;
+  novelty_score: number;
+  topic_momentum_score: number;
+  clarity_score: number;
+  pacing_score: number;
+  creator_fit_score: number;
+  projected_views_multiplier: number;
+  projected_views: number;
+  performance_tier: string;
+  hazards: any;
+  fixes: any;
+  created_at?: Date;
 }
 
 export interface CreatorRecord {
@@ -96,7 +121,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       try {
         const client = await this.pool.connect();
 
-        // 1. Create Core Tables (Users, Creators, Videos)
+        // 1. Create Core Tables (Users, Creators, Videos, Simulations)
         await client.query(`
           CREATE TABLE IF NOT EXISTS users (
             id VARCHAR(64) PRIMARY KEY,
@@ -108,11 +133,39 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
             active_channel_handle VARCHAR(100) DEFAULT '@RevenueCat',
             is_guest BOOLEAN DEFAULT FALSE,
             is_pro BOOLEAN DEFAULT FALSE,
+            simulations_used_this_month INT DEFAULT 0,
+            free_simulations_limit INT DEFAULT 3,
+            trial_ends_at TIMESTAMP WITH TIME ZONE,
             created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
             updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
           );
 
           ALTER TABLE users ADD COLUMN IF NOT EXISTS is_pro BOOLEAN DEFAULT FALSE;
+          ALTER TABLE users ADD COLUMN IF NOT EXISTS simulations_used_this_month INT DEFAULT 0;
+          ALTER TABLE users ADD COLUMN IF NOT EXISTS free_simulations_limit INT DEFAULT 3;
+          ALTER TABLE users ADD COLUMN IF NOT EXISTS trial_ends_at TIMESTAMP WITH TIME ZONE;
+
+          CREATE TABLE IF NOT EXISTS simulations (
+            id VARCHAR(64) PRIMARY KEY,
+            user_id VARCHAR(64),
+            channel_handle VARCHAR(100) NOT NULL,
+            title TEXT NOT NULL,
+            draft_script TEXT NOT NULL,
+            format VARCHAR(32) DEFAULT 'longForm',
+            hook_score NUMERIC(3,1) NOT NULL,
+            resonance_score NUMERIC(3,1) NOT NULL,
+            novelty_score NUMERIC(3,1) NOT NULL,
+            topic_momentum_score NUMERIC(3,1) NOT NULL,
+            clarity_score NUMERIC(3,1) NOT NULL,
+            pacing_score NUMERIC(3,1) NOT NULL,
+            creator_fit_score NUMERIC(3,1) NOT NULL,
+            projected_views_multiplier NUMERIC(4,2) NOT NULL,
+            projected_views BIGINT NOT NULL,
+            performance_tier VARCHAR(32) NOT NULL,
+            hazards JSONB DEFAULT '[]'::jsonb,
+            fixes JSONB DEFAULT '[]'::jsonb,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+          );
 
           CREATE TABLE IF NOT EXISTS creators (
             id VARCHAR(64) PRIMARY KEY,
@@ -150,7 +203,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         `);
 
         this.isConnected = true;
-        this.logger.log('✅ Connected to PostgreSQL: "users", "creators" & "videos" tables ready.');
+        this.logger.log('✅ Connected to PostgreSQL: "users", "simulations", "creators" & "videos" tables ready.');
 
         // 2. Optional pgvector check
         try {
@@ -351,14 +404,18 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       const rows = await this.query<UserRecord>(
         `INSERT INTO users (
           id, email, password_hash, display_name, photo_url,
-          connected_channels, active_channel_handle, is_guest, is_pro, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
+          connected_channels, active_channel_handle, is_guest, is_pro,
+          simulations_used_this_month, free_simulations_limit, trial_ends_at,
+          created_at, updated_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW())
         ON CONFLICT (email) DO UPDATE SET
           display_name = EXCLUDED.display_name,
           photo_url = EXCLUDED.photo_url,
           connected_channels = EXCLUDED.connected_channels,
           active_channel_handle = EXCLUDED.active_channel_handle,
           is_pro = EXCLUDED.is_pro,
+          simulations_used_this_month = COALESCE(users.simulations_used_this_month, EXCLUDED.simulations_used_this_month),
+          free_simulations_limit = COALESCE(users.free_simulations_limit, EXCLUDED.free_simulations_limit),
           updated_at = NOW()
         RETURNING *;`,
         [
@@ -371,6 +428,9 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           user.active_channel_handle,
           user.is_guest ?? false,
           user.is_pro ?? false,
+          user.simulations_used_this_month ?? 0,
+          user.free_simulations_limit ?? 3,
+          user.trial_ends_at || null,
         ],
       );
       return rows[0] || null;
@@ -455,6 +515,226 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       return rows[0] || null;
     } catch (err: any) {
       this.logger.warn(`Failed to update user pro status: ${err.message}`);
+      return null;
+    }
+  }
+
+  async checkAndIncrementSimulationUsage(
+    userIdOrEmail: string,
+  ): Promise<{
+    allowed: boolean;
+    isPro: boolean;
+    simulationsUsedThisMonth: number;
+    freeSimulationsLimit: number;
+    simulationsRemaining: number;
+  }> {
+    if (!this.isConnected) {
+      return {
+        allowed: true,
+        isPro: false,
+        simulationsUsedThisMonth: 1,
+        freeSimulationsLimit: 3,
+        simulationsRemaining: 2,
+      };
+    }
+
+    try {
+      let user: UserRecord | null = null;
+      if (userIdOrEmail.includes('@')) {
+        user = await this.getUserByEmail(userIdOrEmail);
+      } else {
+        user = await this.getUserById(userIdOrEmail);
+      }
+
+      if (!user) {
+        const cleanId = userIdOrEmail.startsWith('usr_')
+          ? userIdOrEmail
+          : `usr_guest_${Date.now()}`;
+        const cleanEmail = userIdOrEmail.includes('@')
+          ? userIdOrEmail
+          : 'creator@studio.prevue.app';
+
+        const guestUser: UserRecord = {
+          id: cleanId,
+          email: cleanEmail,
+          display_name: 'Guest Creator',
+          photo_url: null,
+          connected_channels: ['@RevenueCat'],
+          active_channel_handle: '@RevenueCat',
+          is_guest: true,
+          is_pro: false,
+          simulations_used_this_month: 0,
+          free_simulations_limit: 3,
+        };
+        user = await this.upsertUser(guestUser);
+      }
+
+      const isPro = user?.is_pro ?? false;
+      const limit = user?.free_simulations_limit ?? 3;
+      const currentUsed = user?.simulations_used_this_month ?? 0;
+
+      if (isPro) {
+        return {
+          allowed: true,
+          isPro: true,
+          simulationsUsedThisMonth: currentUsed,
+          freeSimulationsLimit: limit,
+          simulationsRemaining: 9999,
+        };
+      }
+
+      if (currentUsed >= limit) {
+        this.logger.warn(`🚫 [Free Trial Limit Reached] User ${user?.email} has used ${currentUsed}/${limit} free simulations.`);
+        return {
+          allowed: false,
+          isPro: false,
+          simulationsUsedThisMonth: currentUsed,
+          freeSimulationsLimit: limit,
+          simulationsRemaining: 0,
+        };
+      }
+
+      // Atomically increment in PostgreSQL database
+      const updatedRows = await this.query<UserRecord>(
+        `UPDATE users 
+         SET simulations_used_this_month = simulations_used_this_month + 1, updated_at = NOW() 
+         WHERE id = $1 
+         RETURNING *;`,
+        [user!.id],
+      );
+      const updated = updatedRows[0] || user;
+      const newUsed = updated.simulations_used_this_month ?? (currentUsed + 1);
+
+      this.logger.log(`📊 [Database Free Trial Counter] User ${user?.email} incremented simulation usage: ${newUsed}/${limit} (Remaining: ${Math.max(0, limit - newUsed)})`);
+
+      return {
+        allowed: true,
+        isPro: false,
+        simulationsUsedThisMonth: newUsed,
+        freeSimulationsLimit: limit,
+        simulationsRemaining: Math.max(0, limit - newUsed),
+      };
+    } catch (err: any) {
+      this.logger.warn(`Error checking simulation usage in DB: ${err.message}`);
+      return {
+        allowed: true,
+        isPro: false,
+        simulationsUsedThisMonth: 1,
+        freeSimulationsLimit: 3,
+        simulationsRemaining: 2,
+      };
+    }
+  }
+
+  async getSimulationUsage(
+    userIdOrEmail: string,
+  ): Promise<{
+    isPro: boolean;
+    simulationsUsedThisMonth: number;
+    freeSimulationsLimit: number;
+    simulationsRemaining: number;
+  }> {
+    if (!this.isConnected) {
+      return {
+        isPro: false,
+        simulationsUsedThisMonth: 0,
+        freeSimulationsLimit: 3,
+        simulationsRemaining: 3,
+      };
+    }
+
+    try {
+      let user: UserRecord | null = null;
+      if (userIdOrEmail.includes('@')) {
+        user = await this.getUserByEmail(userIdOrEmail);
+      } else {
+        user = await this.getUserById(userIdOrEmail);
+      }
+
+      const isPro = user?.is_pro ?? false;
+      const limit = user?.free_simulations_limit ?? 3;
+      const currentUsed = user?.simulations_used_this_month ?? 0;
+
+      return {
+        isPro,
+        simulationsUsedThisMonth: currentUsed,
+        freeSimulationsLimit: limit,
+        simulationsRemaining: isPro ? 9999 : Math.max(0, limit - currentUsed),
+      };
+    } catch {
+      return {
+        isPro: false,
+        simulationsUsedThisMonth: 0,
+        freeSimulationsLimit: 3,
+        simulationsRemaining: 3,
+      };
+    }
+  }
+
+  async saveSimulation(record: SimulationRecord): Promise<SimulationRecord | null> {
+    if (!this.isConnected) return record;
+    try {
+      const rows = await this.query<SimulationRecord>(
+        `INSERT INTO simulations (
+          id, user_id, channel_handle, title, draft_script, format,
+          hook_score, resonance_score, novelty_score, topic_momentum_score,
+          clarity_score, pacing_score, creator_fit_score,
+          projected_views_multiplier, projected_views, performance_tier,
+          hazards, fixes, created_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, NOW())
+        RETURNING *;`,
+        [
+          record.id,
+          record.user_id || null,
+          record.channel_handle,
+          record.title,
+          record.draft_script,
+          record.format || 'longForm',
+          record.hook_score,
+          record.resonance_score,
+          record.novelty_score,
+          record.topic_momentum_score,
+          record.clarity_score,
+          record.pacing_score,
+          record.creator_fit_score,
+          record.projected_views_multiplier,
+          record.projected_views,
+          record.performance_tier,
+          JSON.stringify(record.hazards || []),
+          JSON.stringify(record.fixes || []),
+        ],
+      );
+      this.logger.log(`💾 [Database Service] Persisted simulation "${record.title}" (ID: ${record.id}) in PostgreSQL.`);
+      return rows[0] || record;
+    } catch (err: any) {
+      this.logger.warn(`Failed to save simulation to DB: ${err.message}`);
+      return record;
+    }
+  }
+
+  async getSimulationsByUserId(userId: string, limit: number = 20): Promise<SimulationRecord[]> {
+    if (!this.isConnected) return [];
+    try {
+      return await this.query<SimulationRecord>(
+        `SELECT * FROM simulations WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2;`,
+        [userId, limit],
+      );
+    } catch (err: any) {
+      this.logger.warn(`Failed to get simulation history: ${err.message}`);
+      return [];
+    }
+  }
+
+  async resetSimulationUsage(userId: string): Promise<UserRecord | null> {
+    if (!this.isConnected) return null;
+    try {
+      const rows = await this.query<UserRecord>(
+        `UPDATE users SET simulations_used_this_month = 0, updated_at = NOW() WHERE id = $1 RETURNING *;`,
+        [userId],
+      );
+      return rows[0] || null;
+    } catch (err: any) {
+      this.logger.warn(`Failed to reset simulation usage: ${err.message}`);
       return null;
     }
   }

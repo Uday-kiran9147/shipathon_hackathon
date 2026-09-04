@@ -277,7 +277,31 @@ class _PreflightSimulatorScreenState extends State<PreflightSimulatorScreen> {
                         return;
                       }
 
-                      await simProvider.runSimulation(channel);
+                      try {
+                        await simProvider.runSimulation(
+                          channel,
+                          subscriptionProvider: subProvider,
+                        );
+                      } catch (e) {
+                        if (e.toString().contains('Free simulation limit') ||
+                            e.toString().contains('PRO_REQUIRED')) {
+                          if (context.mounted) {
+                            subProvider.presentPaywall(context);
+                          }
+                        } else {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  e.toString().replaceAll('Exception: ', ''),
+                                ),
+                                backgroundColor: AppColors.hazardRuby,
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          }
+                        }
+                      }
                     },
                   ),
                 ],

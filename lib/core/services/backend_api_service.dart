@@ -2,6 +2,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import '../network/api_endpoints.dart';
 import '../../models/user_profile.dart';
+import '../../models/channel_graph.dart';
+import '../../models/daily_blueprint.dart';
 
 /// Backend API Service for Prevue
 /// Integrates all REST endpoints defined in API_DOCUMENTATION.md with dual-mode resilience:
@@ -385,6 +387,53 @@ class BackendApiService {
     return currentChannels;
   }
 
+  /// POST /api/v1/simulator/run
+  Future<Map<String, dynamic>?> runSimulationOnBackend({
+    required String title,
+    required String draftScript,
+    required BlueprintFormat format,
+    required ChannelGraph channel,
+  }) async {
+    if (_mockMode) return null;
+
+    try {
+      debugPrint(
+        '[BackendApiService] 🚀 Sending POST ${ApiEndpoints.baseUrl}${ApiEndpoints.simulatorRun}',
+      );
+      final response = await _dio.post(
+        ApiEndpoints.simulatorRun,
+        data: {
+          'title': title.trim(),
+          'draftScript': draftScript.trim(),
+          'script': draftScript.trim(),
+          'format': format == BlueprintFormat.short ? 'short' : 'longForm',
+          'channelHandle': channel.handle,
+          'medianViews': channel.medianViews,
+        },
+      );
+      final data = response.data as Map<String, dynamic>;
+      debugPrint('[BackendApiService] ✅ Simulation ran on backend PostgreSQL');
+      return data;
+    } on DioException catch (e) {
+      if (e.response != null && e.response!.statusCode == 403) {
+        final data = e.response?.data;
+        final errorMsg = (data is Map && data['message'] != null)
+            ? data['message'].toString()
+            : 'Free simulation limit reached (3/3). Unlock Creator Pro for unlimited pre-flight simulations.';
+        debugPrint('[BackendApiService] 🚫 Pro required 403: $errorMsg');
+        throw Exception(errorMsg);
+      }
+      debugPrint('[BackendApiService] ⚠️ runSimulationOnBackend network fallback ($e)');
+      return null;
+    } catch (e) {
+      if (e is Exception && e.toString().contains('Free simulation limit')) {
+        rethrow;
+      }
+      debugPrint('[BackendApiService] ⚠️ runSimulationOnBackend error ($e)');
+      return null;
+    }
+  }
+
   /// Helper to generate resilient mock user
   UserProfile _generateMockUser({
     String? id,
@@ -403,6 +452,9 @@ class BackendApiService {
       connectedChannels: [handle],
       activeChannelHandle: handle,
       isGuest: false,
+      isPro: false,
+      simulationsUsedThisMonth: 0,
+      freeSimulationsLimit: 3,
       authToken: 'mock_token_${DateTime.now().millisecondsSinceEpoch}',
       createdAt: DateTime.now(),
     );

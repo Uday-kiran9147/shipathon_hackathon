@@ -6,6 +6,10 @@ export class EvaluateSimulationDto {
   creatorId?: string;
 
   @IsOptional()
+  @IsString()
+  channelHandle?: string;
+
+  @IsOptional()
   @IsNumber()
   medianViews?: number;
 
@@ -13,9 +17,13 @@ export class EvaluateSimulationDto {
   @IsString()
   title: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  script: string;
+  script?: string;
+
+  @IsOptional()
+  @IsString()
+  draftScript?: string;
 
   @IsOptional()
   @IsString()

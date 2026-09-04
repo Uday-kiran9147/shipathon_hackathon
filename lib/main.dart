@@ -175,6 +175,10 @@ class _AuthenticatedBootstrapState extends State<_AuthenticatedBootstrap> {
       if (!mounted) return;
       final auth = context.read<AuthProvider>();
       final channelProvider = context.read<ChannelProvider>();
+      final subProvider = context.read<SubscriptionProvider>();
+      if (auth.user != null) {
+        subProvider.syncWithUser(auth.user);
+      }
       if (channelProvider.channel.handle.toLowerCase() !=
           auth.activeHandle.toLowerCase()) {
         channelProvider.syncChannel(auth.activeHandle);

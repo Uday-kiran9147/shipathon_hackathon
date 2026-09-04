@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Delete, Body, Param, Headers, UnauthorizedException } from '@nestjs/common';
 import { DatabaseService } from '../../database/database.service';
 
-@Controller('api/v1/user')
+@Controller(['api/v1/user', 'api/user'])
 export class UserController {
   constructor(private readonly db: DatabaseService) {}
 
@@ -25,6 +25,12 @@ export class UserController {
     if (!user) {
       throw new UnauthorizedException('User not found.');
     }
+
+    const isPro = user.is_pro ?? false;
+    const limit = user.free_simulations_limit ?? 3;
+    const used = user.simulations_used_this_month ?? 0;
+    const remaining = isPro ? 9999 : Math.max(0, limit - used);
+
     return {
       success: true,
       user: {
@@ -35,9 +41,29 @@ export class UserController {
         connectedChannels: user.connected_channels,
         activeChannelHandle: user.active_channel_handle,
         isGuest: user.is_guest,
-        isPro: user.is_pro ?? false,
+        isPro: isPro,
+        simulationsUsedThisMonth: used,
+        freeSimulationsLimit: limit,
+        simulationsRemaining: remaining,
+        trialEndsAt: user.trial_ends_at,
         createdAt: user.created_at,
       },
+    };
+  }
+
+  @Post('simulations/reset')
+  async resetSimulations(@Headers('authorization') authHeader?: string) {
+    const email = this.extractEmailFromAuthHeader(authHeader);
+    const user = await this.db.getUserByEmail(email);
+    if (!user) {
+      throw new UnauthorizedException('User not found.');
+    }
+    const updated = await this.db.resetSimulationUsage(user.id);
+    return {
+      success: true,
+      simulationsUsedThisMonth: updated?.simulations_used_this_month ?? 0,
+      freeSimulationsLimit: updated?.free_simulations_limit ?? 3,
+      simulationsRemaining: updated?.free_simulations_limit ?? 3,
     };
   }
 
