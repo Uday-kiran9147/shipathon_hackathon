@@ -5,6 +5,8 @@ import 'package:provider/provider.dart';
 import '../core/theme/app_colors.dart';
 import '../core/theme/app_typography.dart';
 import '../providers/subscription_provider.dart';
+import '../widgets/common/coming_soon_card.dart';
+import '../widgets/common/custom_app_bar.dart';
 import 'briefing/daily_briefing_screen.dart';
 import 'channel/channel_graph_screen.dart';
 import 'simulator/preflight_simulator_screen.dart';
@@ -24,9 +26,9 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
 
   void _switchTab(int index) {
     if (index == 3) {
-      // Direct Pro Paywall trigger
+      // Direct Pro Coming Soon Showcase trigger on pressing GoPro
       HapticFeedback.lightImpact();
-      context.read<SubscriptionProvider>().presentPaywall(context);
+      ComingSoonCard.showProShowcaseModal(context);
       return;
     }
     if (_currentIndex != index) {
@@ -46,7 +48,23 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
       DailyBriefingScreen(onNavigateTab: (idx) => _switchTab(idx)),
       const PreflightSimulatorScreen(),
       const ChannelGraphScreen(),
-      const ChannelGraphScreen(), // Placeholder for Pro tab action
+      Scaffold(
+        backgroundColor: AppColors.canvas,
+        appBar: const CustomAppBar(
+          title: 'Creator Pro',
+          subtitle: 'Upcoming AI Intelligence Studio',
+        ),
+        body: Center(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.all(16.w),
+            child: const ComingSoonCard(
+              title: 'Creator Pro',
+              description:
+                  'Exciting new creator intelligence and simulation features are currently in development. Stay tuned!',
+            ),
+          ),
+        ),
+      ),
     ];
 
     final isForward = _currentIndex >= _previousIndex;

@@ -7,6 +7,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/channel_provider.dart';
 import '../../providers/subscription_provider.dart';
 import '../channel/channel_switcher_modal.dart';
+import 'coming_soon_card.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
@@ -202,7 +203,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           padding: EdgeInsets.only(right: 14.w),
           child: GestureDetector(
             onTap: () {
-              subProvider.presentPaywall(context);
+              ComingSoonCard.showProShowcaseModal(context);
             },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
