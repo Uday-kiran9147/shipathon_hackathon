@@ -100,10 +100,18 @@ class RevenueCatService {
     try {
       return await Purchases.getOfferings();
     } catch (e) {
-      if (e.toString().contains('ConfigurationError')) {
+      final errStr = e.toString();
+      if (errStr.contains('ConfigurationError')) {
         debugPrint(
           '[RevenueCat] Notice: Play Store API key is active, but no Play Store products are attached to an Offering in your RevenueCat Dashboard yet. '
           'Prevue is gracefully serving the built-in Studio Paywall with simulated purchase fallback.',
+        );
+      } else if (errStr.contains('PurchaseNotAllowedError') ||
+          errStr.contains('BILLING_UNAVAILABLE') ||
+          errStr.contains('Billing is not available')) {
+        debugPrint(
+          '[RevenueCat] Notice: Google Play Billing is not supported or unavailable on this device/emulator (BILLING_UNAVAILABLE). '
+          'To test live Play Store purchases, use an Android emulator created with the "Google Play" system image and sign into Google Play, or test on a physical Android device.',
         );
       } else {
         debugPrint('[RevenueCat] Error fetching offerings: $e');
@@ -185,8 +193,12 @@ class RevenueCatService {
       );
     } catch (e) {
       debugPrint('[RevenueCat] Purchase failed or cancelled: $e');
-      if (e.toString().contains('MissingPluginException') ||
-          e.toString().contains('ConfigurationError')) {
+      final errStr = e.toString();
+      if (errStr.contains('MissingPluginException') ||
+          errStr.contains('ConfigurationError') ||
+          errStr.contains('PurchaseNotAllowedError') ||
+          errStr.contains('BILLING_UNAVAILABLE') ||
+          errStr.contains('Billing is not available')) {
         _mockMode = true;
         return true;
       }
@@ -320,10 +332,19 @@ class RevenueCatService {
 
     try {
       debugPrint('[RevenueCat] Presenting official RevenueCat Paywall UI...');
+      Offering? targetOffering = offering;
+      if (targetOffering == null) {
+        final offerings = await getOfferings();
+        targetOffering = offerings?.current ??
+            (offerings != null && offerings.all.isNotEmpty
+                ? offerings.all.values.first
+                : null);
+      }
+
       final PaywallResult result;
-      if (offering != null) {
+      if (targetOffering != null) {
         result = await RevenueCatUI.presentPaywall(
-          offering: offering,
+          offering: targetOffering,
           displayCloseButton: true,
         );
       } else {
