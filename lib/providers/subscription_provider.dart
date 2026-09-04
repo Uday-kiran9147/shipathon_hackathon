@@ -1,4 +1,7 @@
-import 'package:flutter/foundation.dart';
+import 'dart:developer' show log;
+import 'package:flutter/material.dart';
+import 'package:purchases_ui_flutter/purchases_ui_flutter.dart';
+import '../core/constants/app_constants.dart';
 import '../core/services/revenue_cat_service.dart';
 import '../models/subscription_state.dart';
 
@@ -51,10 +54,17 @@ class SubscriptionProvider extends ChangeNotifier {
         isAnnual: isAnnual,
       );
       if (success) {
+        final packageId = isAnnual ? 'annual' : 'monthly';
+        final trialEndsAt = DateTime.now().add(
+          const Duration(days: AppConstants.freeTrialDays),
+        );
         _state = _state.copyWith(
           isPro: true,
-          activePackageId: isAnnual ? 'annual' : 'monthly',
-          renewalDate: DateTime.now().add(Duration(days: isAnnual ? 365 : 30)),
+          activePackageId: packageId,
+          renewalDate: DateTime.now().add(
+            Duration(days: isAnnual ? AppConstants.annualDurationDays : AppConstants.monthlyDurationDays),
+          ),
+          trialEndsAt: trialEndsAt,
         );
       }
       _isPurchasing = false;
@@ -94,5 +104,34 @@ class SubscriptionProvider extends ChangeNotifier {
   void resetSimulations() {
     _state = _state.copyWith(simulationsUsedThisMonth: 0);
     notifyListeners();
+  }
+
+  /// Present RevenueCat Paywall
+  /// Exclusively launches the official RevenueCat Paywall UI
+  Future<void> presentPaywall(BuildContext context) async {
+    log('[SubscriptionProvider] Presenting official RevenueCat paywall...');
+    try {
+      final result = await _revenueCatService.presentPaywall();
+      if (result != null) {
+        if (result == PaywallResult.purchased ||
+            result == PaywallResult.restored) {
+          final hasPro = await _revenueCatService.checkProEntitlement();
+          _state = _state.copyWith(isPro: hasPro || true);
+          notifyListeners();
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  '🚀 Welcome to Creator Pro! Unlimited simulations unlocked.',
+                ),
+                backgroundColor: Color(0xFF059669),
+              ),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('[SubscriptionProvider] Error presenting RevenueCat paywall: $e');
+    }
   }
 }

@@ -37,7 +37,8 @@ dependencies:
   flutter_screenutil: ^5.9.3
   provider: ^6.1.2
   google_fonts: ^6.2.1
-  purchases_flutter: ^8.5.0
+  purchases_flutter: ^10.10.1
+  purchases_ui_flutter: ^10.10.1
   intl: ^0.20.2
   dio: ^5.8.0+1
   flutter_dotenv: ^5.2.1

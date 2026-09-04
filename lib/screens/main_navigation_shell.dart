@@ -7,7 +7,6 @@ import '../core/theme/app_typography.dart';
 import '../providers/subscription_provider.dart';
 import 'briefing/daily_briefing_screen.dart';
 import 'channel/channel_graph_screen.dart';
-import 'paywall/creator_pro_paywall_sheet.dart';
 import 'simulator/preflight_simulator_screen.dart';
 
 /// Main Navigation Shell with sliding pill indicator, spring micro-interactions, and smooth screen transitions
@@ -27,7 +26,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     if (index == 3) {
       // Direct Pro Paywall trigger
       HapticFeedback.lightImpact();
-      CreatorProPaywallSheet.show(context);
+      context.read<SubscriptionProvider>().presentPaywall(context);
       return;
     }
     if (_currentIndex != index) {

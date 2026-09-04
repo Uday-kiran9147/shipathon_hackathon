@@ -6,7 +6,6 @@ import '../../core/theme/app_typography.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/channel_provider.dart';
 import '../../providers/subscription_provider.dart';
-import '../../screens/paywall/creator_pro_paywall_sheet.dart';
 import '../channel/channel_switcher_modal.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -203,7 +202,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           padding: EdgeInsets.only(right: 14.w),
           child: GestureDetector(
             onTap: () {
-              CreatorProPaywallSheet.show(context);
+              subProvider.presentPaywall(context);
             },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),

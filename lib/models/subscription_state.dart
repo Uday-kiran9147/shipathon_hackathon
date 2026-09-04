@@ -7,6 +7,7 @@ class SubscriptionState {
   final int freeSimulationsLimit;
   final String? activePackageId;
   final DateTime? renewalDate;
+  final DateTime? trialEndsAt;
 
   const SubscriptionState({
     required this.isPro,
@@ -14,6 +15,7 @@ class SubscriptionState {
     this.freeSimulationsLimit = AppConstants.freeSimulationsPerMonth,
     this.activePackageId,
     this.renewalDate,
+    this.trialEndsAt,
   });
 
   bool get canSimulate =>
@@ -25,12 +27,16 @@ class SubscriptionState {
     return remaining > 0 ? remaining : 0;
   }
 
+  bool get hasActiveFreeTrial =>
+      trialEndsAt != null && trialEndsAt!.isAfter(DateTime.now());
+
   SubscriptionState copyWith({
     bool? isPro,
     int? simulationsUsedThisMonth,
     int? freeSimulationsLimit,
     String? activePackageId,
     DateTime? renewalDate,
+    DateTime? trialEndsAt,
   }) {
     return SubscriptionState(
       isPro: isPro ?? this.isPro,
@@ -39,6 +45,7 @@ class SubscriptionState {
       freeSimulationsLimit: freeSimulationsLimit ?? this.freeSimulationsLimit,
       activePackageId: activePackageId ?? this.activePackageId,
       renewalDate: renewalDate ?? this.renewalDate,
+      trialEndsAt: trialEndsAt ?? this.trialEndsAt,
     );
   }
 

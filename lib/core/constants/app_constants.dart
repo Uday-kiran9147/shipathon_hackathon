@@ -28,7 +28,7 @@ class AppConstants {
 
   // RevenueCat Configuration
   static const String entitlementPro = 'creator_pro_access';
-  static const String offeringDefault = 'default_creator_offering';
+  static const String offeringDefault = 'default';
   static const String packageMonthly = 'creator_pro_monthly';
   static const String packageAnnual = 'creator_pro_annual';
 
@@ -38,6 +38,10 @@ class AppConstants {
   static const String priceAnnualMonthlyEquivalent = '\$12.41';
   static const String annualSavingsPercentage = '38%';
 
-  // Free Tier Usage Limits
+  // Free tier & trial settings
   static const int freeSimulationsPerMonth = 3;
+  static const int freeTrialDays = 3;
+  static const String freeTrialLabel = '3-Day Free Trial';
+  static const int monthlyDurationDays = 30;
+  static const int annualDurationDays = 365;
 }

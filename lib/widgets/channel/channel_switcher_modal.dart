@@ -6,7 +6,6 @@ import '../../core/theme/app_typography.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/channel_provider.dart';
 import '../../providers/subscription_provider.dart';
-import '../../screens/paywall/creator_pro_paywall_sheet.dart';
 import '../auth/auth_modal_sheet.dart';
 import '../common/solid_heavy_button.dart';
 import '../common/tactile_card.dart';
@@ -556,7 +555,7 @@ class _ChannelSwitcherModalState extends State<ChannelSwitcherModal> {
                           if (!subProvider.isPro &&
                               user.connectedChannels.isNotEmpty) {
                             Navigator.pop(context);
-                            CreatorProPaywallSheet.show(context);
+                            subProvider.presentPaywall(context);
                           } else {
                             setState(() => _isAddingChannel = true);
                           }

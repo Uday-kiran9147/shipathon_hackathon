@@ -15,7 +15,6 @@ import '../../widgets/common/tactile_card.dart';
 import '../../widgets/simulator/hook_score_gauge.dart';
 import '../../widgets/simulator/prescriptive_fix_tile.dart';
 import '../../widgets/simulator/retention_hazard_scrubber.dart';
-import '../paywall/creator_pro_paywall_sheet.dart';
 
 /// Pre-Flight Content Simulator Screen ("Will this work?")
 class PreflightSimulatorScreen extends StatefulWidget {
@@ -274,7 +273,7 @@ class _PreflightSimulatorScreenState extends State<PreflightSimulatorScreen> {
                       // Check subscription simulation credit limit
                       final allowed = subProvider.recordSimulationAttempt();
                       if (!allowed) {
-                        CreatorProPaywallSheet.show(context);
+                        subProvider.presentPaywall(context);
                         return;
                       }
 

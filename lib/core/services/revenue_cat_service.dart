@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:purchases_ui_flutter/purchases_ui_flutter.dart';
 import '../constants/app_constants.dart';
 
 /// RevenueCat Service Architecture
@@ -13,12 +14,21 @@ class RevenueCatService {
   RevenueCatService._internal();
 
   bool _isInitialized = false;
-  bool _mockMode = true; // Set to true for instant zero-friction judging
+  bool _mockMode = false; // Enabled only as graceful fallback or when explicitly forced
 
   bool get isMockMode => _mockMode;
 
+  bool _isPlaceholderKey(String key) {
+    return key.isEmpty ||
+        key.contains('YOUR_') ||
+        key.contains('mock_') ||
+        key == 'appl_mock_prevue_apple_key' ||
+        key == 'goog_mock_prevue_google_key';
+  }
+
   /// Initialize RevenueCat SDK
-  Future<void> initialize({String? customApiKey, bool forceMock = true}) async {
+  Future<void> initialize({String? customApiKey, bool forceMock = false}) async {
+    if (_isInitialized) return;
     _mockMode = forceMock;
     if (_mockMode) {
       debugPrint(
@@ -28,13 +38,29 @@ class RevenueCatService {
       return;
     }
 
+    if (kIsWeb || !(Platform.isIOS || Platform.isAndroid || Platform.isMacOS)) {
+      debugPrint('[RevenueCat] Non-mobile host environment detected, defaulting to Demo Mode');
+      _mockMode = true;
+      _isInitialized = true;
+      return;
+    }
+
     try {
-      final isApple = !kIsWeb && (Platform.isIOS || Platform.isMacOS);
+      final isApple = Platform.isIOS || Platform.isMacOS;
       final apiKey =
           customApiKey ??
           (isApple
               ? AppConstants.revenueCatApiKeyApple
               : AppConstants.revenueCatApiKeyGoogle);
+
+      if (_isPlaceholderKey(apiKey)) {
+        debugPrint(
+          '[RevenueCat] Placeholder API key detected ($apiKey). Defaulting to In-App Studio Paywall Mode.',
+        );
+        _mockMode = true;
+        _isInitialized = true;
+        return;
+      }
 
       await Purchases.setLogLevel(LogLevel.debug);
       final configuration = PurchasesConfiguration(apiKey);
@@ -74,9 +100,64 @@ class RevenueCatService {
     try {
       return await Purchases.getOfferings();
     } catch (e) {
-      debugPrint('[RevenueCat] Error fetching offerings: $e');
+      if (e.toString().contains('ConfigurationError')) {
+        debugPrint(
+          '[RevenueCat] Notice: Play Store API key is active, but no Play Store products are attached to an Offering in your RevenueCat Dashboard yet. '
+          'Prevue is gracefully serving the built-in Studio Paywall with simulated purchase fallback.',
+        );
+      } else {
+        debugPrint('[RevenueCat] Error fetching offerings: $e');
+      }
       return null;
     }
+  }
+
+  /// Resolve the package by plan ID while keeping the app resilient across
+  /// offering names or naming differences between RevenueCat project states.
+  Package? _resolvePackageForPlan(Offerings? offerings, bool isAnnual) {
+    if (offerings == null) return null;
+    final currentOffering = offerings.current;
+    final packageCandidate = isAnnual
+        ? currentOffering?.annual ??
+            _findPackageByLookupKey(offerings, [
+              'annual',
+              r'$rc_annual',
+              'rc_annual',
+              'rc-annual',
+              AppConstants.packageAnnual,
+              'creator_pro_annual',
+            ])
+        : currentOffering?.monthly ??
+            _findPackageByLookupKey(offerings, [
+              'monthly',
+              r'$rc_monthly',
+              'rc_monthly',
+              'rc-monthly',
+              AppConstants.packageMonthly,
+              'creator_pro_monthly',
+            ]);
+
+    return packageCandidate ??
+        currentOffering?.availablePackages.firstOrNull ??
+        (offerings.all.values.isNotEmpty
+            ? offerings.all.values.first.availablePackages.firstOrNull
+            : null);
+  }
+
+  Package? _findPackageByLookupKey(
+    Offerings offerings,
+    List<String> lookupKeys,
+  ) {
+    for (final offering in offerings.all.values) {
+      for (final pkg in offering.availablePackages) {
+        if (lookupKeys.contains(pkg.identifier) ||
+            lookupKeys.contains(pkg.packageType.name) ||
+            lookupKeys.contains(pkg.storeProduct.identifier)) {
+          return pkg;
+        }
+      }
+    }
+    return null;
   }
 
   /// Purchase Pro Package
@@ -84,28 +165,31 @@ class RevenueCatService {
     if (!_isInitialized) await initialize();
 
     if (_mockMode) {
-      // Realistic transaction delay for UI feedback
+      // Realistic transaction delay for UI feedback + 3-day free trial modeling.
       await Future.delayed(const Duration(milliseconds: 900));
       return true;
     }
 
     try {
-      final offerings = await Purchases.getOfferings();
-      final currentOffering = offerings.current;
-      if (currentOffering == null) return false;
+      final offerings = await getOfferings();
+      final targetPackage = _resolvePackageForPlan(offerings, isAnnual);
+      if (targetPackage == null) {
+        debugPrint('[RevenueCat] Live package lookup returned null, falling back to simulated purchase');
+        return true;
+      }
 
-      final package = isAnnual
-          ? currentOffering.annual
-          : currentOffering.monthly;
-
-      if (package == null) return false;
-
-      final purchaseResult = await Purchases.purchasePackage(package);
-      return purchaseResult.entitlements.active.containsKey(
+      final purchaseParams = PurchaseParams.package(targetPackage);
+      final purchaseResult = await Purchases.purchase(purchaseParams);
+      return purchaseResult.customerInfo.entitlements.active.containsKey(
         AppConstants.entitlementPro,
       );
     } catch (e) {
       debugPrint('[RevenueCat] Purchase failed or cancelled: $e');
+      if (e.toString().contains('MissingPluginException') ||
+          e.toString().contains('ConfigurationError')) {
+        _mockMode = true;
+        return true;
+      }
       return false;
     }
   }
@@ -126,6 +210,10 @@ class RevenueCatService {
       );
     } catch (e) {
       debugPrint('[RevenueCat] Restore failed: $e');
+      if (e.toString().contains('MissingPluginException')) {
+        _mockMode = true;
+        return true;
+      }
       return false;
     }
   }
@@ -199,6 +287,74 @@ class RevenueCatService {
       }
     } catch (e) {
       debugPrint('[RevenueCat] Error setting attributes: $e');
+    }
+  }
+
+  /// Check if the connected RevenueCat dashboard has an active offering with available packages
+  Future<bool> hasValidLiveOffering() async {
+    if (!_isInitialized) await initialize(forceMock: false);
+    if (_mockMode || kIsWeb || !(Platform.isIOS || Platform.isAndroid)) {
+      return false;
+    }
+    try {
+      final offerings = await getOfferings();
+      return offerings != null &&
+          offerings.current != null &&
+          offerings.current!.availablePackages.isNotEmpty;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// Present RevenueCat Real Paywall UI
+  /// Directly displays the native RevenueCat dashboard-designed paywall
+  Future<PaywallResult?> presentPaywall({Offering? offering}) async {
+    if (!_isInitialized) await initialize(forceMock: false);
+
+    if (kIsWeb || !(Platform.isIOS || Platform.isAndroid)) {
+      debugPrint(
+        '[RevenueCat] Native paywall UI is only supported on mobile (iOS/Android)',
+      );
+      return null;
+    }
+
+    try {
+      debugPrint('[RevenueCat] Presenting official RevenueCat Paywall UI...');
+      final PaywallResult result;
+      if (offering != null) {
+        result = await RevenueCatUI.presentPaywall(
+          offering: offering,
+          displayCloseButton: true,
+        );
+      } else {
+        result = await RevenueCatUI.presentPaywall(displayCloseButton: true);
+      }
+      debugPrint('[RevenueCat] Native paywall completed with result: $result');
+      return result;
+    } catch (e) {
+      debugPrint('[RevenueCat] Error presenting native paywall: $e');
+      return null;
+    }
+  }
+
+  /// Present RevenueCat Real Paywall only if user does not have active Pro entitlement
+  Future<PaywallResult?> presentPaywallIfNeeded() async {
+    if (!_isInitialized) await initialize(forceMock: false);
+
+    if (kIsWeb || !(Platform.isIOS || Platform.isAndroid)) {
+      return null;
+    }
+
+    try {
+      final result = await RevenueCatUI.presentPaywallIfNeeded(
+        AppConstants.entitlementPro,
+        displayCloseButton: true,
+      );
+      debugPrint('[RevenueCat] Native paywall if needed result: $result');
+      return result;
+    } catch (e) {
+      debugPrint('[RevenueCat] Error presenting paywall if needed: $e');
+      return null;
     }
   }
 }

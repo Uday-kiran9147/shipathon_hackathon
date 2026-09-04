@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
+import 'package:shipathon_hackathon/core/services/revenue_cat_service.dart';
 import 'core/services/auth_service.dart';
 import 'core/theme/app_colors.dart';
 import 'core/theme/app_theme.dart';
@@ -22,7 +23,6 @@ void main() async {
   } catch (e) {
     debugPrint('[Environment] .env not found or failed to load: $e');
   }
-
   // Pre-load persisted session before booting widget tree
   UserProfile? initialUser;
   try {
@@ -32,6 +32,8 @@ void main() async {
     debugPrint('[Main] Could not pre-load initial user: $e');
   }
 
+  RevenueCatService revenueCatService = RevenueCatService();
+  await revenueCatService.initialize(forceMock: false); // Force mock mode for testing
   runApp(PrevueAPP(initialUser: initialUser));
 }
 

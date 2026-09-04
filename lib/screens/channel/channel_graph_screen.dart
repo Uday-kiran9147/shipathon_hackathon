@@ -13,7 +13,6 @@ import '../../widgets/common/custom_app_bar.dart';
 
 import '../../widgets/common/solid_heavy_button.dart';
 import '../../widgets/common/tactile_card.dart';
-import '../paywall/creator_pro_paywall_sheet.dart';
 
 /// Channel Graph Baseline & YouTube API Integration Screen
 class ChannelGraphScreen extends StatefulWidget {
@@ -1580,7 +1579,7 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                       SizedBox(width: 8.w),
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: () => CreatorProPaywallSheet.show(context),
+                          onPressed: () => subProvider.presentPaywall(context),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,
                             padding: EdgeInsets.symmetric(vertical: 10.h),

@@ -20,6 +20,10 @@ class CreatorProPaywallSheet extends StatefulWidget {
     );
   }
 
+  static Future<void> present(BuildContext context) {
+    return context.read<SubscriptionProvider>().presentPaywall(context);
+  }
+
   @override
   State<CreatorProPaywallSheet> createState() => _CreatorProPaywallSheetState();
 }
@@ -335,7 +339,7 @@ class _CreatorProPaywallSheetState extends State<CreatorProPaywallSheet> {
 
                     // Primary CTA: Start Free Trial
                     SolidHeavyButton(
-                      label: 'Start 7-Day Free Trial',
+                      label: 'Start ${AppConstants.freeTrialLabel}',
                       height: 56.h,
                       fontSize: 16.sp,
                       isLoading: subProvider.isPurchasing,
@@ -349,7 +353,7 @@ class _CreatorProPaywallSheetState extends State<CreatorProPaywallSheet> {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
-                                '🚀 Welcome to Creator Pro! Unlimited simulations unlocked.',
+                                '🚀 Welcome to Creator Pro! Your ${AppConstants.freeTrialDays}-day trial is active.',
                                 style: AppTypography.bodySmall.copyWith(
                                   color: Colors.white,
                                 ),
