@@ -18,6 +18,7 @@ export interface UserRecord {
   connected_channels: string[];
   active_channel_handle: string;
   is_guest: boolean;
+  is_pro?: boolean;
   created_at?: Date;
   updated_at?: Date;
 }
@@ -106,9 +107,12 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
             connected_channels TEXT[] DEFAULT ARRAY['@RevenueCat'],
             active_channel_handle VARCHAR(100) DEFAULT '@RevenueCat',
             is_guest BOOLEAN DEFAULT FALSE,
+            is_pro BOOLEAN DEFAULT FALSE,
             created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
             updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
           );
+
+          ALTER TABLE users ADD COLUMN IF NOT EXISTS is_pro BOOLEAN DEFAULT FALSE;
 
           CREATE TABLE IF NOT EXISTS creators (
             id VARCHAR(64) PRIMARY KEY,
@@ -342,19 +346,19 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
   }
 
   async upsertUser(user: UserRecord): Promise<UserRecord | null> {
-
     if (!this.isConnected) return user;
     try {
       const rows = await this.query<UserRecord>(
         `INSERT INTO users (
           id, email, password_hash, display_name, photo_url,
-          connected_channels, active_channel_handle, is_guest, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
+          connected_channels, active_channel_handle, is_guest, is_pro, created_at, updated_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
         ON CONFLICT (email) DO UPDATE SET
           display_name = EXCLUDED.display_name,
           photo_url = EXCLUDED.photo_url,
           connected_channels = EXCLUDED.connected_channels,
           active_channel_handle = EXCLUDED.active_channel_handle,
+          is_pro = EXCLUDED.is_pro,
           updated_at = NOW()
         RETURNING *;`,
         [
@@ -365,7 +369,8 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           user.photo_url || null,
           user.connected_channels,
           user.active_channel_handle,
-          user.is_guest,
+          user.is_guest ?? false,
+          user.is_pro ?? false,
         ],
       );
       return rows[0] || null;
@@ -436,6 +441,20 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       return rows[0] || null;
     } catch (err: any) {
       this.logger.warn(`Failed to update active channel: ${err.message}`);
+      return null;
+    }
+  }
+
+  async updateUserProStatus(userId: string, isPro: boolean): Promise<UserRecord | null> {
+    if (!this.isConnected) return null;
+    try {
+      const rows = await this.query<UserRecord>(
+        `UPDATE users SET is_pro = $1, updated_at = NOW() WHERE id = $2 RETURNING *;`,
+        [isPro, userId],
+      );
+      return rows[0] || null;
+    } catch (err: any) {
+      this.logger.warn(`Failed to update user pro status: ${err.message}`);
       return null;
     }
   }

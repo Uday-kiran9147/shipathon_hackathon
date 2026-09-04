@@ -44,9 +44,9 @@ export class AuthService {
       display_name: dto.displayName.trim(),
       photo_url: null,
       connected_channels: [cleanHandle],
-
       active_channel_handle: cleanHandle,
       is_guest: false,
+      is_pro: false,
     };
 
     this.logger.log(`💾 [AuthService] Writing new user to PostgreSQL "users" table: email="${newUser.email}", handle="${newUser.active_channel_handle}"`);
@@ -65,6 +65,7 @@ export class AuthService {
         connectedChannels: saved?.connected_channels || newUser.connected_channels,
         activeChannelHandle: saved?.active_channel_handle || newUser.active_channel_handle,
         isGuest: false,
+        isPro: saved?.is_pro ?? false,
         authToken: token,
         createdAt: saved?.created_at || new Date(),
       },
@@ -88,7 +89,6 @@ export class AuthService {
     this.logger.log(`✅ [AuthService] Password verified in PostgreSQL for: "${dto.email}"`);
     const token = this.generateToken(user);
 
-
     return {
       success: true,
       token,
@@ -100,6 +100,7 @@ export class AuthService {
         connectedChannels: user.connected_channels,
         activeChannelHandle: user.active_channel_handle,
         isGuest: user.is_guest,
+        isPro: user.is_pro ?? false,
         authToken: token,
         createdAt: user.created_at || new Date(),
       },
@@ -123,9 +124,9 @@ export class AuthService {
         display_name: 'Google Verified Creator',
         photo_url: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
         connected_channels: [cleanHandle],
-
         active_channel_handle: cleanHandle,
         is_guest: false,
+        is_pro: false,
       };
       await this.db.upsertUser(user);
     }
@@ -143,6 +144,7 @@ export class AuthService {
         connectedChannels: user.connected_channels,
         activeChannelHandle: user.active_channel_handle,
         isGuest: user.is_guest,
+        isPro: user.is_pro ?? false,
         authToken: token,
         createdAt: user.created_at || new Date(),
       },

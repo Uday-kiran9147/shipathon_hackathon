@@ -7,6 +7,21 @@
 CREATE EXTENSION IF NOT EXISTS vector;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+-- 0. Users Table
+CREATE TABLE IF NOT EXISTS users (
+    id VARCHAR(64) PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255),
+    display_name VARCHAR(255) NOT NULL,
+    photo_url TEXT,
+    connected_channels TEXT[] DEFAULT ARRAY['@RevenueCat'],
+    active_channel_handle VARCHAR(100) DEFAULT '@RevenueCat',
+    is_guest BOOLEAN DEFAULT FALSE,
+    is_pro BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- 1. Creators Master Table
 CREATE TABLE IF NOT EXISTS creators (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

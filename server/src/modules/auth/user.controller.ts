@@ -35,8 +35,27 @@ export class UserController {
         connectedChannels: user.connected_channels,
         activeChannelHandle: user.active_channel_handle,
         isGuest: user.is_guest,
+        isPro: user.is_pro ?? false,
         createdAt: user.created_at,
       },
+    };
+  }
+
+  @Post('subscription')
+  async updateSubscription(
+    @Body() body: { isPro: boolean },
+    @Headers('authorization') authHeader?: string,
+  ) {
+    const email = this.extractEmailFromAuthHeader(authHeader);
+    const user = await this.db.getUserByEmail(email);
+    if (!user) {
+      throw new UnauthorizedException('User not found.');
+    }
+
+    const updated = await this.db.updateUserProStatus(user.id, body.isPro ?? false);
+    return {
+      success: true,
+      isPro: updated?.is_pro ?? body.isPro ?? false,
     };
   }
 

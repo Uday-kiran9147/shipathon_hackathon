@@ -7,6 +7,7 @@ class UserProfile {
   final List<String> connectedChannels;
   final String activeChannelHandle;
   final bool isGuest;
+  final bool isPro;
   final String? authToken;
   final DateTime createdAt;
 
@@ -18,6 +19,7 @@ class UserProfile {
     this.connectedChannels = const ['@uk'],
     this.activeChannelHandle = '@uk',
     this.isGuest = false,
+    this.isPro = false,
     this.authToken,
     required this.createdAt,
   });
@@ -32,6 +34,7 @@ class UserProfile {
       connectedChannels: [initialHandle],
       activeChannelHandle: initialHandle,
       isGuest: true,
+      isPro: false,
       authToken: null,
       createdAt: DateTime.now(),
     );
@@ -49,6 +52,7 @@ class UserProfile {
         connectedChannels: const ['@RevenueCat', '@mkbhd', '@Telusko'],
         activeChannelHandle: '@RevenueCat',
         isGuest: false,
+        isPro: true,
         authToken: 'mock_jwt_demo_alex_rc',
         createdAt: DateTime(2025, 1, 15),
       ),
@@ -57,10 +61,11 @@ class UserProfile {
         email: 'jeff@fireship.io',
         displayName: 'Jeff Delaney (Fireship)',
         photoUrl:
-            'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+            'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
         connectedChannels: const ['@Fireship', '@MrBeast'],
         activeChannelHandle: '@Fireship',
         isGuest: false,
+        isPro: true,
         authToken: 'mock_jwt_demo_fireship',
         createdAt: DateTime(2025, 2, 1),
       ),
@@ -73,6 +78,7 @@ class UserProfile {
         connectedChannels: const ['@Telusko'],
         activeChannelHandle: '@Telusko',
         isGuest: false,
+        isPro: false,
         authToken: 'mock_jwt_demo_telusko',
         createdAt: DateTime(2025, 3, 10),
       ),
@@ -87,6 +93,7 @@ class UserProfile {
     List<String>? connectedChannels,
     String? activeChannelHandle,
     bool? isGuest,
+    bool? isPro,
     String? authToken,
     DateTime? createdAt,
   }) {
@@ -98,6 +105,7 @@ class UserProfile {
       connectedChannels: connectedChannels ?? this.connectedChannels,
       activeChannelHandle: activeChannelHandle ?? this.activeChannelHandle,
       isGuest: isGuest ?? this.isGuest,
+      isPro: isPro ?? this.isPro,
       authToken: authToken ?? this.authToken,
       createdAt: createdAt ?? this.createdAt,
     );
@@ -123,7 +131,8 @@ class UserProfile {
           (json['activeChannelHandle'] ?? json['active_channel_handle'])
               as String? ??
           (channels.isNotEmpty ? channels.first : '@RevenueCat'),
-      isGuest: json['isGuest'] as bool? ?? false,
+      isGuest: json['isGuest'] as bool? ?? json['is_guest'] as bool? ?? false,
+      isPro: json['isPro'] as bool? ?? json['is_pro'] as bool? ?? false,
       authToken: (json['authToken'] ?? json['token']) as String?,
       createdAt: rawCreatedAt != null
           ? DateTime.tryParse(rawCreatedAt.toString()) ?? DateTime.now()
@@ -139,6 +148,8 @@ class UserProfile {
     'connectedChannels': connectedChannels,
     'activeChannelHandle': activeChannelHandle,
     'isGuest': isGuest,
+    'isPro': isPro,
+    'is_pro': isPro,
     'authToken': authToken,
     'createdAt': createdAt.toIso8601String(),
   };
