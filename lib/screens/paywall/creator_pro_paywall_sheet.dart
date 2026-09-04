@@ -5,6 +5,7 @@ import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
 import '../../providers/subscription_provider.dart';
+import '../../widgets/common/coming_soon_card.dart';
 import '../../widgets/common/solid_heavy_button.dart';
 
 /// High-Converting RevenueCat Creator Pro Paywall BottomSheet
@@ -12,12 +13,7 @@ class CreatorProPaywallSheet extends StatefulWidget {
   const CreatorProPaywallSheet({super.key});
 
   static Future<void> show(BuildContext context) {
-    return showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => const CreatorProPaywallSheet(),
-    );
+    return ComingSoonCard.showLimitReached(context);
   }
 
   static Future<void> present(BuildContext context) {

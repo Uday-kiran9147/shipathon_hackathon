@@ -1,9 +1,9 @@
 import 'dart:developer' show log;
 import 'package:flutter/material.dart';
-import 'package:purchases_ui_flutter/purchases_ui_flutter.dart';
 import '../core/constants/app_constants.dart';
 import '../core/services/revenue_cat_service.dart';
 import '../models/subscription_state.dart';
+import '../widgets/common/coming_soon_card.dart';
 
 class SubscriptionProvider extends ChangeNotifier {
   final RevenueCatService _revenueCatService = RevenueCatService();
@@ -34,7 +34,7 @@ class SubscriptionProvider extends ChangeNotifier {
     if (_state.isPro) return true;
 
     if (_state.simulationsUsedThisMonth >= _state.freeSimulationsLimit) {
-      return false; // Limit reached, paywall required
+      return false; // Limit reached, dialog required
     }
 
     _state = _state.copyWith(
@@ -133,32 +133,11 @@ class SubscriptionProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Present RevenueCat Paywall
-  /// Exclusively launches the official RevenueCat Paywall UI
+  /// Shows the Limit Reached / Pro Subscriptions Coming Soon dialog
   Future<void> presentPaywall(BuildContext context) async {
-    log('[SubscriptionProvider] Presenting official RevenueCat paywall...');
-    try {
-      final result = await _revenueCatService.presentPaywall();
-      if (result != null) {
-        if (result == PaywallResult.purchased ||
-            result == PaywallResult.restored) {
-          final hasPro = await _revenueCatService.checkProEntitlement();
-          _state = _state.copyWith(isPro: hasPro || true);
-          notifyListeners();
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text(
-                  '🚀 Welcome to Creator Pro! Unlimited simulations unlocked.',
-                ),
-                backgroundColor: Color(0xFF059669),
-              ),
-            );
-          }
-        }
-      }
-    } catch (e) {
-      debugPrint('[SubscriptionProvider] Error presenting RevenueCat paywall: $e');
+    log('[SubscriptionProvider] Presenting Limit Reached Coming Soon dialog...');
+    if (context.mounted) {
+      await ComingSoonCard.showLimitReached(context);
     }
   }
 }

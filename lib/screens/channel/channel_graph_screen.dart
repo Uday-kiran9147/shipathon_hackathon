@@ -9,6 +9,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/channel_provider.dart';
 import '../../providers/subscription_provider.dart';
 import '../../widgets/channel/channel_switcher_modal.dart';
+import '../../widgets/common/coming_soon_card.dart';
 import '../../widgets/common/custom_app_bar.dart';
 
 import '../../widgets/common/solid_heavy_button.dart';
@@ -1579,14 +1580,14 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                       SizedBox(width: 8.w),
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: () => subProvider.presentPaywall(context),
+                          onPressed: () => ComingSoonCard.showProShowcaseModal(context),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,
                             padding: EdgeInsets.symmetric(vertical: 10.h),
                             shape: const StadiumBorder(), // Capsule CTA
                           ),
                           child: Text(
-                            'Open Paywall',
+                            'Pro Preview',
                             style: AppTypography.labelSmall.copyWith(
                               color: Colors.white,
                               fontWeight: FontWeight.w800,

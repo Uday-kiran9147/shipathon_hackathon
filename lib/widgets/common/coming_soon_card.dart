@@ -79,6 +79,17 @@ class ComingSoonCard extends StatefulWidget {
     );
   }
 
+  /// Displays the Limit Reached Coming Soon modal bottom sheet
+  static Future<void> showLimitReached(BuildContext context) {
+    return show(
+      context,
+      title: 'Simulation Limit Reached',
+      description:
+          'You have reached your 3 free simulations for this month. Pro subscriptions with unlimited simulations are coming soon!',
+      icon: Icons.rocket_launch_rounded,
+    );
+  }
+
   /// Alias for showing the Pro Coming Soon modal
   static Future<void> showProShowcaseModal(BuildContext context) => show(context);
 

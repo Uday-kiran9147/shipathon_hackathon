@@ -7,6 +7,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/channel_provider.dart';
 import '../../providers/subscription_provider.dart';
 import '../auth/auth_modal_sheet.dart';
+import '../common/coming_soon_card.dart';
 import '../common/solid_heavy_button.dart';
 import '../common/tactile_card.dart';
 
@@ -555,7 +556,13 @@ class _ChannelSwitcherModalState extends State<ChannelSwitcherModal> {
                           if (!subProvider.isPro &&
                               user.connectedChannels.isNotEmpty) {
                             Navigator.pop(context);
-                            subProvider.presentPaywall(context);
+                            ComingSoonCard.show(
+                              context,
+                              title: 'Multi-Channel Workspace',
+                              description:
+                                  'Connecting multiple YouTube channels requires Creator Pro. Pro subscriptions are coming soon!',
+                              icon: Icons.hub_rounded,
+                            );
                           } else {
                             setState(() => _isAddingChannel = true);
                           }
