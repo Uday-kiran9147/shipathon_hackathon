@@ -11,7 +11,6 @@ import '../../widgets/briefing/blueprint_card.dart';
 import '../../widgets/common/custom_app_bar.dart';
 import '../../widgets/common/solid_heavy_button.dart';
 import '../../widgets/common/tactile_card.dart';
-import '../history/history_screen.dart';
 
 /// Daily Prescriptive Briefing Screen ("What to Film Tomorrow")
 class DailyBriefingScreen extends StatefulWidget {

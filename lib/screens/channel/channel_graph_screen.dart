@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
@@ -626,53 +627,54 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                           ],
                         ),
                       ),
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 8.w,
-                          vertical: 3.h,
-                        ),
-                        decoration: BoxDecoration(
-                          color: channelProvider.hasApiKey
-                              ? AppColors.outlierJadeSubtle
-                              : AppColors.warningAmberSubtle,
-                          borderRadius: BorderRadius.circular(
-                            100.r,
-                          ), // Capsule pill
-                          border: Border.all(
+                      if (kDebugMode)
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 8.w,
+                            vertical: 3.h,
+                          ),
+                          decoration: BoxDecoration(
                             color: channelProvider.hasApiKey
-                                ? AppColors.outlierJadeBorder
-                                : AppColors.warningAmberBorder,
+                                ? AppColors.outlierJadeSubtle
+                                : AppColors.warningAmberSubtle,
+                            borderRadius: BorderRadius.circular(
+                              100.r,
+                            ), // Capsule pill
+                            border: Border.all(
+                              color: channelProvider.hasApiKey
+                                  ? AppColors.outlierJadeBorder
+                                  : AppColors.warningAmberBorder,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 6.w,
+                                height: 6.w,
+                                decoration: BoxDecoration(
+                                  color: channelProvider.hasApiKey
+                                      ? AppColors.outlierJade
+                                      : AppColors.warningAmber,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              SizedBox(width: 4.w),
+                              Text(
+                                channelProvider.hasApiKey
+                                    ? 'API KEY READY'
+                                    : 'OFFLINE / DEMO',
+                                style: AppTypography.labelSmall.copyWith(
+                                  fontSize: 9.sp,
+                                  fontWeight: FontWeight.w800,
+                                  color: channelProvider.hasApiKey
+                                      ? AppColors.outlierJade
+                                      : AppColors.warningAmber,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              width: 6.w,
-                              height: 6.w,
-                              decoration: BoxDecoration(
-                                color: channelProvider.hasApiKey
-                                    ? AppColors.outlierJade
-                                    : AppColors.warningAmber,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            SizedBox(width: 4.w),
-                            Text(
-                              channelProvider.hasApiKey
-                                  ? 'API KEY READY'
-                                  : 'OFFLINE / DEMO',
-                              style: AppTypography.labelSmall.copyWith(
-                                fontSize: 9.sp,
-                                fontWeight: FontWeight.w800,
-                                color: channelProvider.hasApiKey
-                                    ? AppColors.outlierJade
-                                    : AppColors.warningAmber,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
                     ],
                   ),
                   SizedBox(height: 10.h),

@@ -172,4 +172,29 @@ class DailyBlueprint {
             ],
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'format': format == BlueprintFormat.short ? 'short' : 'longForm',
+      'formatLabel': formatLabel,
+      'hookText': hookText,
+      'thumbnailConceptLeft': thumbnailConceptLeft,
+      'thumbnailConceptRight': thumbnailConceptRight,
+      'thumbnailTag': thumbnailTag,
+      'dataProofReason': dataProofReason,
+      'predictedMultiplier': predictedMultiplier,
+      'convictionScore': convictionScore,
+      'confidenceIntervalMin': confidenceIntervalMin,
+      'confidenceIntervalMax': confidenceIntervalMax,
+      'categoryTag': categoryTag,
+      'date': date.toIso8601String(),
+      'isBookmarked': isBookmarked,
+      'demandEvidenceSummary': demandEvidenceSummary,
+      'creatorAuthenticityProof': creatorAuthenticityProof,
+      'engagementContext': engagementContext,
+      'preEngineeredRetentionAnchors': preEngineeredRetentionAnchors,
+    };
+  }
 }
