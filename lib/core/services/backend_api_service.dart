@@ -399,19 +399,34 @@ class BackendApiService {
         ? handle.trim()
         : '@${handle.trim()}';
 
-    debugPrint(
-      '[BackendApiService] 🚀 Sending POST ${ApiEndpoints.baseUrl}${ApiEndpoints.channelSync}',
-    );
-    final response = await _dio.post(
-      ApiEndpoints.channelSync,
-      data: {'handle': cleanHandle},
-    );
-    final data = response.data as Map<String, dynamic>;
-    final channelJson = data['channel'] as Map<String, dynamic>;
-    debugPrint(
-      '[BackendApiService] ✅ Channel Graph synced from backend: $cleanHandle',
-    );
-    return ChannelGraph.fromJson(channelJson);
+    try {
+      debugPrint(
+        '[BackendApiService] 🚀 Sending POST ${ApiEndpoints.baseUrl}${ApiEndpoints.channelSync}',
+      );
+      final response = await _dio.post(
+        ApiEndpoints.channelSync,
+        data: {'handle': cleanHandle},
+      );
+      if (response.data is Map<String, dynamic>) {
+        final data = response.data as Map<String, dynamic>;
+        if (data['channel'] is Map<String, dynamic>) {
+          final channelJson = data['channel'] as Map<String, dynamic>;
+          debugPrint(
+            '[BackendApiService] ✅ Channel Graph synced from backend: $cleanHandle',
+          );
+          return ChannelGraph.fromJson(channelJson);
+        }
+      }
+      throw Exception('Invalid channel sync payload returned by server.');
+    } on DioException catch (e) {
+      final errorMsg =
+          _extractErrorMessage(e, 'Failed to sync channel from YouTube API.');
+      debugPrint('[BackendApiService] 🔴 syncChannel error: $errorMsg');
+      throw Exception(errorMsg);
+    } catch (e) {
+      if (e is Exception) rethrow;
+      throw Exception('Failed to sync channel: $e');
+    }
   }
 
   /// POST /api/briefing/generate

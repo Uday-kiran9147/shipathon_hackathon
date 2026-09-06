@@ -17,7 +17,10 @@ export class YouTubeController {
   @Post('sync')
   async sync(@Body() dto: SyncChannelDto) {
     try {
-      const channelData = await this.youtubeService.fetchChannelIntelligence(dto.handle);
+      const channelData = await this.youtubeService.fetchChannelIntelligence(
+        dto.handle,
+        dto.apiKey,
+      );
 
       // Persist creator + mine video/comment embeddings in DB if available.
       // Best-effort: sync always returns channelData even if DB writes fail.

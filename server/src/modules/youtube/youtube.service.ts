@@ -121,26 +121,122 @@ export class YouTubeService {
     this.apiKey = this.configService.get<string>('youtubeApiKey', '');
   }
 
-  async fetchChannelIntelligence(handle: string): Promise<MinedChannelData> {
-    const cleanHandle = handle.startsWith('@') ? handle : `@${handle}`;
+  async fetchChannelIntelligence(
+    handle: string,
+    customApiKey?: string,
+  ): Promise<MinedChannelData> {
+    const cleanHandle = handle.trim().startsWith('@')
+      ? handle.trim()
+      : `@${handle.trim()}`;
+    const handleWithoutAt = cleanHandle.replace(/^@/, '');
+    const effectiveApiKey =
+      customApiKey && customApiKey.trim().length > 0
+        ? customApiKey.trim()
+        : this.apiKey;
 
-    if (!this.apiKey) {
+    if (!effectiveApiKey) {
+      this.logger.warn(`No YouTube API key configured, using mock fallback for ${cleanHandle}`);
       return this.getMockChannelData(cleanHandle);
     }
 
     try {
-      const channelUrl = `https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics,contentDetails,topicDetails&forHandle=${encodeURIComponent(
-        cleanHandle,
-      )}&key=${this.apiKey}`;
+      let channelItem: any = null;
 
-      const res = await fetch(channelUrl);
-      const data = await res.json();
+      // Strategy 1: channels?forHandle=@handle
+      try {
+        const u1 = `https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics,contentDetails,topicDetails&forHandle=${encodeURIComponent(
+          cleanHandle,
+        )}&key=${effectiveApiKey}`;
+        const r1 = await fetch(u1);
+        const d1 = await r1.json();
+        if (d1.items && d1.items.length > 0) {
+          channelItem = d1.items[0];
+        }
+      } catch (err: any) {
+        this.logger.debug(`Strategy 1 (forHandle with @) failed: ${err.message}`);
+      }
 
-      if (!data.items || data.items.length === 0) {
+      // Strategy 2: channels?forHandle=handleWithoutAt
+      if (!channelItem) {
+        try {
+          const u2 = `https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics,contentDetails,topicDetails&forHandle=${encodeURIComponent(
+            handleWithoutAt,
+          )}&key=${effectiveApiKey}`;
+          const r2 = await fetch(u2);
+          const d2 = await r2.json();
+          if (d2.items && d2.items.length > 0) {
+            channelItem = d2.items[0];
+          }
+        } catch (err: any) {
+          this.logger.debug(`Strategy 2 (forHandle without @) failed: ${err.message}`);
+        }
+      }
+
+      // Strategy 3: channels?forUsername=handleWithoutAt
+      if (!channelItem) {
+        try {
+          const u3 = `https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics,contentDetails,topicDetails&forUsername=${encodeURIComponent(
+            handleWithoutAt,
+          )}&key=${effectiveApiKey}`;
+          const r3 = await fetch(u3);
+          const d3 = await r3.json();
+          if (d3.items && d3.items.length > 0) {
+            channelItem = d3.items[0];
+          }
+        } catch (err: any) {
+          this.logger.debug(`Strategy 3 (forUsername) failed: ${err.message}`);
+        }
+      }
+
+      // Strategy 4: channels?id=handle (if starts with UC)
+      if (!channelItem && handleWithoutAt.startsWith('UC')) {
+        try {
+          const u4 = `https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics,contentDetails,topicDetails&id=${encodeURIComponent(
+            handleWithoutAt,
+          )}&key=${effectiveApiKey}`;
+          const r4 = await fetch(u4);
+          const d4 = await r4.json();
+          if (d4.items && d4.items.length > 0) {
+            channelItem = d4.items[0];
+          }
+        } catch (err: any) {
+          this.logger.debug(`Strategy 4 (id=UC...) failed: ${err.message}`);
+        }
+      }
+
+      // Strategy 5: search?type=channel&q=handle
+      if (!channelItem) {
+        try {
+          const u5 = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=channel&q=${encodeURIComponent(
+            cleanHandle,
+          )}&maxResults=1&key=${effectiveApiKey}`;
+          const r5 = await fetch(u5);
+          const d5 = await r5.json();
+          const foundChannelId =
+            d5.items?.[0]?.snippet?.channelId || d5.items?.[0]?.id?.channelId;
+          if (foundChannelId) {
+            const u6 = `https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics,contentDetails,topicDetails&id=${encodeURIComponent(
+              foundChannelId,
+            )}&key=${effectiveApiKey}`;
+            const r6 = await fetch(u6);
+            const d6 = await r6.json();
+            if (d6.items && d6.items.length > 0) {
+              channelItem = d6.items[0];
+            }
+          }
+        } catch (err: any) {
+          this.logger.debug(`Strategy 5 (search) failed: ${err.message}`);
+        }
+      }
+
+      if (!channelItem) {
+        this.logger.warn(
+          `YouTube API could not locate channel for handle: ${cleanHandle}, defaulting to mock data`,
+        );
         return this.getMockChannelData(cleanHandle);
       }
 
-      const item = data.items[0];
+      const item = channelItem;
       const snippet = item.snippet || {};
       const stats = item.statistics || {};
       const contentDetails = item.contentDetails || {};
@@ -154,6 +250,7 @@ export class YouTubeService {
         snippet.thumbnails?.medium?.url ||
         snippet.thumbnails?.default?.url ||
         null;
+      const bannerUrl = snippet.thumbnails?.bannerExternalUrl || null;
       const subscribers = parseInt(stats.subscriberCount || '0', 10);
       const totalViews = parseInt(stats.viewCount || '0', 10);
       const totalVideos = parseInt(stats.videoCount || '0', 10);
@@ -164,17 +261,18 @@ export class YouTubeService {
       const allVideoTitles: string[] = [];
 
       if (uploadsPlaylistId) {
-        const playlistUrl = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet,contentDetails&playlistId=${uploadsPlaylistId}&maxResults=8&key=${this.apiKey}`;
+        const playlistUrl = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet,contentDetails&playlistId=${uploadsPlaylistId}&maxResults=50&key=${effectiveApiKey}`;
         const pRes = await fetch(playlistUrl);
         const pData = await pRes.json();
 
-        const videoIds = (pData.items || [])
+        const videoIdsList = (pData.items || [])
           .map((i: any) => i.contentDetails?.videoId)
-          .filter(Boolean)
-          .join(',');
+          .filter(Boolean);
 
-        if (videoIds) {
-          const vUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics,contentDetails&id=${videoIds}&key=${this.apiKey}`;
+        if (videoIdsList.length > 0) {
+          // Batch fetch in chunks of 50
+          const chunk = videoIdsList.slice(0, 50).join(',');
+          const vUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics,contentDetails&id=${chunk}&key=${effectiveApiKey}`;
           const vRes = await fetch(vUrl);
           const vData = await vRes.json();
 
@@ -197,8 +295,11 @@ export class YouTubeService {
             );
 
             let topComments: ChannelComment[] = [];
-            if (recentVideos.length < 4 && vComments > 0) {
-              topComments = await this.fetchLiveCommentsForVideo(vId);
+            if (recentVideos.length < 6 && vComments > 0) {
+              topComments = await this.fetchLiveCommentsForVideo(
+                vId,
+                effectiveApiKey,
+              );
             }
 
             recentVideos.push({
@@ -209,7 +310,10 @@ export class YouTubeService {
               likes: vLikes,
               commentCount: vComments,
               publishedAt: vSnippet.publishedAt || new Date().toISOString(),
-              thumbnailUrl: vSnippet.thumbnails?.medium?.url || null,
+              thumbnailUrl:
+                vSnippet.thumbnails?.high?.url ||
+                vSnippet.thumbnails?.medium?.url ||
+                null,
               tags: vTags,
               durationFormatted: this.formatDuration(durationSec),
               topComments,
@@ -218,12 +322,15 @@ export class YouTubeService {
         }
       }
 
+      // Mathematical metrics calculated strictly from live YouTube data
       const viewsList = recentVideos.map((v) => v.views).filter((v) => v > 0);
       viewsList.sort((a, b) => a - b);
       const medianViews =
         viewsList.length > 0
           ? viewsList[Math.floor(viewsList.length / 2)]
-          : 10000;
+          : totalVideos > 0 && totalViews > 0
+            ? Math.round(totalViews / totalVideos)
+            : 10000;
       const avgViews =
         viewsList.length > 0
           ? Math.round(viewsList.reduce((a, b) => a + b, 0) / viewsList.length)
@@ -231,9 +338,10 @@ export class YouTubeService {
 
       const topVideoViews =
         viewsList.length > 0 ? viewsList[viewsList.length - 1] : medianViews * 2;
-      const topOutlierMultiplier = medianViews > 0
-        ? parseFloat(((topVideoViews / medianViews) * 10 / 10).toFixed(1))
-        : 3.2;
+      const topOutlierMultiplier =
+        medianViews > 0
+          ? parseFloat(((topVideoViews / medianViews) * 10 / 10).toFixed(1))
+          : 2.5;
 
       const totalRecentLikes = recentVideos.reduce((s, v) => s + v.likes, 0);
       const totalRecentComments = recentVideos.reduce(
@@ -248,6 +356,111 @@ export class YouTubeService {
         recentVideos.length > 0
           ? Math.round(totalRecentComments / recentVideos.length)
           : 0;
+
+      // Real upload frequency (videos per week) calculated from published dates
+      let uploadFrequency = 2.0;
+      if (recentVideos.length >= 2) {
+        const dates = recentVideos
+          .map((v) => new Date(v.publishedAt).getTime())
+          .filter((t) => !isNaN(t))
+          .sort((a, b) => b - a);
+        if (dates.length >= 2) {
+          const daysSpan = Math.max(
+            1,
+            (dates[0] - dates[dates.length - 1]) / (1000 * 60 * 60 * 24),
+          );
+          const weeks = daysSpan / 7;
+          if (weeks > 0) {
+            uploadFrequency = parseFloat((recentVideos.length / weeks).toFixed(1));
+            uploadFrequency = Math.min(14.0, Math.max(0.1, uploadFrequency));
+          }
+        }
+      }
+
+      // Best video length computed from above-median performing videos
+      const highPerformers = recentVideos.filter((v) => v.views >= medianViews);
+      const pool = highPerformers.length > 0 ? highPerformers : recentVideos;
+      let bestVideoLength = '10–14 min';
+      if (pool.length > 0) {
+        const durations = pool.map((v) => {
+          const parts = v.durationFormatted.split(':').map((p) => parseInt(p, 10));
+          if (parts.length === 2) return parts[0] * 60 + parts[1];
+          if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+          return 600;
+        });
+        const avgDurSec =
+          durations.reduce((a, b) => a + b, 0) / durations.length;
+        if (avgDurSec < 60) bestVideoLength = 'Shorts (<60s)';
+        else if (avgDurSec < 300) bestVideoLength = '3–5 min';
+        else if (avgDurSec < 600) bestVideoLength = '6–10 min';
+        else if (avgDurSec < 900) bestVideoLength = '10–15 min';
+        else if (avgDurSec < 1500) bestVideoLength = '15–25 min';
+        else bestVideoLength = '30+ min Deep Dive';
+      }
+
+      // Views velocity (views per day relative to expected daily views)
+      let viewsVelocity = 5.0;
+      if (recentVideos.length > 0) {
+        const now = Date.now();
+        const dailyRates = recentVideos.map((v) => {
+          const ageDays = Math.max(
+            1,
+            (now - new Date(v.publishedAt).getTime()) / (1000 * 60 * 60 * 24),
+          );
+          return v.views / ageDays;
+        });
+        const avgDaily =
+          dailyRates.reduce((a, b) => a + b, 0) / dailyRates.length;
+        const expectedDaily = Math.max(1, medianViews / 30);
+        viewsVelocity = parseFloat(
+          Math.min(
+            10.0,
+            Math.max(1.0, (avgDaily / expectedDaily) * 4.0),
+          ).toFixed(1),
+        );
+      }
+
+      // Title patterns dynamically extracted from real video titles
+      const extractedPatterns: string[] = [];
+      for (const title of allVideoTitles) {
+        const tLower = title.toLowerCase();
+        if (
+          tLower.startsWith('how to') &&
+          !extractedPatterns.includes('How-To Framework & Tutorial')
+        ) {
+          extractedPatterns.push('How-To Framework & Tutorial');
+        } else if (
+          tLower.includes(' vs ') &&
+          !extractedPatterns.includes('Direct Side-by-Side Comparison')
+        ) {
+          extractedPatterns.push('Direct Side-by-Side Comparison');
+        } else if (
+          (tLower.startsWith('why ') || tLower.includes('why you')) &&
+          !extractedPatterns.includes('Contrarian Premise & Root Cause')
+        ) {
+          extractedPatterns.push('Contrarian Premise & Root Cause');
+        } else if (
+          tLower.includes('in ') &&
+          tLower.includes('min') &&
+          !extractedPatterns.includes('High-Density Speedrun / Summary')
+        ) {
+          extractedPatterns.push('High-Density Speedrun / Summary');
+        } else if (
+          (tLower.includes('i built') ||
+            tLower.includes('i tested') ||
+            tLower.includes('i tried')) &&
+          !extractedPatterns.includes('First-Person Experiment & Proof')
+        ) {
+          extractedPatterns.push('First-Person Experiment & Proof');
+        }
+      }
+      if (extractedPatterns.length === 0) {
+        extractedPatterns.push(
+          'Contrarian thesis leading to benchmark proof',
+          'System teardown & architectural lessons',
+          'Direct cost & performance comparison',
+        );
+      }
 
       const topicCategories: string[] = (topicDetails.topicCategories || [])
         .map((u: string) =>
@@ -296,17 +509,40 @@ export class YouTubeService {
         averageComments,
       });
 
+      // Topic performance multipliers computed from REAL views for each cluster
       const topicPerformanceMultipliers: TopicPerformanceMultiplier[] =
-        topTopicClusters.map((topic, idx) => {
-          const mult = idx === 0 ? 2.4 : idx === 1 ? 1.7 : idx === 2 ? 1.2 : 0.8;
+        topTopicClusters.map((topic) => {
+          const topicWords = topic
+            .toLowerCase()
+            .split(/\s+/)
+            .filter((w) => w.length > 3);
+          const matchingVideos = recentVideos.filter((v) => {
+            const tLower = v.title.toLowerCase();
+            const tagsLower = v.tags.map((t) => t.toLowerCase());
+            return topicWords.some(
+              (tw) => tLower.includes(tw) || tagsLower.some((t) => t.includes(tw)),
+            );
+          });
+
+          const count = matchingVideos.length > 0 ? matchingVideos.length : 1;
+          const avgTopicViews =
+            matchingVideos.length > 0
+              ? Math.round(
+                  matchingVideos.reduce((s, v) => s + v.views, 0) /
+                    matchingVideos.length,
+                )
+              : Math.round(medianViews);
+
+          const mult =
+            medianViews > 0
+              ? parseFloat((avgTopicViews / medianViews).toFixed(1))
+              : 1.0;
+
           return {
             topic,
-            multiple: mult,
-            videoCount: Math.max(
-              1,
-              Math.floor(recentVideos.length / Math.max(1, topTopicClusters.length)),
-            ),
-            averageViews: Math.round(medianViews * mult),
+            multiple: Math.max(0.2, mult),
+            videoCount: count,
+            averageViews: avgTopicViews,
           };
         });
 
@@ -324,21 +560,18 @@ export class YouTubeService {
         medianCtr: 5.6,
         totalVideos,
         totalViews,
-        uploadFrequency: 2.3,
+        uploadFrequency,
         topOutlierMultiplier,
-        viewsVelocity: 5.2,
-        bestVideoLength: '10–14 min',
-        titlePatterns: [
-          'Contrarian thesis leading to benchmark proof',
-          'System teardown & architectural lessons',
-          'Direct cost & performance comparison',
-        ],
+        viewsVelocity,
+        bestVideoLength,
+        titlePatterns: extractedPatterns.slice(0, 3),
         topicPerformanceMultipliers,
-        targetAudienceLevel: 'Core Channel Community',
+        targetAudienceLevel: `Audience & Community of ${channelName}`,
         topTopicClusters,
-        topFormat: 'Long-Form + Shorts',
+        topFormat:
+          bestVideoLength.includes('Shorts') ? 'YouTube Shorts' : 'Long-Form Video',
         avatarUrl,
-        bannerUrl: null,
+        bannerUrl,
         isLiveConnected: true,
         recentVideos,
         audienceInsight,
@@ -346,7 +579,7 @@ export class YouTubeService {
         authenticityProfile,
       };
     } catch (e: any) {
-      this.logger.warn(`YouTube API fallback: ${e.message}`);
+      this.logger.warn(`YouTube API error: ${e.message}`);
       return this.getMockChannelData(cleanHandle);
     }
   }
@@ -354,9 +587,13 @@ export class YouTubeService {
   /// Fetch live top-level comment threads for a specific video
   private async fetchLiveCommentsForVideo(
     videoId: string,
+    apiKey?: string,
   ): Promise<ChannelComment[]> {
+    const key = apiKey || this.apiKey;
+    if (!key) return [];
+
     try {
-      const url = `https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=${videoId}&maxResults=15&order=relevance&key=${this.apiKey}`;
+      const url = `https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=${videoId}&maxResults=20&order=relevance&key=${key}`;
       const res = await fetch(url);
       const data = await res.json();
       const items = data.items || [];

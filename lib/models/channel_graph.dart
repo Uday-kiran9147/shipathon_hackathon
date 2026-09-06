@@ -35,7 +35,7 @@ class ChannelComment {
       authorDisplayName: json['authorDisplayName'] as String? ?? 'Viewer',
       authorProfileImageUrl: json['authorProfileImageUrl'] as String?,
       text: json['text'] as String? ?? '',
-      likeCount: json['likeCount'] as int? ?? 0,
+      likeCount: (json['likeCount'] as num?)?.toInt() ?? 0,
       publishedAt: json['publishedAt'] != null
           ? DateTime.tryParse(json['publishedAt'] as String)
           : null,
@@ -91,8 +91,8 @@ class CommentDemandCluster {
       id: json['id'] as String? ?? '',
       topicKeyword: json['topicKeyword'] as String? ?? '',
       sampleComments: comments,
-      totalUpvotes: json['totalUpvotes'] as int? ?? 0,
-      commentFrequency: json['commentFrequency'] as int? ?? 1,
+      totalUpvotes: (json['totalUpvotes'] as num?)?.toInt() ?? 0,
+      commentFrequency: (json['commentFrequency'] as num?)?.toInt() ?? 1,
       demandVelocityIndex:
           (json['demandVelocityIndex'] as num?)?.toDouble() ?? 1.0,
       primaryIntent: intent,
@@ -213,9 +213,9 @@ class ChannelRecentVideo {
       id: json['id'] as String? ?? '',
       title: json['title'] as String? ?? 'Untitled Video',
       description: json['description'] as String? ?? '',
-      views: json['views'] as int? ?? 0,
-      likes: json['likes'] as int? ?? 0,
-      commentCount: json['commentCount'] as int? ?? 0,
+      views: (json['views'] as num?)?.toInt() ?? 0,
+      likes: (json['likes'] as num?)?.toInt() ?? 0,
+      commentCount: (json['commentCount'] as num?)?.toInt() ?? 0,
       publishedAt: json['publishedAt'] != null
           ? DateTime.tryParse(json['publishedAt'] as String) ?? DateTime.now()
           : DateTime.now(),
@@ -286,8 +286,10 @@ class AudienceInsight {
               ?.map((e) => e.toString())
               .toList() ??
           [],
-      averageLikesPerVideo: json['averageLikesPerVideo'] as int? ?? 0,
-      averageCommentsPerVideo: json['averageCommentsPerVideo'] as int? ?? 0,
+      averageLikesPerVideo:
+          (json['averageLikesPerVideo'] as num?)?.toInt() ?? 0,
+      averageCommentsPerVideo:
+          (json['averageCommentsPerVideo'] as num?)?.toInt() ?? 0,
       topPerformingTopic: json['topPerformingTopic'] as String? ?? '',
     );
   }
@@ -323,8 +325,8 @@ class TopicPerformanceMultiplier {
     return TopicPerformanceMultiplier(
       topic: json['topic'] as String? ?? '',
       multiple: (json['multiple'] as num?)?.toDouble() ?? 1.0,
-      videoCount: json['videoCount'] as int? ?? 1,
-      averageViews: json['averageViews'] as int? ?? 0,
+      videoCount: (json['videoCount'] as num?)?.toInt() ?? 1,
+      averageViews: (json['averageViews'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -518,13 +520,13 @@ class ChannelGraph {
       handle: json['handle'] as String? ?? '',
       channelDescription: json['channelDescription'] as String? ?? '',
       niche: json['niche'] as String? ?? '',
-      subscribers: json['subscribers'] as int? ?? 0,
-      medianViews: json['medianViews'] as int? ?? 0,
-      averageLikes: json['averageLikes'] as int? ?? 0,
-      averageComments: json['averageComments'] as int? ?? 0,
+      subscribers: (json['subscribers'] as num?)?.toInt() ?? 0,
+      medianViews: (json['medianViews'] as num?)?.toInt() ?? 0,
+      averageLikes: (json['averageLikes'] as num?)?.toInt() ?? 0,
+      averageComments: (json['averageComments'] as num?)?.toInt() ?? 0,
       medianCtr: (json['medianCtr'] as num?)?.toDouble() ?? 0.0,
-      totalVideos: json['totalVideos'] as int? ?? 0,
-      totalViews: json['totalViews'] as int? ?? 0,
+      totalVideos: (json['totalVideos'] as num?)?.toInt() ?? 0,
+      totalViews: (json['totalViews'] as num?)?.toInt() ?? 0,
       uploadFrequency: (json['uploadFrequency'] as num?)?.toDouble() ?? 2.3,
       topOutlierMultiplier:
           (json['topOutlierMultiplier'] as num?)?.toDouble() ?? 3.8,
