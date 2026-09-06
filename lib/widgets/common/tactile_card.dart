@@ -67,7 +67,11 @@ class _TactileCardState extends State<TactileCard>
                   ? AppColors.cardElevationPressed
                   : (widget.shadows ?? AppColors.cardElevation),
             ),
-            child: widget.child,
+            // Material ancestor so InkWell/InkResponse children render splashes
+            child: Material(
+              type: MaterialType.transparency,
+              child: widget.child,
+            ),
           ),
         ),
       ),

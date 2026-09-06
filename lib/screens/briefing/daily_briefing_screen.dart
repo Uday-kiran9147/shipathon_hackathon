@@ -152,18 +152,19 @@ class _DailyBriefingScreenState extends State<DailyBriefingScreen> {
                               briefingProvider.currentFilter ==
                                   BriefingFilter.all;
 
-                          return Padding(
-                            padding: EdgeInsets.only(bottom: 16.h),
-                            child: BlueprintCard(
-                              blueprint: blueprint,
-                              isHero: isHero,
-                              onSimulatePressed: () {
-                                if (widget.onNavigateTab != null) {
-                                  widget.onNavigateTab!(
-                                    1,
-                                  ); // Jump to Pre-Flight Simulator Tab
-                                }
-                              },
+                          return _StaggeredSlide(
+                            index: index,
+                            child: Padding(
+                              padding: EdgeInsets.only(bottom: 16.h),
+                              child: BlueprintCard(
+                                blueprint: blueprint,
+                                isHero: isHero,
+                                onSimulatePressed: () {
+                                  if (widget.onNavigateTab != null) {
+                                    widget.onNavigateTab!(1);
+                                  }
+                                },
+                              ),
                             ),
                           );
                         }),
@@ -914,6 +915,60 @@ class _DailyBriefingScreenState extends State<DailyBriefingScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+
+/// Staggered slide-up + fade entrance for each briefing card.
+class _StaggeredSlide extends StatefulWidget {
+  final int index;
+  final Widget child;
+  const _StaggeredSlide({required this.index, required this.child});
+  @override
+  State<_StaggeredSlide> createState() => _StaggeredSlideState();
+}
+
+class _StaggeredSlideState extends State<_StaggeredSlide>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _offset;
+  late Animation<double> _opacity;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 480),
+    );
+    _offset = Tween<double>(begin: 32.0, end: 0.0).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic),
+    );
+    _opacity = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
+    Future.delayed(Duration(milliseconds: widget.index * 75), () {
+      if (mounted) _ctrl.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _ctrl,
+      builder: (_, child) => FadeTransition(
+        opacity: _opacity,
+        child: Transform.translate(
+          offset: Offset(0, _offset.value),
+          child: child,
+        ),
+      ),
+      child: widget.child,
     );
   }
 }

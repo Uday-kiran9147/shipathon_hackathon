@@ -349,9 +349,13 @@ class _PreflightSimulatorScreenState extends State<PreflightSimulatorScreen> {
                                 simProvider.currentResult!.noveltyScore,
                             topicMomentumScore:
                                 simProvider.currentResult!.topicMomentumScore,
+                            clarityScore:
+                                simProvider.currentResult!.clarityScore,
                             pacingScore: simProvider.currentResult!.pacingScore,
                             creatorFitScore:
                                 simProvider.currentResult!.creatorFitScore,
+                            authenticityScore:
+                                simProvider.currentResult!.authenticityScore,
                             tier: simProvider.currentResult!.performanceTier,
                           ),
                           SizedBox(height: 16.h),

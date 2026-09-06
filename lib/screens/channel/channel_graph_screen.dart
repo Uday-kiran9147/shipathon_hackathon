@@ -1380,9 +1380,8 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                   padding: EdgeInsets.all(8.w),
                   child: Column(
                     children: channel.recentVideos.map((video) {
-                      return InkWell(
+                      return GestureDetector(
                         onTap: () => _showVideoDetailsModal(context, video),
-                        borderRadius: BorderRadius.circular(8.r),
                         child: Padding(
                           padding: EdgeInsets.symmetric(
                             vertical: 8.h,

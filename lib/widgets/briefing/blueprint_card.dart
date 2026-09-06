@@ -283,8 +283,7 @@ class BlueprintCard extends StatelessWidget {
                         ],
                       ),
                     ),
-                    InkWell(
-                      borderRadius: BorderRadius.circular(8.r),
+                    GestureDetector(
                       onTap: () {
                         Clipboard.setData(
                           ClipboardData(text: blueprint.hookText),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/physics.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
@@ -11,7 +12,7 @@ import 'briefing/daily_briefing_screen.dart';
 import 'channel/channel_graph_screen.dart';
 import 'simulator/preflight_simulator_screen.dart';
 
-/// Main Navigation Shell with sliding pill indicator, spring micro-interactions, and smooth screen transitions
+/// Main Navigation Shell — spring-physics pill indicator, smooth screen transitions
 class MainNavigationShell extends StatefulWidget {
   const MainNavigationShell({super.key});
 
@@ -19,14 +20,29 @@ class MainNavigationShell extends StatefulWidget {
   State<MainNavigationShell> createState() => _MainNavigationShellState();
 }
 
-class _MainNavigationShellState extends State<MainNavigationShell> {
+class _MainNavigationShellState extends State<MainNavigationShell>
+    with SingleTickerProviderStateMixin {
   int _currentIndex = 0;
   int _previousIndex = 0;
   int _pressedIndex = -1;
 
+  // Spring-driven pill position: tracks fractional tab index (0.0–2.0 for 3 real tabs)
+  late AnimationController _pillController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pillController = AnimationController.unbounded(vsync: this, value: 0.0);
+  }
+
+  @override
+  void dispose() {
+    _pillController.dispose();
+    super.dispose();
+  }
+
   void _switchTab(int index) {
     if (index == 3) {
-      // Direct Pro Coming Soon Showcase trigger on pressing GoPro
       HapticFeedback.lightImpact();
       ComingSoonCard.showProShowcaseModal(context);
       return;
@@ -37,6 +53,14 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
         _previousIndex = _currentIndex;
         _currentIndex = index;
       });
+      _pillController.animateWith(
+        SpringSimulation(
+          const SpringDescription(mass: 1.0, stiffness: 300.0, damping: 28.0),
+          _pillController.value,
+          index.toDouble(),
+          0.0,
+        ),
+      );
     }
   }
 
@@ -134,40 +158,44 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                 return Stack(
                   alignment: Alignment.centerLeft,
                   children: [
-                    // Smooth Sliding Active Pill Indicator
-                    AnimatedPositioned(
-                      duration: const Duration(milliseconds: 250),
-                      curve: Curves.easeOutCubic,
-                      left: _currentIndex * tabWidth,
-                      width: tabWidth,
-                      top: 0,
-                      bottom: 0,
-                      child: Container(
-                        margin: EdgeInsets.symmetric(
-                          horizontal: 2.w,
-                          vertical: 2.h,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF181A24), // Solid Dark Black
-                          borderRadius: BorderRadius.circular(100.r),
-                          border: Border.all(
-                            color: const Color(0xFF0A0D14),
-                            width: 1.5,
+                    // Spring-physics pill indicator
+                    AnimatedBuilder(
+                      animation: _pillController,
+                      builder: (context, _) {
+                        final pillLeft = _pillController.value.clamp(0.0, 3.0) * tabWidth;
+                        return Positioned(
+                          left: pillLeft,
+                          width: tabWidth,
+                          top: 0,
+                          bottom: 0,
+                          child: Container(
+                            margin: EdgeInsets.symmetric(
+                              horizontal: 2.w,
+                              vertical: 2.h,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF181A24),
+                              borderRadius: BorderRadius.circular(100.r),
+                              border: Border.all(
+                                color: const Color(0xFF0A0D14),
+                                width: 1.5,
+                              ),
+                              boxShadow: [
+                                const BoxShadow(
+                                  color: Colors.black,
+                                  offset: Offset(0, 2),
+                                  blurRadius: 0,
+                                ),
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.22),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
                           ),
-                          boxShadow: [
-                            const BoxShadow(
-                              color: Colors.black,
-                              offset: Offset(0, 2), // 3D solid physical ledge
-                              blurRadius: 0,
-                            ),
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.22),
-                              blurRadius: 8,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                      ),
+                        );
+                      },
                     ),
 
                     // Interactive Tab Items
