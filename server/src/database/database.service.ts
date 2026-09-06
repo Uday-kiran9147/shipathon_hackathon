@@ -41,6 +41,7 @@ export interface SimulationRecord {
   clarity_score: number;
   pacing_score: number;
   creator_fit_score: number;
+  authenticity_score?: number;
   projected_views_multiplier: number;
   projected_views: number;
   performance_tier: string;
@@ -189,6 +190,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
             clarity_score NUMERIC(3,1) NOT NULL,
             pacing_score NUMERIC(3,1) NOT NULL,
             creator_fit_score NUMERIC(3,1) NOT NULL,
+            authenticity_score NUMERIC(3,1),
             projected_views_multiplier NUMERIC(4,2) NOT NULL,
             projected_views BIGINT NOT NULL,
             performance_tier VARCHAR(32) NOT NULL,
@@ -272,6 +274,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
 
             ALTER TABLE comment_embeddings ADD COLUMN IF NOT EXISTS video_id VARCHAR(64);
             ALTER TABLE comment_embeddings ADD COLUMN IF NOT EXISTS youtube_comment_id VARCHAR(64);
+            ALTER TABLE simulations ADD COLUMN IF NOT EXISTS authenticity_score NUMERIC(3,1);
 
             CREATE UNIQUE INDEX IF NOT EXISTS idx_video_embeddings_video_id ON video_embeddings(video_id);
             DROP INDEX IF EXISTS idx_comment_embeddings_youtube_comment_id;
@@ -861,10 +864,11 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         `INSERT INTO simulations (
           id, user_id, channel_handle, title, draft_script, format,
           hook_score, resonance_score, novelty_score, topic_momentum_score,
-          clarity_score, pacing_score, creator_fit_score,
+          clarity_score, pacing_score, creator_fit_score, authenticity_score,
           projected_views_multiplier, projected_views, performance_tier,
           hazards, fixes, created_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, NOW())
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, NOW())
+        ON CONFLICT (id) DO NOTHING
         RETURNING *;`,
         [
           record.id,
@@ -880,6 +884,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           record.clarity_score,
           record.pacing_score,
           record.creator_fit_score,
+          record.authenticity_score ?? null,
           record.projected_views_multiplier,
           record.projected_views,
           record.performance_tier,

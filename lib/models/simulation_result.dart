@@ -189,6 +189,7 @@ class SimulationResult {
   final double clarityScore;
   final double pacingScore;
   final double creatorFitScore;
+  final double authenticityScore;
   final double projectedViewsMultiplier;
   final int projectedViews;
   final PerformanceTier performanceTier;
@@ -208,6 +209,7 @@ class SimulationResult {
     this.clarityScore = 8.9,
     this.pacingScore = 7.8,
     this.creatorFitScore = 9.0,
+    this.authenticityScore = 0.0,
     this.projectedViewsMultiplier = 1.63,
     this.projectedViews = 30000,
     required this.performanceTier,
@@ -216,15 +218,24 @@ class SimulationResult {
     required this.createdAt,
   });
 
-  /// Composite Overall Score across all 7 evaluation dimensions (0.0 - 10.0 scale)
+  /// Composite Overall Score across all 8 evaluation dimensions (0.0 - 10.0 scale).
+  /// authenticityScore is included only when the server returns it (non-zero).
   double get overallScore {
-    final composite =
-        (hookScore * 0.28) +
-        (resonanceScore * 0.22) +
-        (noveltyScore * 0.15) +
-        (topicMomentumScore * 0.15) +
-        (clarityScore * 0.10) +
-        (pacingScore * 0.10);
+    final hasAuthenticity = authenticityScore > 0;
+    final composite = hasAuthenticity
+        ? (hookScore * 0.27) +
+          (resonanceScore * 0.21) +
+          (noveltyScore * 0.15) +
+          (topicMomentumScore * 0.13) +
+          (clarityScore * 0.10) +
+          (pacingScore * 0.08) +
+          (authenticityScore * 0.06)
+        : (hookScore * 0.28) +
+          (resonanceScore * 0.22) +
+          (noveltyScore * 0.15) +
+          (topicMomentumScore * 0.15) +
+          (clarityScore * 0.10) +
+          (pacingScore * 0.10);
     return (composite.clamp(3.0, 9.9) * 10).round() / 10.0;
   }
 
@@ -240,6 +251,7 @@ class SimulationResult {
     double? clarityScore,
     double? pacingScore,
     double? creatorFitScore,
+    double? authenticityScore,
     double? projectedViewsMultiplier,
     int? projectedViews,
     PerformanceTier? performanceTier,
@@ -259,6 +271,7 @@ class SimulationResult {
       clarityScore: clarityScore ?? this.clarityScore,
       pacingScore: pacingScore ?? this.pacingScore,
       creatorFitScore: creatorFitScore ?? this.creatorFitScore,
+      authenticityScore: authenticityScore ?? this.authenticityScore,
       projectedViewsMultiplier:
           projectedViewsMultiplier ?? this.projectedViewsMultiplier,
       projectedViews: projectedViews ?? this.projectedViews,
@@ -295,6 +308,7 @@ class SimulationResult {
       clarityScore: (json['clarityScore'] as num?)?.toDouble() ?? 8.9,
       pacingScore: (json['pacingScore'] as num?)?.toDouble() ?? 7.8,
       creatorFitScore: (json['creatorFitScore'] as num?)?.toDouble() ?? 9.0,
+      authenticityScore: (json['authenticityScore'] as num?)?.toDouble() ?? 0.0,
       projectedViewsMultiplier:
           (json['projectedViewsMultiplier'] as num?)?.toDouble() ?? 1.63,
       projectedViews: json['projectedViews'] as int? ?? 30000,

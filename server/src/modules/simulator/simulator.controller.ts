@@ -56,19 +56,19 @@ export class SimulatorController {
   ) {
     const userIdentifier = this.extractEmailOrId(authHeader);
 
-    // 1. Enforce Free Trial limits in PostgreSQL Database
+    // 1. Enforce free trial limits
     const usage = await this.db.checkAndIncrementSimulationUsage(userIdentifier);
 
     if (!usage.allowed) {
       this.logger.warn(
-        `🚫 [Simulator API] Free simulation limit reached for: ${userIdentifier} (${usage.simulationsUsedThisMonth}/${usage.freeSimulationsLimit})`,
+        `🚫 [Simulator] Free limit reached for: ${userIdentifier} (${usage.simulationsUsedThisMonth}/${usage.freeSimulationsLimit})`,
       );
       throw new HttpException(
         {
           success: false,
           error: 'PRO_REQUIRED',
           message:
-            'Free simulation limit reached (3/3). You have 0 free simulations remaining. Unlock Creator Pro for unlimited pre-flight simulations.',
+            'Free simulation limit reached (3/3). Unlock Creator Pro for unlimited pre-flight simulations.',
           simulationsUsedThisMonth: usage.simulationsUsedThisMonth,
           freeSimulationsLimit: usage.freeSimulationsLimit,
           simulationsRemaining: 0,
@@ -78,13 +78,32 @@ export class SimulatorController {
     }
 
     try {
+      // 2. Enrich DTO with channel context from DB if not already supplied by the client
+      const handle = dto.channelHandle || '@prevue';
+      if (dto.channelHandle && (!dto.niche || !dto.signatureHookStyle)) {
+        try {
+          const creator = await this.db.getCreatorByHandle(dto.channelHandle);
+          if (creator) {
+            if (!dto.niche && creator.niche) dto.niche = creator.niche;
+            if (!dto.signatureHookStyle && creator.signature_hook_style) {
+              dto.signatureHookStyle = creator.signature_hook_style;
+            }
+            if (!dto.medianViews && creator.median_views) {
+              dto.medianViews = creator.median_views;
+            }
+          }
+        } catch (e: any) {
+          this.logger.debug(`Channel context fetch skipped: ${e.message}`);
+        }
+      }
+
+      // 3. Run evaluation (Gemini or niche-aware static fallback)
       const rawScript = dto.script || dto.draftScript || '';
-      const result = this.simulatorService.evaluateScript(dto);
+      const result = await this.simulatorService.evaluateScript(dto);
 
       const simId = `sim_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
-      const handle = dto.channelHandle || '@RevenueCat';
 
-      // 2. Persist simulation result in PostgreSQL Database
+      // 4. Persist result
       const simRecord: SimulationRecord = {
         id: simId,
         user_id: userIdentifier,
@@ -99,6 +118,7 @@ export class SimulatorController {
         clarity_score: result.scores.clarity,
         pacing_score: result.scores.pacing,
         creator_fit_score: result.scores.creatorFit,
+        authenticity_score: result.scores.authenticityScore,
         projected_views_multiplier: result.viewsMultiplier,
         projected_views: result.projectedViews,
         performance_tier:
@@ -130,6 +150,7 @@ export class SimulatorController {
           clarityScore: simRecord.clarity_score,
           pacingScore: simRecord.pacing_score,
           creatorFitScore: simRecord.creator_fit_score,
+          authenticityScore: simRecord.authenticity_score,
           projectedViewsMultiplier: simRecord.projected_views_multiplier,
           projectedViews: simRecord.projected_views,
           performanceTier: simRecord.performance_tier,
@@ -156,19 +177,13 @@ export class SimulatorController {
   async getUsage(@Headers('authorization') authHeader?: string) {
     const userIdentifier = this.extractEmailOrId(authHeader);
     const usage = await this.db.getSimulationUsage(userIdentifier);
-    return {
-      success: true,
-      ...usage,
-    };
+    return { success: true, ...usage };
   }
 
   @Get('history')
   async getHistory(@Headers('authorization') authHeader?: string) {
     const userIdentifier = this.extractEmailOrId(authHeader);
     const history = await this.db.getSimulationsByUserId(userIdentifier, 20);
-    return {
-      success: true,
-      simulations: history,
-    };
+    return { success: true, simulations: history };
   }
 }

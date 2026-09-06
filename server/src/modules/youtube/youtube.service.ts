@@ -261,62 +261,140 @@ export class YouTubeService {
       const allVideoTitles: string[] = [];
 
       if (uploadsPlaylistId) {
-        const playlistUrl = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet,contentDetails&playlistId=${uploadsPlaylistId}&maxResults=50&key=${effectiveApiKey}`;
-        const pRes = await fetch(playlistUrl);
-        const pData = await pRes.json();
+        // ── 1. Collect video IDs across multiple playlist pages ──────────────
+        // Fetch up to 3 pages (150 IDs) so large channels get a meaningful
+        // sample beyond just the 50 most-recently-uploaded videos.
+        const MAX_PLAYLIST_PAGES = 3;
+        const allVideoIds: string[] = [];
+        let nextPageToken: string | undefined;
 
-        const videoIdsList = (pData.items || [])
-          .map((i: any) => i.contentDetails?.videoId)
-          .filter(Boolean);
+        for (let page = 0; page < MAX_PLAYLIST_PAGES; page++) {
+          const pageParam = nextPageToken ? `&pageToken=${nextPageToken}` : '';
+          const playlistUrl =
+            `https://www.googleapis.com/youtube/v3/playlistItems` +
+            `?part=snippet,contentDetails&playlistId=${uploadsPlaylistId}` +
+            `&maxResults=50&key=${effectiveApiKey}${pageParam}`;
+          try {
+            const pRes = await fetch(playlistUrl);
+            const pData = await pRes.json();
+            const ids = (pData.items || [])
+              .map((i: any) => i.contentDetails?.videoId as string)
+              .filter(Boolean);
+            allVideoIds.push(...ids);
+            nextPageToken = pData.nextPageToken;
+            if (!nextPageToken) break; // no more pages
+          } catch {
+            break;
+          }
+        }
 
-        if (videoIdsList.length > 0) {
-          // Batch fetch in chunks of 50
-          const chunk = videoIdsList.slice(0, 50).join(',');
-          const vUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics,contentDetails&id=${chunk}&key=${effectiveApiKey}`;
-          const vRes = await fetch(vUrl);
-          const vData = await vRes.json();
+        if (allVideoIds.length > 0) {
+          // ── 2. Batch-fetch video stats in chunks of 50 ────────────────────
+          const rawVideos: any[] = [];
+          for (let i = 0; i < allVideoIds.length; i += 50) {
+            const chunk = allVideoIds.slice(i, i + 50).join(',');
+            try {
+              const vUrl =
+                `https://www.googleapis.com/youtube/v3/videos` +
+                `?part=snippet,statistics,contentDetails&id=${chunk}&key=${effectiveApiKey}`;
+              const vRes = await fetch(vUrl);
+              const vData = await vRes.json();
+              rawVideos.push(...(vData.items || []));
+            } catch {
+              // partial failure — continue with what we have
+            }
+          }
 
-          for (const v of vData.items || []) {
+          // ── 3. Smart sampling: top 20 by views + 10 most recent ───────────
+          // Sorting gives us the outlier signal; recency gives trend signal.
+          // Combined this beats a naive "first 50 from playlist" for any size.
+          const byViews = [...rawVideos].sort(
+            (a, b) =>
+              parseInt(b.statistics?.viewCount || '0', 10) -
+              parseInt(a.statistics?.viewCount || '0', 10),
+          );
+          const top20 = byViews.slice(0, 20);
+          const top20Ids = new Set(top20.map((v) => v.id));
+          // Most recent 10 not already in top 20
+          const recent10 = rawVideos
+            .filter((v) => !top20Ids.has(v.id))
+            .slice(0, 10);
+          const selectedVideos = [...top20, ...recent10];
+
+          // ── 4. Adaptive comment target based on channel size ───────────────
+          // Large channels have more comments per video so fewer videos needed.
+          const commentTarget =
+            subscribers >= 500_000 ? 4
+            : subscribers >= 50_000  ? 5
+            : 6;
+
+          // Build ChannelRecentVideo list (no comments yet)
+          const videoDataList: Array<{
+            id: string; title: string; description: string; views: number;
+            likes: number; commentCount: number; publishedAt: string;
+            thumbnailUrl: string | null; tags: string[]; durationFormatted: string;
+          }> = [];
+
+          for (const v of selectedVideos) {
             const vSnippet = v.snippet || {};
-            const vStats = v.statistics || {};
+            const vStats  = v.statistics || {};
             const vContent = v.contentDetails || {};
-            const vId = v.id as string;
             const vTitle = vSnippet.title || 'Untitled Video';
             const vTags: string[] = vSnippet.tags || [];
 
             allVideoTitles.push(vTitle);
             allTags.push(...vTags);
 
-            const vViews = parseInt(vStats.viewCount || '0', 10);
-            const vLikes = parseInt(vStats.likeCount || '0', 10);
-            const vComments = parseInt(vStats.commentCount || '0', 10);
-            const durationSec = this.parseIsoDurationSeconds(
-              vContent.duration || 'PT10M',
-            );
-
-            let topComments: ChannelComment[] = [];
-            if (recentVideos.length < 6 && vComments > 0) {
-              topComments = await this.fetchLiveCommentsForVideo(
-                vId,
-                effectiveApiKey,
-              );
-            }
-
-            recentVideos.push({
-              id: vId,
+            videoDataList.push({
+              id: v.id as string,
               title: vTitle,
-              description: vSnippet.description || '',
-              views: vViews,
-              likes: vLikes,
-              commentCount: vComments,
+              // Truncate descriptions — 400 chars is enough for analysis,
+              // and keeps the payload size manageable for all channel sizes.
+              description: (vSnippet.description || '').substring(0, 400),
+              views:   parseInt(vStats.viewCount   || '0', 10),
+              likes:   parseInt(vStats.likeCount   || '0', 10),
+              commentCount: parseInt(vStats.commentCount || '0', 10),
               publishedAt: vSnippet.publishedAt || new Date().toISOString(),
               thumbnailUrl:
                 vSnippet.thumbnails?.high?.url ||
                 vSnippet.thumbnails?.medium?.url ||
                 null,
               tags: vTags,
-              durationFormatted: this.formatDuration(durationSec),
-              topComments,
+              durationFormatted: this.formatDuration(
+                this.parseIsoDurationSeconds(vContent.duration || 'PT10M'),
+              ),
+            });
+          }
+
+          // ── 5. Parallel comment fetching ──────────────────────────────────
+          // Pick the commentTarget most-commented videos for deep analysis.
+          const commentCandidates = [...videoDataList]
+            .sort((a, b) => b.commentCount - a.commentCount)
+            .slice(0, commentTarget);
+          const commentTargetIds = new Set(commentCandidates.map((v) => v.id));
+
+          const commentResults = await Promise.allSettled(
+            commentCandidates.map((v) =>
+              this.fetchLiveCommentsForVideo(v.id, effectiveApiKey),
+            ),
+          );
+
+          const commentMap = new Map<string, ChannelComment[]>();
+          commentCandidates.forEach((v, idx) => {
+            const result = commentResults[idx];
+            commentMap.set(
+              v.id,
+              result.status === 'fulfilled' ? result.value : [],
+            );
+          });
+
+          // Assemble final recentVideos list
+          for (const vd of videoDataList) {
+            recentVideos.push({
+              ...vd,
+              topComments: commentTargetIds.has(vd.id)
+                ? (commentMap.get(vd.id) ?? [])
+                : [],
             });
           }
         }
@@ -489,6 +567,16 @@ export class YouTubeService {
         channelName,
       });
 
+      // Re-classify comments that fell through to 'discussion' using niche-specific
+      // request keywords — corrects demand cluster accuracy before synthesizeAudienceInsight.
+      for (const video of recentVideos) {
+        for (const comment of video.topComments) {
+          if (comment.intentCategory === 'discussion') {
+            comment.intentCategory = this.classifyCommentIntent(comment.text, niche);
+          }
+        }
+      }
+
       const audienceInsight = this.synthesizeAudienceInsight({
         recentVideos,
         topTopicClusters,
@@ -660,8 +748,9 @@ export class YouTubeService {
     return result;
   }
 
-  /// Classify a comment's intent using the same heuristics as the mobile mining engine
-  private classifyCommentIntent(text: string): CommentIntent {
+  /// Classify a comment's intent using the same heuristics as the mobile mining engine.
+  /// Pass niche to augment with niche-specific request keywords.
+  private classifyCommentIntent(text: string, niche?: string): CommentIntent {
     const lower = text.toLowerCase();
 
     const isRhetorical =
@@ -685,29 +774,30 @@ export class YouTubeService {
       return 'discussion';
     }
 
-    if (
-      lower.includes('please make') ||
-      lower.includes('can you make') ||
-      lower.includes('can you do') ||
-      lower.includes('can you cover') ||
-      lower.includes('can you explain') ||
-      lower.includes('can you show') ||
-      lower.includes('can you teach') ||
-      lower.includes('can you build') ||
-      lower.includes('next video on') ||
-      lower.includes('next video should be') ||
-      lower.includes('part 2') ||
-      lower.includes('tutorial on') ||
-      lower.includes('deep dive on') ||
-      lower.includes('we want a video') ||
-      lower.includes('make a video about') ||
-      lower.includes('make a video on') ||
-      lower.includes('cover this in next') ||
-      lower.includes('would love to see a video') ||
-      lower.includes('please explain') ||
-      lower.includes('please do a video') ||
-      lower.includes('waiting for part')
-    ) {
+    const baseRequestKeywords = [
+      'please make', 'can you make', 'can you do', 'can you cover',
+      'can you explain', 'can you show', 'can you teach', 'can you build',
+      'next video on', 'next video should be', 'part 2', 'tutorial on',
+      'deep dive on', 'we want a video', 'make a video about', 'make a video on',
+      'cover this in next', 'would love to see a video', 'please explain',
+      'please do a video', 'waiting for part',
+    ];
+
+    // Niche-specific request keywords (imported lazily to avoid circular deps)
+    let nicheRequestKeywords: string[] = [];
+    if (niche) {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const { NICHE_TAXONOMY, detectNicheKey } = require('../simulator/niche-taxonomy');
+        const key = detectNicheKey(niche);
+        nicheRequestKeywords = NICHE_TAXONOMY[key]?.requestKeywords ?? [];
+      } catch {
+        // taxonomy not available — use base keywords only
+      }
+    }
+
+    const allRequestKeywords = [...baseRequestKeywords, ...nicheRequestKeywords];
+    if (allRequestKeywords.some((kw) => lower.includes(kw))) {
       return 'request';
     }
 
