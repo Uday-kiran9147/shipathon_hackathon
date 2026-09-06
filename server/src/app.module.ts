@@ -16,7 +16,11 @@ import { AuthModule } from './modules/auth/auth.module';
       load: [configuration],
       envFilePath: [
         `.env.${process.env.NODE_ENV || 'development'}`,
+        '.env.production',
+        '.env.local',
         '.env',
+        '../.env.production',
+        '../.env',
       ],
     }),
     DatabaseModule,
