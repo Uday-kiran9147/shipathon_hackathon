@@ -1,13 +1,12 @@
 import 'package:flutter/foundation.dart';
-import '../core/services/blueprint_generator_service.dart';
+import '../core/services/backend_api_service.dart';
 import '../models/channel_graph.dart';
 import '../models/daily_blueprint.dart';
 
 enum BriefingFilter { all, longForm, short, saved }
 
 class BriefingProvider extends ChangeNotifier {
-  final BlueprintGeneratorService _generatorService =
-      BlueprintGeneratorService();
+  final BackendApiService _backendApiService = BackendApiService();
 
   List<DailyBlueprint> _blueprints = [];
   BriefingFilter _currentFilter = BriefingFilter.all;
@@ -68,7 +67,7 @@ class BriefingProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _blueprints = _generatorService.generateBlueprintsForChannel(channel);
+      _blueprints = await _backendApiService.generateBriefing(channel);
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -79,6 +78,44 @@ class BriefingProvider extends ChangeNotifier {
   void clearBlueprints() {
     _blueprints = [];
     notifyListeners();
+  }
+
+  /// Loads the most recently generated & persisted briefing for this channel
+  /// from `/api/briefing/history`. This never calls Gemini — it only reads
+  /// back a batch this account already generated (in this session or a past
+  /// one), so a channel's briefing survives app restarts without requiring
+  /// another tap of "Generate Daily Briefing".
+  Future<void> loadPersistedBriefing(ChannelGraph channel) async {
+    if (!channel.isConfigured) {
+      _blueprints = [];
+      notifyListeners();
+      return;
+    }
+
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final history = await _backendApiService.getBriefingHistory();
+      final match = history.firstWhere(
+        (record) =>
+            (record['channel_handle']?.toString().toLowerCase() ?? '') ==
+            channel.handle.toLowerCase(),
+        orElse: () => const {},
+      );
+
+      final rawBlueprints = match['blueprints'] as List<dynamic>? ?? [];
+      _blueprints = rawBlueprints
+          .whereType<Map<String, dynamic>>()
+          .map((b) => DailyBlueprint.fromJson(b))
+          .toList();
+    } catch (e) {
+      debugPrint('[BriefingProvider] Could not load persisted briefing: $e');
+      _blueprints = [];
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   /// Pull-to-refresh (Refreshes dynamic catalog blueprints)
@@ -93,21 +130,24 @@ class BriefingProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _blueprints = _generatorService.generateBlueprintsForChannel(channel);
+      _blueprints = await _backendApiService.generateBriefing(channel);
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  /// AI Generates a brand-new blueprint in real time
+  /// AI Generates a brand-new blueprint in real time (via the backend engine)
   Future<DailyBlueprint> generateFreshBlueprint(ChannelGraph channel) async {
     _isGeneratingFresh = true;
     notifyListeners();
 
     try {
-      final newBlueprint = await _generatorService
-          .generateFreshBlueprintOnDemand(channel);
+      final fresh = await _backendApiService.generateBriefing(channel);
+      if (fresh.isEmpty) {
+        throw Exception('Backend returned no fresh blueprint.');
+      }
+      final newBlueprint = fresh.first;
       _blueprints.insert(0, newBlueprint);
       _isGeneratingFresh = false;
       notifyListeners();

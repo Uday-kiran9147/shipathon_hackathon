@@ -505,4 +505,95 @@ class ChannelGraph {
       authenticityProfile: authenticityProfile ?? this.authenticityProfile,
     );
   }
+
+  /// Parse the canonical Channel Graph wire shape returned by the Prevue backend
+  /// (`POST /api/channel/sync`) and consumed by `POST /api/briefing/generate`.
+  factory ChannelGraph.fromJson(Map<String, dynamic> json) {
+    final rawTopics = json['topicPerformanceMultipliers'] as List<dynamic>? ?? [];
+    final rawVideos = json['recentVideos'] as List<dynamic>? ?? [];
+
+    return ChannelGraph(
+      channelId: json['channelId'] as String?,
+      channelName: json['channelName'] as String? ?? '',
+      handle: json['handle'] as String? ?? '',
+      channelDescription: json['channelDescription'] as String? ?? '',
+      niche: json['niche'] as String? ?? '',
+      subscribers: json['subscribers'] as int? ?? 0,
+      medianViews: json['medianViews'] as int? ?? 0,
+      averageLikes: json['averageLikes'] as int? ?? 0,
+      averageComments: json['averageComments'] as int? ?? 0,
+      medianCtr: (json['medianCtr'] as num?)?.toDouble() ?? 0.0,
+      totalVideos: json['totalVideos'] as int? ?? 0,
+      totalViews: json['totalViews'] as int? ?? 0,
+      uploadFrequency: (json['uploadFrequency'] as num?)?.toDouble() ?? 2.3,
+      topOutlierMultiplier:
+          (json['topOutlierMultiplier'] as num?)?.toDouble() ?? 3.8,
+      viewsVelocity: (json['viewsVelocity'] as num?)?.toDouble() ?? 5.2,
+      bestVideoLength: json['bestVideoLength'] as String? ?? '10–14 min',
+      titlePatterns:
+          (json['titlePatterns'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const [],
+      topicPerformanceMultipliers: rawTopics
+          .map((t) => TopicPerformanceMultiplier.fromJson(t as Map<String, dynamic>))
+          .toList(),
+      targetAudienceLevel: json['targetAudienceLevel'] as String? ?? '',
+      topTopicClusters:
+          (json['topTopicClusters'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const [],
+      topFormat: json['topFormat'] as String? ?? 'Long-Form + Shorts',
+      avatarUrl: json['avatarUrl'] as String?,
+      bannerUrl: json['bannerUrl'] as String?,
+      isLiveConnected: json['isLiveConnected'] as bool? ?? false,
+      recentVideos: rawVideos
+          .map((v) => ChannelRecentVideo.fromJson(v as Map<String, dynamic>))
+          .toList(),
+      audienceInsight: json['audienceInsight'] != null
+          ? AudienceInsight.fromJson(json['audienceInsight'] as Map<String, dynamic>)
+          : const AudienceInsight(),
+      signatureCreatorStyle: json['signatureCreatorStyle'] as String? ?? '',
+      authenticityProfile: json['authenticityProfile'] != null
+          ? CreatorAuthenticityProfile.fromJson(
+              json['authenticityProfile'] as Map<String, dynamic>,
+            )
+          : const CreatorAuthenticityProfile(),
+    );
+  }
+
+  /// Serialize back into the canonical wire shape (used to hand this channel
+  /// graph to `POST /api/briefing/generate`).
+  Map<String, dynamic> toJson() => {
+    'channelId': channelId,
+    'channelName': channelName,
+    'handle': handle,
+    'channelDescription': channelDescription,
+    'niche': niche,
+    'subscribers': subscribers,
+    'medianViews': medianViews,
+    'averageLikes': averageLikes,
+    'averageComments': averageComments,
+    'medianCtr': medianCtr,
+    'totalVideos': totalVideos,
+    'totalViews': totalViews,
+    'uploadFrequency': uploadFrequency,
+    'topOutlierMultiplier': topOutlierMultiplier,
+    'viewsVelocity': viewsVelocity,
+    'bestVideoLength': bestVideoLength,
+    'titlePatterns': titlePatterns,
+    'topicPerformanceMultipliers':
+        topicPerformanceMultipliers.map((t) => t.toJson()).toList(),
+    'targetAudienceLevel': targetAudienceLevel,
+    'topTopicClusters': topTopicClusters,
+    'topFormat': topFormat,
+    'avatarUrl': avatarUrl,
+    'bannerUrl': bannerUrl,
+    'isLiveConnected': isLiveConnected,
+    'recentVideos': recentVideos.map((v) => v.toJson()).toList(),
+    'audienceInsight': audienceInsight.toJson(),
+    'signatureCreatorStyle': signatureCreatorStyle,
+    'authenticityProfile': authenticityProfile.toJson(),
+  };
 }

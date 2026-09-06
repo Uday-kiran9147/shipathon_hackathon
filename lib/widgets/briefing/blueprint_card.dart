@@ -92,7 +92,8 @@ class BlueprintCard extends StatelessWidget {
 
           // Live Audience Demand & Comment Source Callout
           if (blueprint.demandCluster != null ||
-              blueprint.audienceCommentSource != null) ...[
+              blueprint.audienceCommentSource != null ||
+              blueprint.demandEvidenceSummary.isNotEmpty) ...[
             SizedBox(height: 10.h),
             Container(
               padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
@@ -215,6 +216,17 @@ class BlueprintCard extends StatelessWidget {
                           ),
                         ),
                       ],
+                    ),
+                  ] else if (blueprint.demandEvidenceSummary.isNotEmpty) ...[
+                    SizedBox(height: 8.h),
+                    Text(
+                      blueprint.demandEvidenceSummary,
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.primaryDark,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12.sp,
+                        height: 1.4,
+                      ),
                     ),
                   ],
                 ],

@@ -146,7 +146,29 @@ CREATE TABLE IF NOT EXISTS creator_metrics (
     calculated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 7. Content Ideas / Blueprints Table
+-- 7. Daily Briefing Batches (one row per generated batch of blueprints)
+CREATE TABLE IF NOT EXISTS briefings (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id VARCHAR(64) REFERENCES users(id) ON DELETE CASCADE,
+    channel_handle VARCHAR(100) NOT NULL,
+    blueprints JSONB DEFAULT '[]'::jsonb,
+    source VARCHAR(16) DEFAULT 'algorithmic', -- 'gemini' | 'algorithmic'
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_briefings_user_id ON briefings(user_id);
+
+-- Dedup key for comment embeddings so re-syncing a channel doesn't duplicate rows
+ALTER TABLE comment_embeddings ADD COLUMN IF NOT EXISTS youtube_comment_id VARCHAR(64);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_video_embeddings_video_id ON video_embeddings(video_id);
+-- Plain (non-partial) unique index: ON CONFLICT (youtube_comment_id) cannot
+-- target a partial index unless the same WHERE predicate is repeated there,
+-- so this stays a full index (NULLs are still treated as distinct by Postgres).
+DROP INDEX IF EXISTS idx_comment_embeddings_youtube_comment_id;
+CREATE UNIQUE INDEX idx_comment_embeddings_youtube_comment_id
+    ON comment_embeddings(youtube_comment_id);
+
+-- 8. Content Ideas / Blueprints Table (legacy single-idea table, superseded by `briefings`)
 CREATE TABLE IF NOT EXISTS content_ideas (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     creator_id UUID REFERENCES creators(id) ON DELETE CASCADE,

@@ -1,6 +1,7 @@
 import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Pool, PoolClient } from 'pg';
+import { randomUUID } from 'crypto';
 
 let pgvector: any = null;
 try {
@@ -77,6 +78,35 @@ export interface VideoRecord {
   likes: number;
   comments: number;
   thumbnail_url: string;
+}
+
+export interface VideoEmbeddingRecord {
+  id?: string;
+  creator_id: string;
+  video_id: string;
+  performance_multiple: number;
+  combined_embedding: number[];
+}
+
+export interface CommentEmbeddingRecord {
+  id?: string;
+  creator_id: string;
+  video_id: string;
+  youtube_comment_id: string;
+  author_name: string;
+  comment_text: string;
+  like_count: number;
+  intent_category: string;
+  embedding: number[];
+}
+
+export interface BriefingRecord {
+  id: string;
+  user_id?: string | null;
+  channel_handle: string;
+  blueprints: any;
+  source: 'gemini' | 'algorithmic';
+  created_at?: Date;
 }
 
 @Injectable()
@@ -200,10 +230,19 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
             thumbnail_url TEXT,
             created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
           );
+
+          CREATE TABLE IF NOT EXISTS briefings (
+            id VARCHAR(64) PRIMARY KEY,
+            user_id VARCHAR(64),
+            channel_handle VARCHAR(100) NOT NULL,
+            blueprints JSONB DEFAULT '[]'::jsonb,
+            source VARCHAR(16) DEFAULT 'algorithmic',
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+          );
         `);
 
         this.isConnected = true;
-        this.logger.log('✅ Connected to PostgreSQL: "users", "simulations", "creators" & "videos" tables ready.');
+        this.logger.log('✅ Connected to PostgreSQL: "users", "simulations", "creators", "videos" & "briefings" tables ready.');
 
         // 2. Optional pgvector check
         try {
@@ -221,6 +260,8 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
             CREATE TABLE IF NOT EXISTS comment_embeddings (
               id VARCHAR(64) PRIMARY KEY,
               creator_id VARCHAR(64) NOT NULL,
+              video_id VARCHAR(64),
+              youtube_comment_id VARCHAR(64),
               author_name VARCHAR(255),
               comment_text TEXT NOT NULL,
               like_count INTEGER DEFAULT 0,
@@ -228,6 +269,14 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
               embedding vector(768),
               created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
             );
+
+            ALTER TABLE comment_embeddings ADD COLUMN IF NOT EXISTS video_id VARCHAR(64);
+            ALTER TABLE comment_embeddings ADD COLUMN IF NOT EXISTS youtube_comment_id VARCHAR(64);
+
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_video_embeddings_video_id ON video_embeddings(video_id);
+            DROP INDEX IF EXISTS idx_comment_embeddings_youtube_comment_id;
+            CREATE UNIQUE INDEX idx_comment_embeddings_youtube_comment_id
+              ON comment_embeddings(youtube_comment_id);
           `);
           this.logger.log('✅ pgvector extension and vector tables enabled for vector similarity.');
         } catch {
@@ -269,12 +318,16 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
   async upsertCreator(creator: CreatorRecord): Promise<CreatorRecord | null> {
     if (!this.isConnected) return null;
     try {
+      // `id` is generated here (rather than relying on a DB-side default)
+      // because some deployed `creators` tables have no DEFAULT on `id`,
+      // which previously made every insert fail with a NOT NULL violation.
+      // ON CONFLICT never touches `id`, so an existing row keeps its id.
       const rows = await this.query<CreatorRecord>(
         `INSERT INTO creators (
-          youtube_channel_id, handle, title, description, avatar_url,
+          id, youtube_channel_id, handle, title, description, avatar_url,
           subscriber_count, total_views, total_videos, upload_frequency,
           median_views, avg_views, niche, signature_hook_style, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW())
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW())
         ON CONFLICT (youtube_channel_id) DO UPDATE SET
           handle = EXCLUDED.handle,
           title = EXCLUDED.title,
@@ -291,6 +344,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           updated_at = NOW()
         RETURNING *;`,
         [
+          creator.id || randomUUID(),
           creator.youtube_channel_id,
           creator.handle,
           creator.title,
@@ -321,6 +375,135 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       [cleanHandle],
     );
     return rows[0] || null;
+  }
+
+  async upsertVideo(video: VideoRecord): Promise<VideoRecord | null> {
+    if (!this.isConnected) return null;
+    try {
+      const id = video.id || randomUUID();
+      const rows = await this.query<VideoRecord>(
+        `INSERT INTO videos (
+          id, creator_id, youtube_video_id, title, description,
+          published_at, duration_seconds, views, likes, comments, thumbnail_url
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        ON CONFLICT (youtube_video_id) DO UPDATE SET
+          creator_id = EXCLUDED.creator_id,
+          title = EXCLUDED.title,
+          description = EXCLUDED.description,
+          published_at = EXCLUDED.published_at,
+          duration_seconds = EXCLUDED.duration_seconds,
+          views = EXCLUDED.views,
+          likes = EXCLUDED.likes,
+          comments = EXCLUDED.comments,
+          thumbnail_url = EXCLUDED.thumbnail_url
+        RETURNING *;`,
+        [
+          id,
+          video.creator_id,
+          video.youtube_video_id,
+          video.title,
+          video.description,
+          video.published_at,
+          video.duration_seconds,
+          video.views,
+          video.likes,
+          video.comments,
+          video.thumbnail_url,
+        ],
+      );
+      return rows[0] || null;
+    } catch (err: any) {
+      this.logger.warn(`Failed to upsert video: ${err.message}`);
+      return null;
+    }
+  }
+
+  async upsertVideoEmbedding(record: VideoEmbeddingRecord): Promise<void> {
+    if (!this.isConnected || !pgvector) return;
+    try {
+      await this.query(
+        `INSERT INTO video_embeddings (id, creator_id, video_id, performance_multiple, combined_embedding)
+        VALUES ($1, $2, $3, $4, $5)
+        ON CONFLICT (video_id) DO UPDATE SET
+          performance_multiple = EXCLUDED.performance_multiple,
+          combined_embedding = EXCLUDED.combined_embedding;`,
+        [
+          record.id || randomUUID(),
+          record.creator_id,
+          record.video_id,
+          record.performance_multiple,
+          pgvector.toSql(record.combined_embedding),
+        ],
+      );
+    } catch (err: any) {
+      this.logger.debug(`Skipping video embedding upsert: ${err.message}`);
+    }
+  }
+
+  async upsertCommentEmbedding(record: CommentEmbeddingRecord): Promise<void> {
+    if (!this.isConnected || !pgvector) return;
+    try {
+      await this.query(
+        `INSERT INTO comment_embeddings (
+          id, creator_id, video_id, youtube_comment_id, author_name,
+          comment_text, like_count, intent_category, embedding
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        ON CONFLICT (youtube_comment_id) DO UPDATE SET
+          comment_text = EXCLUDED.comment_text,
+          like_count = EXCLUDED.like_count,
+          intent_category = EXCLUDED.intent_category,
+          embedding = EXCLUDED.embedding;`,
+        [
+          record.id || randomUUID(),
+          record.creator_id,
+          record.video_id,
+          record.youtube_comment_id,
+          record.author_name,
+          record.comment_text,
+          record.like_count,
+          record.intent_category,
+          pgvector.toSql(record.embedding),
+        ],
+      );
+    } catch (err: any) {
+      this.logger.debug(`Skipping comment embedding upsert: ${err.message}`);
+    }
+  }
+
+  async saveBriefing(record: BriefingRecord): Promise<BriefingRecord | null> {
+    if (!this.isConnected) return record;
+    try {
+      const rows = await this.query<BriefingRecord>(
+        `INSERT INTO briefings (id, user_id, channel_handle, blueprints, source, created_at)
+        VALUES ($1, $2, $3, $4, $5, NOW())
+        RETURNING *;`,
+        [
+          record.id,
+          record.user_id || null,
+          record.channel_handle,
+          JSON.stringify(record.blueprints || []),
+          record.source,
+        ],
+      );
+      this.logger.log(`💾 [Database Service] Persisted briefing (ID: ${record.id}) for ${record.channel_handle}.`);
+      return rows[0] || record;
+    } catch (err: any) {
+      this.logger.warn(`Failed to save briefing to DB: ${err.message}`);
+      return record;
+    }
+  }
+
+  async getBriefingsByUserId(userId: string, limit: number = 20): Promise<BriefingRecord[]> {
+    if (!this.isConnected) return [];
+    try {
+      return await this.query<BriefingRecord>(
+        `SELECT * FROM briefings WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2;`,
+        [userId, limit],
+      );
+    } catch (err: any) {
+      this.logger.warn(`Failed to get briefing history: ${err.message}`);
+      return [];
+    }
   }
 
   async searchOutlierVideos(

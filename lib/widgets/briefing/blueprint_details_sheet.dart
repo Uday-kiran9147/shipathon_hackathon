@@ -332,13 +332,52 @@ class BlueprintDetailsSheet extends StatelessWidget {
                               height: 1.4,
                             ),
                           ),
+                          if (blueprint.engagementContext.isNotEmpty) ...[
+                            SizedBox(height: 8.h),
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 8.w,
+                                vertical: 6.h,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(8.r),
+                                border: Border.all(
+                                  color: AppColors.outlierJadeBorder,
+                                ),
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Icon(
+                                    Icons.bolt_rounded,
+                                    size: 13.sp,
+                                    color: AppColors.outlierJade,
+                                  ),
+                                  SizedBox(width: 6.w),
+                                  Expanded(
+                                    child: Text(
+                                      blueprint.engagementContext,
+                                      style: AppTypography.labelSmall.copyWith(
+                                        color: const Color(0xFF065F46),
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 10.5.sp,
+                                        height: 1.35,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
 
                     // Section 5: Demand Cluster & Comment Evidence
                     if (blueprint.demandCluster != null ||
-                        blueprint.audienceCommentSource != null) ...[
+                        blueprint.audienceCommentSource != null ||
+                        blueprint.demandEvidenceSummary.isNotEmpty) ...[
                       SizedBox(height: 16.h),
                       _buildSectionHeader(
                         icon: Icons.forum_rounded,
@@ -513,6 +552,17 @@ class BlueprintDetailsSheet extends StatelessWidget {
                                 style: AppTypography.bodyMedium.copyWith(
                                   color: AppColors.textInk,
                                   fontStyle: FontStyle.italic,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ] else if (blueprint
+                                .demandEvidenceSummary
+                                .isNotEmpty) ...[
+                              Text(
+                                blueprint.demandEvidenceSummary,
+                                style: AppTypography.bodyMedium.copyWith(
+                                  color: AppColors.primaryDark,
+                                  fontWeight: FontWeight.w600,
                                   height: 1.4,
                                 ),
                               ),

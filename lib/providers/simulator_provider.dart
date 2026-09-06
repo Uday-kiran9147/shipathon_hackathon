@@ -1,13 +1,11 @@
 import 'package:flutter/foundation.dart';
 import '../core/services/backend_api_service.dart';
-import '../core/services/simulator_engine_service.dart';
 import '../models/channel_graph.dart';
 import '../models/daily_blueprint.dart';
 import '../models/simulation_result.dart';
 import 'subscription_provider.dart';
 
 class SimulatorProvider extends ChangeNotifier {
-  final SimulatorEngineService _engineService = SimulatorEngineService();
   final BackendApiService _backendApiService = BackendApiService();
 
   String _titleInput = '';
@@ -58,7 +56,9 @@ class SimulatorProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // 1. Attempt backend simulation with PostgreSQL limit enforcement
+      // The backend Pre-Flight Simulator Engine is the source of truth: it
+      // scores the script, enforces the free-tier limit, and persists the
+      // result in PostgreSQL. The app never recomputes scores locally.
       final backendResponse = await _backendApiService.runSimulationOnBackend(
         title: _titleInput,
         draftScript: _scriptInput,
@@ -66,24 +66,25 @@ class SimulatorProvider extends ChangeNotifier {
         channel: channel,
       );
 
-      if (backendResponse != null && subscriptionProvider != null) {
-        if (backendResponse['simulationsUsedThisMonth'] != null) {
-          subscriptionProvider.updateSimulationUsage(
-            simulationsUsedThisMonth:
-                backendResponse['simulationsUsedThisMonth'] as int,
-            freeSimulationsLimit:
-                backendResponse['freeSimulationsLimit'] as int?,
-            isPro: backendResponse['isPro'] as bool?,
-          );
-        }
+      if (backendResponse == null ||
+          backendResponse['simulationResult'] == null) {
+        throw Exception(
+          'Could not reach the Prevue backend to run this simulation. Please check your connection and try again.',
+        );
       }
 
-      // 2. Compute full client-side metrics and hazards
-      final result = await _engineService.runSimulation(
-        title: _titleInput,
-        draftScript: _scriptInput,
-        format: _selectedFormat,
-        channel: channel,
+      if (subscriptionProvider != null &&
+          backendResponse['simulationsUsedThisMonth'] != null) {
+        subscriptionProvider.updateSimulationUsage(
+          simulationsUsedThisMonth:
+              backendResponse['simulationsUsedThisMonth'] as int,
+          freeSimulationsLimit: backendResponse['freeSimulationsLimit'] as int?,
+          isPro: backendResponse['isPro'] as bool?,
+        );
+      }
+
+      final result = SimulationResult.fromJson(
+        backendResponse['simulationResult'] as Map<String, dynamic>,
       );
 
       _currentResult = result;
@@ -138,13 +139,43 @@ class SimulatorProvider extends ChangeNotifier {
       }
     }
 
-    // Update simulation result scores
-    final updated = _engineService.applyPrescriptiveFix(
-      currentResult: _currentResult!,
-      fixId: fixId,
-    );
+    // Lift the scores toward the backend-computed `projectedScoreAfter` for
+    // this fix and mark it applied. The backend already computed the lift
+    // when it scored the draft; this just reflects that in the UI.
+    final updatedFixes = _currentResult!.fixes.map((f) {
+      return f.id == fixId ? f.copyWith(isApplied: true) : f;
+    }).toList();
 
-    _currentResult = updated;
+    final newHookScore = targetFix.projectedScoreAfter;
+    final newResonance = (_currentResult!.resonanceScore + targetFix.scoreLift * 0.7)
+        .clamp(3.0, 9.8);
+    final newPacing = (_currentResult!.pacingScore + targetFix.scoreLift * 0.5)
+        .clamp(3.0, 9.8);
+
+    final remainingHazards = _currentResult!.hazards.where((h) {
+      if (fixId == 'fix_hook') return h.startSeconds > 16;
+      if (fixId == 'fix_pacing') return h.startSeconds < 16;
+      return true;
+    }).toList();
+
+    final newMultiplier =
+        (_currentResult!.projectedViewsMultiplier * 1.18).clamp(1.0, 4.5);
+    final newViews = (_currentResult!.projectedViews * 1.18).round();
+
+    _currentResult = _currentResult!.copyWith(
+      hookScore: newHookScore,
+      resonanceScore: newResonance,
+      pacingScore: newPacing,
+      projectedViewsMultiplier: newMultiplier,
+      projectedViews: newViews,
+      performanceTier: newHookScore >= 8.5
+          ? PerformanceTier.topOutlier
+          : newHookScore >= 7.0
+              ? PerformanceTier.aboveMedian
+              : _currentResult!.performanceTier,
+      fixes: updatedFixes,
+      hazards: remainingHazards,
+    );
     notifyListeners();
   }
 

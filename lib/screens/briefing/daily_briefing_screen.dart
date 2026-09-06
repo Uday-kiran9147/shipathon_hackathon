@@ -11,6 +11,7 @@ import '../../widgets/briefing/blueprint_card.dart';
 import '../../widgets/common/custom_app_bar.dart';
 import '../../widgets/common/solid_heavy_button.dart';
 import '../../widgets/common/tactile_card.dart';
+import '../history/history_screen.dart';
 
 /// Daily Prescriptive Briefing Screen ("What to Film Tomorrow")
 class DailyBriefingScreen extends StatefulWidget {
@@ -30,13 +31,17 @@ class _DailyBriefingScreenState extends State<DailyBriefingScreen> {
     final briefingProvider = context.watch<BriefingProvider>();
     final channel = context.watch<ChannelProvider>().channel;
 
-    // Check if channel changed (e.g. user selected different archetype in Channel tab)
+    // Check if channel changed (e.g. user selected different archetype in Channel
+    // tab, or the app just booted). We only ever load an *already-generated*
+    // briefing for this channel from persisted history here — a plain DB read,
+    // never a Gemini call. Generating a brand-new briefing always waits for an
+    // explicit tap (Generate Daily Briefing / Generate Fresh Idea / pull-to-refresh).
     if (_lastSyncedChannel == null ||
         _lastSyncedChannel!.handle != channel.handle ||
         _lastSyncedChannel!.channelName != channel.channelName) {
       _lastSyncedChannel = channel;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        briefingProvider.updateForChannel(channel);
+        briefingProvider.loadPersistedBriefing(channel);
       });
     }
 
@@ -112,6 +117,19 @@ class _DailyBriefingScreenState extends State<DailyBriefingScreen> {
                       }
                     }
                   },
+          ),
+          IconButton(
+            icon: Icon(
+              Icons.history_rounded,
+              color: AppColors.textInk,
+              size: 22.sp,
+            ),
+            tooltip: 'History',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => const HistoryScreen()),
+              );
+            },
           ),
         ],
       ),
@@ -199,7 +217,7 @@ class _DailyBriefingScreenState extends State<DailyBriefingScreen> {
                       if (briefingProvider.isLoading) ...[
                         _buildLoadingState(),
                       ] else if (briefingProvider.blueprints.isEmpty) ...[
-                        _buildEmptyState(),
+                        _buildEmptyState(context, briefingProvider, channel),
                       ] else ...[
                         ...briefingProvider.blueprints.asMap().entries.map((
                           entry,
@@ -746,7 +764,62 @@ class _DailyBriefingScreenState extends State<DailyBriefingScreen> {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(
+    BuildContext context,
+    BriefingProvider briefingProvider,
+    ChannelGraph channel,
+  ) {
+    // Channel not connected yet: send the user to the Channel tab.
+    if (!channel.isConfigured) {
+      return Container(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(vertical: 36.h, horizontal: 20.w),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(color: AppColors.borderLight),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              Icons.video_library_outlined,
+              size: 44.sp,
+              color: AppColors.primary,
+            ),
+            SizedBox(height: 14.h),
+            Text(
+              'No Channel Connected Yet',
+              style: AppTypography.titleLarge.copyWith(
+                fontWeight: FontWeight.w800,
+                color: AppColors.textInk,
+              ),
+            ),
+            SizedBox(height: 8.h),
+            Text(
+              'Sync your YouTube channel handle to get custom video ideas tailored for your audience.',
+              textAlign: TextAlign.center,
+              style: AppTypography.bodyMedium.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+            SizedBox(height: 16.h),
+            SolidHeavyButton(
+              label: 'Connect YouTube Channel',
+              icon: Icons.sync_rounded,
+              height: 48.h,
+              onPressed: () {
+                if (widget.onNavigateTab != null) {
+                  widget.onNavigateTab!(2); // Go to Channel Graph Tab
+                }
+              },
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Channel is connected but no briefing has been generated yet — this
+    // never fires automatically; it only runs when the button below is tapped.
     return Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(vertical: 36.h, horizontal: 20.w),
@@ -758,13 +831,13 @@ class _DailyBriefingScreenState extends State<DailyBriefingScreen> {
       child: Column(
         children: [
           Icon(
-            Icons.video_library_outlined,
+            Icons.auto_awesome_rounded,
             size: 44.sp,
             color: AppColors.primary,
           ),
           SizedBox(height: 14.h),
           Text(
-            'No Channel Connected Yet',
+            'Ready to Generate Ideas',
             style: AppTypography.titleLarge.copyWith(
               fontWeight: FontWeight.w800,
               color: AppColors.textInk,
@@ -772,7 +845,7 @@ class _DailyBriefingScreenState extends State<DailyBriefingScreen> {
           ),
           SizedBox(height: 8.h),
           Text(
-            'Sync your YouTube channel handle to get custom video ideas tailored for your audience.',
+            '${channel.channelName.isNotEmpty ? channel.channelName : channel.handle} is synced. Tap below to generate your Daily Briefing.',
             textAlign: TextAlign.center,
             style: AppTypography.bodyMedium.copyWith(
               color: AppColors.textSecondary,
@@ -780,12 +853,22 @@ class _DailyBriefingScreenState extends State<DailyBriefingScreen> {
           ),
           SizedBox(height: 16.h),
           SolidHeavyButton(
-            label: 'Connect YouTube Channel',
-            icon: Icons.sync_rounded,
+            label: 'Generate Daily Briefing',
+            icon: Icons.auto_awesome_rounded,
             height: 48.h,
-            onPressed: () {
-              if (widget.onNavigateTab != null) {
-                widget.onNavigateTab!(2); // Go to Channel Graph Tab
+            onPressed: () async {
+              try {
+                await briefingProvider.updateForChannel(channel);
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Could not generate briefing: $e'),
+                      backgroundColor: AppColors.hazardRuby,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }
               }
             },
           ),

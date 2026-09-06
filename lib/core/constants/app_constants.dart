@@ -6,9 +6,9 @@ class AppConstants {
   static const String appTagline = 'YouTube Pre-Flight Intelligence';
 
   // Environment Configured Keys (from .env with safe uninitialized fallback)
-  static String get youtubeApiKey =>
-      dotenv.isInitialized ? (dotenv.env['YOUTUBE_API_KEY'] ?? '') : '';
-
+  // Note: the YouTube Data API key and Gemini API key now live server-side
+  // only (server/.env) — the Channel Graph and Briefing engines always run
+  // on the Prevue backend, never on-device.
   static String get revenueCatApiKeyApple => dotenv.isInitialized
       ? (dotenv.env['REVENUECAT_APPLE_API_KEY'] ?? 'appl_mock_prevue_apple_key')
       : 'appl_mock_prevue_apple_key';
@@ -17,14 +17,6 @@ class AppConstants {
       ? (dotenv.env['REVENUECAT_GOOGLE_API_KEY'] ??
             'goog_mock_prevue_google_key')
       : 'goog_mock_prevue_google_key';
-
-  static String get geminiApiKey =>
-      dotenv.isInitialized ? (dotenv.env['GEMINI_API_KEY'] ?? '') : '';
-
-  // Gemini Model Identifier (Single source of truth for Gemini Model)
-  static String get geminiModel => dotenv.isInitialized
-      ? (dotenv.env['GEMINI_MODEL'] ?? 'gemini-3.6-flash')
-      : 'gemini-3.6-flash';
 
   // RevenueCat Configuration
   static const String entitlementPro = 'creator_pro_access';

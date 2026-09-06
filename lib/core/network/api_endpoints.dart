@@ -19,13 +19,17 @@ class ApiEndpoints {
   static const String userChannels = '/user/channels';
   static const String userActiveChannel = '/user/channels/active';
 
+  // Channel Graph & Creator Intelligence Mining
+  static const String channelSync = '/channel/sync';
+
   // Prescriptive Briefings & Creator Intelligence
-  static const String briefingsDaily = '/briefings/daily';
-  static const String briefingsGenerate = '/briefings/generate';
+  static const String briefingsGenerate = '/briefing/generate';
+  static const String briefingsHistory = '/briefing/history';
 
   // Pre-Flight Simulator Engine
   static const String simulatorRun = '/simulator/run';
   static const String simulatorApplyFix = '/simulator/apply-fix';
+  static const String simulatorHistory = '/simulator/history';
 
   // Subscriptions & RevenueCat
   static const String subscriptionsStatus = '/subscriptions/status';

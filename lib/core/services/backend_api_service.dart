@@ -22,8 +22,11 @@ class BackendApiService {
     _dio = Dio(
       BaseOptions(
         baseUrl: ApiEndpoints.baseUrl,
-        connectTimeout: const Duration(seconds: 10),
-        receiveTimeout: const Duration(seconds: 10),
+        // Channel sync (live YouTube mining) and briefing generation (Gemini)
+        // legitimately take longer than a typical request; a short timeout
+        // here just makes a slow-but-successful backend look like a failure.
+        connectTimeout: const Duration(seconds: 15),
+        receiveTimeout: const Duration(seconds: 45),
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
@@ -385,6 +388,83 @@ class BackendApiService {
       return updated;
     }
     return currentChannels;
+  }
+
+  /// POST /api/channel/sync
+  /// Runs the Channel Graph context engine (YouTube mining, comment intent
+  /// classification, demand clustering, authenticity profiling) on the
+  /// backend and returns the resulting ChannelGraph.
+  Future<ChannelGraph> syncChannel(String handle) async {
+    final cleanHandle = handle.trim().startsWith('@')
+        ? handle.trim()
+        : '@${handle.trim()}';
+
+    debugPrint(
+      '[BackendApiService] 🚀 Sending POST ${ApiEndpoints.baseUrl}${ApiEndpoints.channelSync}',
+    );
+    final response = await _dio.post(
+      ApiEndpoints.channelSync,
+      data: {'handle': cleanHandle},
+    );
+    final data = response.data as Map<String, dynamic>;
+    final channelJson = data['channel'] as Map<String, dynamic>;
+    debugPrint(
+      '[BackendApiService] ✅ Channel Graph synced from backend: $cleanHandle',
+    );
+    return ChannelGraph.fromJson(channelJson);
+  }
+
+  /// POST /api/briefing/generate
+  /// Runs the Daily Prescriptive Briefing engine on the backend
+  /// (Gemini blueprint synthesis with algorithmic fallback) and returns
+  /// the generated blueprints.
+  Future<List<DailyBlueprint>> generateBriefing(ChannelGraph channel) async {
+    debugPrint(
+      '[BackendApiService] 🚀 Sending POST ${ApiEndpoints.baseUrl}${ApiEndpoints.briefingsGenerate}',
+    );
+    final response = await _dio.post(
+      ApiEndpoints.briefingsGenerate,
+      data: {'channel': channel.toJson()},
+    );
+    final data = response.data as Map<String, dynamic>;
+    final rawBlueprints = data['blueprints'] as List<dynamic>? ?? [];
+    debugPrint(
+      '[BackendApiService] ✅ Briefing generated from backend: ${rawBlueprints.length} blueprints',
+    );
+    return rawBlueprints
+        .map((b) => DailyBlueprint.fromJson(b as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// GET /api/briefing/history
+  /// Returns previously generated & persisted briefing batches for the
+  /// authenticated user (used for a future "past prescriptions" view and
+  /// shared as-is with the planned web client).
+  Future<List<Map<String, dynamic>>> getBriefingHistory() async {
+    try {
+      final response = await _dio.get(ApiEndpoints.briefingsHistory);
+      final data = response.data as Map<String, dynamic>;
+      final rawBriefings = data['briefings'] as List<dynamic>? ?? [];
+      return rawBriefings.cast<Map<String, dynamic>>();
+    } catch (e) {
+      debugPrint('[BackendApiService] ⚠️ getBriefingHistory failed ($e)');
+      return [];
+    }
+  }
+
+  /// GET /api/v1/simulator/history
+  /// Returns previously run & persisted simulations for the authenticated
+  /// user (raw DB row shape: hook_score, performance_tier, draft_script, etc.).
+  Future<List<Map<String, dynamic>>> getSimulationHistory() async {
+    try {
+      final response = await _dio.get(ApiEndpoints.simulatorHistory);
+      final data = response.data as Map<String, dynamic>;
+      final rawSimulations = data['simulations'] as List<dynamic>? ?? [];
+      return rawSimulations.cast<Map<String, dynamic>>();
+    } catch (e) {
+      debugPrint('[BackendApiService] ⚠️ getSimulationHistory failed ($e)');
+      return [];
+    }
   }
 
   /// POST /api/v1/simulator/run

@@ -32,57 +32,62 @@ class PrescriptiveFixTile extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header: High Impact + Fix Type + Score Lift Badge
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 6.w,
-                      vertical: 2.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.hazardRubySubtle,
-                      borderRadius: BorderRadius.circular(4.r),
-                      border: Border.all(color: AppColors.hazardRubyBorder),
-                    ),
-                    child: Text(
-                      'HIGH IMPACT',
-                      style: AppTypography.labelSmall.copyWith(
-                        color: AppColors.hazardRuby,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 9.5.sp,
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              spacing: 8.w,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 6.w,
+                        vertical: 2.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.hazardRubySubtle,
+                        borderRadius: BorderRadius.circular(4.r),
+                        border: Border.all(color: AppColors.hazardRubyBorder),
+                      ),
+                      child: Text(
+                        'HIGH IMPACT',
+                        style: AppTypography.labelSmall.copyWith(
+                          color: AppColors.hazardRuby,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 9.5.sp,
+                        ),
                       ),
                     ),
+                    SizedBox(width: 8.w),
+                    Text(
+                      fix.fixType,
+                      style: AppTypography.titleMedium.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textInk,
+                      ),
+                    ),
+                  ],
+                ),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                  decoration: BoxDecoration(
+                    color: AppColors.outlierJadeSubtle,
+                    borderRadius: BorderRadius.circular(100.r), // Capsule pill
+                    border: Border.all(color: AppColors.outlierJadeBorder),
                   ),
-                  SizedBox(width: 8.w),
-                  Text(
-                    fix.fixType,
-                    style: AppTypography.titleMedium.copyWith(
+                  child: Text(
+                    '+${fix.scoreLift.toStringAsFixed(1)} HOOK LIFT',
+                    style: AppTypography.labelSmall.copyWith(
+                      color: AppColors.outlierJade,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.textInk,
+                      fontSize: 10.5.sp,
                     ),
                   ),
-                ],
-              ),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
-                decoration: BoxDecoration(
-                  color: AppColors.outlierJadeSubtle,
-                  borderRadius: BorderRadius.circular(100.r), // Capsule pill
-                  border: Border.all(color: AppColors.outlierJadeBorder),
                 ),
-                child: Text(
-                  '+${fix.scoreLift.toStringAsFixed(1)} HOOK LIFT',
-                  style: AppTypography.labelSmall.copyWith(
-                    color: AppColors.outlierJade,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 10.5.sp,
-                  ),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
           SizedBox(height: 6.h),
           Text(
