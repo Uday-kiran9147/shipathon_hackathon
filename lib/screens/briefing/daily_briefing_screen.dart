@@ -49,89 +49,13 @@ class _DailyBriefingScreenState extends State<DailyBriefingScreen> {
       backgroundColor: AppColors.canvas,
       appBar: CustomAppBar(
         title: 'Daily Briefing',
-        subtitle: 'Proven video ideas ready to film',
-        actions: [
-          IconButton(
-            icon: briefingProvider.isGeneratingFresh
-                ? SizedBox(
-                    width: 20.w,
-                    height: 20.w,
-                    child: const CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        AppColors.primary,
-                      ),
-                    ),
-                  )
-                : Icon(
-                    Icons.auto_awesome_rounded,
-                    color: AppColors.primary,
-                    size: 22.sp,
-                  ),
-            tooltip: 'Generate Fresh AI Idea',
-            onPressed:
-                briefingProvider.isGeneratingFresh || !channel.isConfigured
-                ? null
-                : () async {
-                    try {
-                      final newBp = await briefingProvider
-                          .generateFreshBlueprint(channel);
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Row(
-                              children: [
-                                const Icon(
-                                  Icons.auto_awesome,
-                                  color: Colors.white,
-                                  size: 18,
-                                ),
-                                SizedBox(width: 8.w),
-                                Expanded(
-                                  child: Text(
-                                    '✨ Fresh AI Idea: ${newBp.title}',
-                                    style: AppTypography.bodyMedium.copyWith(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            backgroundColor: AppColors.primaryDark,
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      }
-                    } catch (e) {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Could not generate idea: $e'),
-                            backgroundColor: AppColors.hazardRuby,
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      }
-                    }
-                  },
-          ),
-          IconButton(
-            icon: Icon(
-              Icons.history_rounded,
-              color: AppColors.textInk,
-              size: 22.sp,
-            ),
-            tooltip: 'History',
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => const HistoryScreen()),
-              );
-            },
-          ),
-        ],
+        subtitle: channel.isConfigured
+            ? "Today's Blueprints • ${DateFormat('MMM d').format(DateTime.now())}"
+            : 'Proven video ideas ready to film',
+        showLiveDot: channel.isConfigured,
+        showChannelSwitcher: true,
+        showProBadge: true,
+        showHistoryButton: true,
       ),
       body: RefreshIndicator(
         color: AppColors.primary,

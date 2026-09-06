@@ -9,7 +9,6 @@ import '../../providers/auth_provider.dart';
 import '../../providers/channel_provider.dart';
 import '../../providers/subscription_provider.dart';
 import '../../widgets/channel/channel_switcher_modal.dart';
-import '../../widgets/common/coming_soon_card.dart';
 import '../../widgets/common/custom_app_bar.dart';
 
 import '../../widgets/common/solid_heavy_button.dart';
@@ -1515,92 +1514,9 @@ class _ChannelGraphScreenState extends State<ChannelGraphScreen> {
                     );
                   }).toList(),
                 ),
-                SizedBox(height: 20.h),
+                SizedBox(height: 30.h),
               ],
             ],
-            TactileCard(
-              backgroundColor: AppColors.proGoldSubtle,
-              border: Border.all(color: const Color(0xFFFDE68A), width: 1.5),
-              padding: EdgeInsets.all(16.w),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.build_circle_rounded,
-                        color: AppColors.proGold,
-                        size: 18.sp,
-                      ),
-                      SizedBox(width: 8.w),
-                      Expanded(
-                        child: Text(
-                          'HACKATHON DEMO & REVENUECAT',
-                          style: AppTypography.labelSmall.copyWith(
-                            color: AppColors.proGold,
-                            fontWeight: FontWeight.w800,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 8.h),
-                  Text(
-                    'Instant toggle between Free Tier and Creator Pro to test RevenueCat access gates.',
-                    style: AppTypography.bodySmall.copyWith(
-                      color: const Color(0xFF92400E),
-                    ),
-                  ),
-                  SizedBox(height: 12.h),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: subProvider.toggleProStatusDemo,
-                          style: OutlinedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            side: const BorderSide(color: Color(0xFFF59E0B)),
-                            padding: EdgeInsets.symmetric(vertical: 10.h),
-                            shape: const StadiumBorder(
-                              side: BorderSide(color: Color(0xFFF59E0B)),
-                            ),
-                          ),
-                          child: Text(
-                            subProvider.isPro
-                                ? 'Switch to Free Tier'
-                                : 'Switch to Pro Access',
-                            style: AppTypography.labelSmall.copyWith(
-                              color: AppColors.proGold,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ),
-                      ),
-                      SizedBox(width: 8.w),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () => ComingSoonCard.showProShowcaseModal(context),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            padding: EdgeInsets.symmetric(vertical: 10.h),
-                            shape: const StadiumBorder(), // Capsule CTA
-                          ),
-                          child: Text(
-                            'Pro Preview',
-                            style: AppTypography.labelSmall.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: 30.h),
           ],
         ),
       ),

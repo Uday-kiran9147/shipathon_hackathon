@@ -23,6 +23,8 @@ class HistoryScreen extends StatelessWidget {
         appBar: CustomAppBar(
           title: 'History',
           subtitle: 'Past briefings & simulations',
+          showChannelSwitcher: false,
+          showProBadge: false,
           actions: [
             IconButton(
               icon: Icon(

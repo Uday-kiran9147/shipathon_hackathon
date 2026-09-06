@@ -362,48 +362,30 @@ class _CreatorProPaywallSheetState extends State<CreatorProPaywallSheet> {
                     ),
                     SizedBox(height: 12.h),
 
-                    // Restore Purchases & Terms
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        TextButton(
-                          onPressed: () async {
-                            final success = await subProvider
-                                .restorePurchases();
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    success
-                                        ? 'Subscriptions restored!'
-                                        : 'No active subscription found.',
-                                  ),
+                    // Restore Purchases
+                    Center(
+                      child: TextButton(
+                        onPressed: () async {
+                          final success = await subProvider.restorePurchases();
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  success
+                                      ? 'Subscriptions restored!'
+                                      : 'No active subscription found.',
                                 ),
-                              );
-                            }
-                          },
-                          child: Text(
-                            'Restore Purchases',
-                            style: AppTypography.labelSmall.copyWith(
-                              color: AppColors.textMuted,
-                            ),
+                              ),
+                            );
+                          }
+                        },
+                        child: Text(
+                          'Restore Purchases',
+                          style: AppTypography.labelSmall.copyWith(
+                            color: AppColors.textMuted,
                           ),
                         ),
-                        Text('•', style: TextStyle(color: AppColors.textMuted)),
-                        TextButton(
-                          onPressed: () {
-                            subProvider.toggleProStatusDemo();
-                            Navigator.pop(context);
-                          },
-                          child: Text(
-                            'Toggle Demo Pro',
-                            style: AppTypography.labelSmall.copyWith(
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                     SizedBox(height: 10.h),
                   ],
