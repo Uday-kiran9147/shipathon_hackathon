@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EvaluateSimulationDto } from './dto/evaluate-simulation.dto';
-import { NICHE_TAXONOMY, NicheProfile, detectNicheKey } from './niche-taxonomy';
+import { NICHE_TAXONOMY, NicheProfile, detectNicheKey, checkDomainMismatch } from './niche-taxonomy';
 
 export interface DimensionScores {
   hookStrength: number;
@@ -170,6 +170,11 @@ DRAFT SCRIPT:
 ${rawScript.substring(0, 1400)}
 ---
 
+CRITICAL DOMAIN & AUTHENTICITY GUARDRAIL:
+- This creator's established channel domain is "${niche}".
+- DOMAIN CHECK: If the draft topic or script attempts an unrelated domain (e.g., a Tech creator attempting Cooking, or a Lifestyle creator attempting low-level Systems C++ code), penalize "creatorFit" and "authenticityScore" severely (down to 2.0-4.0), generate a critical "Domain Mismatch" retention hazard warning about audience drop-off/bounce, and lower projected view multipliers.
+- If the draft is aligned with the creator's domain and signature style, score accurately on merits.
+
 Evaluate this draft and return ONLY valid JSON (no markdown fences, no explanation) matching this exact schema:
 {
   "scores": {
@@ -179,8 +184,8 @@ Evaluate this draft and return ONLY valid JSON (no markdown fences, no explanati
     "topicMomentum": <0-10, alignment with this creator's high-performing topic clusters>,
     "clarity": <0-10, information density and sentence clarity>,
     "pacing": <0-10, rhythm and sentence structure variety>,
-    "creatorFit": <0-10, how well this matches the creator's established signature style>,
-    "authenticityScore": <0-10, does this sound like THIS creator's voice or generic YouTube content>
+    "creatorFit": <0-10, how well this matches the creator's established domain and signature style>,
+    "authenticityScore": <0-10, does this sound like THIS creator's authentic domain voice or off-niche drift>
   },
   "hazards": [
     {
@@ -229,8 +234,6 @@ RULES:
 - Return ONLY the JSON object.`;
   }
 
-  // ─── Static fallback path (niche-aware) ───────────────────────────────────
-
   private evaluateStatically(
     input: EvaluateSimulationDto,
     nicheProfile: NicheProfile,
@@ -241,6 +244,9 @@ RULES:
     const median = Math.max(1000, input.medianViews || 18400);
     const opener = (sentences[0] || '').toLowerCase();
 
+    // Check domain alignment between channel niche and draft script
+    const domainCheck = checkDomainMismatch(input.niche || '', `${title} ${rawScript}`);
+
     // Hook — niche power words replace the generic list
     let hookStrength = 6.2;
     if (/\d|₹|\$|%/.test(opener)) hookStrength += 1.4;
@@ -249,22 +255,34 @@ RULES:
     if (nicheProfile.retentionHazards.some((h) => opener.includes(h.toLowerCase()))) hookStrength -= 2.0;
     hookStrength = this.clamp(hookStrength, 3.0, 9.8);
 
-    // Authenticity — did the hook match the creator's signature style?
-    const authenticityScore = this.computeStaticAuthenticityScore(opener, input, nicheProfile);
+    // Authenticity — did the hook match the creator's signature style & domain?
+    let authenticityScore = this.computeStaticAuthenticityScore(opener, input, nicheProfile);
 
     // Topic momentum — boosted by real multipliers when provided
     const topMultiplier = (input.topicMultipliers || []).reduce(
       (max, t) => Math.max(max, t.multiplier),
       1.0,
     );
-    const topicMomentum = this.clamp(nicheProfile.baseTopicMomentum * Math.min(topMultiplier, 1.2), 3.0, 9.8);
+    let topicMomentum = this.clamp(nicheProfile.baseTopicMomentum * Math.min(topMultiplier, 1.2), 3.0, 9.8);
 
-    const audienceResonance = this.clamp(hookStrength * 0.95 + 0.4, 3.0, 9.9);
-    // Novelty lifted by breadth of demand clusters (more clusters = more signal the creator understands their audience)
+    let creatorFit = this.clamp(7.0 + authenticityScore * 0.2, 3.0, 9.9);
+
+    // If there is an irreconcilable domain mismatch (e.g. Tech creator doing Cooking):
+    if (domainCheck.isMismatch) {
+      creatorFit = this.clamp(creatorFit - 4.5, 2.2, 4.0);
+      authenticityScore = this.clamp(authenticityScore - 4.0, 2.0, 3.8);
+      topicMomentum = this.clamp(topicMomentum - 3.0, 2.5, 5.0);
+    }
+
+    const audienceResonance = this.clamp(
+      domainCheck.isMismatch ? 3.5 : hookStrength * 0.95 + 0.4,
+      2.5,
+      9.9,
+    );
+    // Novelty lifted by breadth of demand clusters
     const novelty = this.clamp(6.5 + Math.min(2.0, (input.topDemandClusters?.length ?? 0) * 0.4), 3.0, 9.8);
     const clarity = sentences.some((s) => s.split(' ').length > 25) ? 7.2 : 8.9;
     const pacing = sentences.length >= 3 ? 8.4 : 7.0;
-    const creatorFit = this.clamp(7.0 + authenticityScore * 0.2, 3.0, 9.9);
 
     const overallScore = this.round(
       hookStrength * 0.27 +
@@ -276,9 +294,13 @@ RULES:
       authenticityScore * 0.06,
     );
 
-    const compositeMultiplier = this.round(
+    let compositeMultiplier = this.round(
       Math.max(0.4, (topicMomentum / 9.0) * (hookStrength / 8.5) * (audienceResonance / 8.5) * (novelty / 8.0) * 1.4),
     );
+
+    if (domainCheck.isMismatch) {
+      compositeMultiplier = this.round(Math.max(0.35, compositeMultiplier * 0.55));
+    }
 
     return {
       scores: {
@@ -301,8 +323,8 @@ RULES:
         '1.5x': Math.round(median * 1.5),
         '2.0x': Math.round(median * 2.0),
       },
-      hazards: this.buildNicheHazards(sentences, nicheProfile),
-      fixes: this.buildNicheFixes(sentences, title, input, nicheProfile, overallScore),
+      hazards: this.buildNicheHazards(sentences, title, input, nicheProfile, domainCheck),
+      fixes: this.buildNicheFixes(sentences, title, input, nicheProfile, overallScore, domainCheck),
     };
   }
 
@@ -341,8 +363,29 @@ RULES:
     return this.clamp(score, 3.0, 9.9);
   }
 
-  private buildNicheHazards(sentences: string[], nicheProfile: NicheProfile): RetentionHazardItem[] {
+  private buildNicheHazards(
+    sentences: string[],
+    title: string,
+    input: EvaluateSimulationDto,
+    nicheProfile: NicheProfile,
+    domainCheck?: { isMismatch: boolean; channelKey: string; scriptKey: string },
+  ): RetentionHazardItem[] {
     const hazards: RetentionHazardItem[] = [];
+
+    // Prepend Domain Mismatch critical hazard if detected
+    if (domainCheck?.isMismatch) {
+      hazards.push({
+        timestampRange: '0:00 - 0:10',
+        startSeconds: 0,
+        endSeconds: 10,
+        severity: 'critical',
+        dropOffPercentage: 68,
+        flaggedSentence: sentences[0] || title,
+        whyReason: `Audience Domain Mismatch: Your channel's community is calibrated for ${input.niche || 'your domain'}. This ${domainCheck.scriptKey} concept causes immediate subscriber bounce and algorithmic confusion.`,
+        fixSuggestion: `Pivot the angle back to ${input.niche || 'your core domain'}, or build an explicit technical bridge to your audience's domain.`,
+      });
+    }
+
     if (sentences.length <= 1) return hazards;
 
     const genericSentence = sentences.find((s) =>
@@ -385,13 +428,28 @@ RULES:
     input: EvaluateSimulationDto,
     nicheProfile: NicheProfile,
     overallScore: number,
+    domainCheck?: { isMismatch: boolean; channelKey: string; scriptKey: string },
   ): PrescriptiveFixItem[] {
     const topDemand = input.topDemandClusters?.[0]?.topic || 'your core topic';
     const hookPattern = nicheProfile.hookPatterns[0].replace('{topic}', topDemand);
     const powerWord = nicheProfile.powerWords[0];
     const powerWordCapitalized = powerWord.charAt(0).toUpperCase() + powerWord.slice(1);
 
-    return [
+    const fixes: PrescriptiveFixItem[] = [];
+
+    // Prepend Domain Realignment fix if mismatched
+    if (domainCheck?.isMismatch) {
+      fixes.push({
+        id: 'fix_domain_alignment',
+        problem: `Domain Mismatch: Concept belongs to ${domainCheck.scriptKey} rather than ${input.niche || 'your niche'}`,
+        originalSnippet: title,
+        replacementSnippet: `How I Built a ${title} System in ${input.niche || 'My Tech Stack'}`,
+        impactScoreLift: 1.8,
+        projectedScoreAfter: Math.min(9.8, this.round(overallScore + 1.8)),
+      });
+    }
+
+    fixes.push(
       {
         id: 'fix_hook',
         problem: `Hook does not match the established opener pattern for ${input.niche || 'this'} content`,
@@ -417,7 +475,9 @@ RULES:
         impactScoreLift: 0.4,
         projectedScoreAfter: Math.min(9.8, this.round(overallScore + 0.4)),
       },
-    ];
+    );
+
+    return fixes.slice(0, 3);
   }
 
   // ─── Normalizers for Gemini output ────────────────────────────────────────

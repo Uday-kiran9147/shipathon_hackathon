@@ -250,13 +250,82 @@ export const NICHE_TAXONOMY: Record<NicheKey, NicheProfile> = {
 
 export function detectNicheKey(niche: string): NicheKey {
   const lower = niche.toLowerCase();
-  if (/\b(software|coding|programming|developer|tech|react|node|python|javascript|typescript|database|api|backend|frontend|cloud|devops|kubernetes|docker|ai|machine.?learning|ml|system.?design)\b/.test(lower)) return 'tech';
+  if (/\b(software|coding|programming|developer|tech|react|node|python|javascript|typescript|database|api|backend|frontend|cloud|devops|kubernetes|docker|ai|machine.?learning|ml|system.?design|flutter|app|ios|android)\b/.test(lower)) return 'tech';
   if (/\b(finance|investing|stocks|mutual.?fund|crypto|trading|money|wealth|portfolio|nifty|sensex|sip|returns|market|demat|zerodha|groww)\b/.test(lower)) return 'finance';
-  if (/\b(cooking|recipe|food|chef|kitchen|baking|cuisine|dish|meal|ingredient|restaurant|street.?food)\b/.test(lower)) return 'cooking';
-  if (/\b(fitness|workout|gym|exercise|health|diet|nutrition|weight|muscle|cardio|yoga|strength|calisthenics)\b/.test(lower)) return 'fitness';
-  if (/\b(gaming|game|gamer|esports|playthrough|speedrun|minecraft|fortnite|valorant|pc.?gaming|console|fps|rpg)\b/.test(lower)) return 'gaming';
-  if (/\b(lifestyle|vlog|daily|routine|productivity|minimalism|travel|fashion|beauty|personal|morning|aesthetic)\b/.test(lower)) return 'lifestyle';
-  if (/\b(education|learn|teach|study|school|math|science|physics|chemistry|biology|history|lecture|exam|tutor)\b/.test(lower)) return 'education';
+  if (/\b(cooking|recipe|food|chef|kitchen|baking|cuisine|dish|meal|ingredient|restaurant|street.?food|bake|cake|cook)\b/.test(lower)) return 'cooking';
+  if (/\b(fitness|workout|gym|exercise|health|diet|nutrition|weight|muscle|cardio|yoga|strength|calisthenics|bodybuilding)\b/.test(lower)) return 'fitness';
+  if (/\b(gaming|game|gamer|esports|playthrough|speedrun|minecraft|fortnite|valorant|pc.?gaming|console|fps|rpg|streamer)\b/.test(lower)) return 'gaming';
+  if (/\b(lifestyle|vlog|daily|routine|productivity|minimalism|travel|fashion|beauty|personal|morning|aesthetic|room.?tour)\b/.test(lower)) return 'lifestyle';
+  if (/\b(education|learn|teach|study|school|math|science|physics|chemistry|biology|history|lecture|exam|tutor|college)\b/.test(lower)) return 'education';
   if (/\b(entertainment|comedy|prank|reaction|challenge|fun|funny|meme|skit|roast|sketch)\b/.test(lower)) return 'entertainment';
   return 'default';
 }
+
+/**
+ * Detect the subject domain of a draft title + script content
+ */
+export function detectScriptDomain(titleAndScript: string): NicheKey {
+  const lower = titleAndScript.toLowerCase();
+  
+  // High-confidence domain keywords in script content
+  if (/\b(recipe|ingredients|cook|bake|oven|flour|sugar|kitchen|dish|taste|flavor|restaurant|delicious|pan|boil|fry)\b/.test(lower)) {
+    return 'cooking';
+  }
+  if (/\b(workout|gym|reps|sets|protein|bicep|muscle|squat|bench|deadlift|calories|cardio|gains|creatine)\b/.test(lower)) {
+    return 'fitness';
+  }
+  if (/\b(stocks|portfolio|dividend|invest|sip|mutual fund|nifty|crypto|bitcoin|trading|shares|market cap|cagr)\b/.test(lower)) {
+    return 'finance';
+  }
+  if (/\b(gameplay|fps|meta|patch|boss|speedrun|minecraft|fortnite|valorant|respawn|ranked|loot|loadout)\b/.test(lower)) {
+    return 'gaming';
+  }
+  if (/\b(code|coding|dev|developer|api|database|react|flutter|backend|frontend|server|docker|repo|git|deploy|bug|prod|latency|refactor|architecture|sdk)\b/.test(lower)) {
+    return 'tech';
+  }
+  if (/\b(morning routine|day in my life|grwm|vlog|aesthetic|habits|minimalist|haul|declutter|room tour)\b/.test(lower)) {
+    return 'lifestyle';
+  }
+  if (/\b(textbook|theorem|formula|derive|professor|exam|solve|equation|hypothesis|quantum|calculus)\b/.test(lower)) {
+    return 'education';
+  }
+  
+  return detectNicheKey(lower);
+}
+
+/**
+ * Check if there is an irreconcilable domain mismatch between the creator's channel and script topic
+ */
+export function checkDomainMismatch(
+  channelNiche: string,
+  scriptTitleAndBody: string,
+): { isMismatch: boolean; channelKey: NicheKey; scriptKey: NicheKey } {
+  const channelKey = detectNicheKey(channelNiche || '');
+  const scriptKey = detectScriptDomain(scriptTitleAndBody || '');
+
+  // If either is default or they match, no hard mismatch
+  if (channelKey === 'default' || scriptKey === 'default' || channelKey === scriptKey) {
+    return { isMismatch: false, channelKey, scriptKey };
+  }
+
+  // Related adjacent domains are allowed without hard penalty (e.g. tech & education, lifestyle & fitness)
+  const allowedAdjacencies: Record<NicheKey, NicheKey[]> = {
+    tech: ['education', 'default'],
+    finance: ['education', 'default'],
+    cooking: ['lifestyle', 'default'],
+    fitness: ['lifestyle', 'education', 'default'],
+    gaming: ['entertainment', 'tech', 'default'],
+    lifestyle: ['fitness', 'cooking', 'entertainment', 'default'],
+    education: ['tech', 'finance', 'default'],
+    entertainment: ['gaming', 'lifestyle', 'default'],
+    default: [],
+  };
+
+  const isAdjacent = allowedAdjacencies[channelKey]?.includes(scriptKey);
+  return {
+    isMismatch: !isAdjacent,
+    channelKey,
+    scriptKey,
+  };
+}
+

@@ -504,6 +504,23 @@ class BackendApiService {
           'format': format == BlueprintFormat.short ? 'short' : 'longForm',
           'channelHandle': channel.handle,
           'medianViews': channel.medianViews,
+          'niche': channel.niche,
+          'signatureHookStyle': channel.authenticityProfile.signatureHookStyle,
+          'engagementVelocity': channel.authenticityProfile.engagementVelocity,
+          'outlierVideoFormats': channel.authenticityProfile.outlierVideoFormats,
+          'topDemandClusters': channel.audienceInsight.topDemandClusters
+              .map((c) => {
+                    'topic': c.topicKeyword,
+                    'demandVelocity': c.demandVelocityIndex,
+                    'commentFrequency': c.commentFrequency,
+                  })
+              .toList(),
+          'topicMultipliers': channel.topicPerformanceMultipliers
+              .map((t) => {
+                    'topic': t.topic,
+                    'multiplier': t.multiple,
+                  })
+              .toList(),
         },
       );
       final data = response.data as Map<String, dynamic>;
