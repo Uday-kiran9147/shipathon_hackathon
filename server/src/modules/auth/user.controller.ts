@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Delete, Body, Param, Headers, UnauthorizedException } from '@nestjs/common';
+// Note: Post /subscription removed — subscription state is set only by the RC webhook
 import { DatabaseService } from '../../database/database.service';
 
 @Controller(['api/v1/user', 'api/user'])
@@ -67,21 +68,32 @@ export class UserController {
     };
   }
 
-  @Post('subscription')
-  async updateSubscription(
-    @Body() body: { isPro: boolean },
-    @Headers('authorization') authHeader?: string,
-  ) {
+  // NOTE: POST /subscription is intentionally removed.
+  // Subscription status is set exclusively by the RevenueCat webhook
+  // (POST /api/v1/webhooks/revenuecat). The client must never be trusted
+  // to report its own Pro status.
+
+  @Get('subscription')
+  async getSubscriptionStatus(@Headers('authorization') authHeader?: string) {
     const email = this.extractEmailFromAuthHeader(authHeader);
     const user = await this.db.getUserByEmail(email);
     if (!user) {
       throw new UnauthorizedException('User not found.');
     }
-
-    const updated = await this.db.updateUserProStatus(user.id, body.isPro ?? false);
+    const sub = await this.db.getActiveSubscription(user.id);
     return {
       success: true,
-      isPro: updated?.is_pro ?? body.isPro ?? false,
+      isPro: user.is_pro ?? false,
+      subscription: sub
+        ? {
+            status: sub.status,
+            productId: sub.product_id,
+            store: sub.store,
+            periodType: sub.period_type,
+            expiresAt: sub.expires_at,
+            willRenew: sub.will_renew,
+          }
+        : null,
     };
   }
 

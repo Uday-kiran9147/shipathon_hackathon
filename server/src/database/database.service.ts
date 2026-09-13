@@ -110,6 +110,25 @@ export interface BriefingRecord {
   created_at?: Date;
 }
 
+export interface SubscriptionRecord {
+  id: string;
+  user_id: string;
+  rc_event_id?: string | null;   // idempotency key
+  product_id?: string | null;
+  store?: string | null;
+  environment?: string | null;   // 'PRODUCTION' | 'SANDBOX'
+  entitlement_id?: string | null;
+  period_type?: string | null;   // 'NORMAL' | 'TRIAL' | 'INTRO'
+  status: string;                // 'active' | 'cancelled' | 'expired' | 'billing_issue' | 'in_trial'
+  purchased_at?: Date | null;
+  expires_at?: Date | null;
+  will_renew?: boolean;
+  event_type?: string | null;
+  raw_event?: any;
+  created_at?: Date;
+  updated_at?: Date;
+}
+
 @Injectable()
 export class DatabaseService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(DatabaseService.name);
@@ -241,10 +260,33 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
             source VARCHAR(16) DEFAULT 'algorithmic',
             created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
           );
+
+          CREATE TABLE IF NOT EXISTS subscriptions (
+            id VARCHAR(64) PRIMARY KEY,
+            user_id VARCHAR(64) NOT NULL,
+            rc_event_id VARCHAR(255) UNIQUE,
+            product_id VARCHAR(255),
+            store VARCHAR(64),
+            environment VARCHAR(16),
+            entitlement_id VARCHAR(255),
+            period_type VARCHAR(32),
+            status VARCHAR(32) NOT NULL DEFAULT 'active',
+            purchased_at TIMESTAMP WITH TIME ZONE,
+            expires_at TIMESTAMP WITH TIME ZONE,
+            will_renew BOOLEAN DEFAULT TRUE,
+            event_type VARCHAR(64),
+            raw_event JSONB,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+            updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+          );
+
+          CREATE INDEX IF NOT EXISTS idx_subscriptions_user_id ON subscriptions(user_id);
+          CREATE INDEX IF NOT EXISTS idx_subscriptions_status ON subscriptions(status);
+          CREATE INDEX IF NOT EXISTS idx_subscriptions_expires_at ON subscriptions(expires_at);
         `);
 
         this.isConnected = true;
-        this.logger.log('✅ Connected to PostgreSQL: "users", "simulations", "creators", "videos" & "briefings" tables ready.');
+        this.logger.log('✅ Connected to PostgreSQL: core tables (users, simulations, creators, videos, briefings, subscriptions) ready.');
 
         // 2. Optional pgvector check
         try {
@@ -755,7 +797,9 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         user = await this.upsertUser(guestUser);
       }
 
-      const isPro = user?.is_pro ?? false;
+      // Check subscriptions table first (authoritative), fall back to users.is_pro
+      const hasSub = user ? await this.hasActiveEntitlement(user.id) : false;
+      const isPro = hasSub || (user?.is_pro ?? false);
       const limit = user?.free_simulations_limit ?? 3;
       const currentUsed = user?.simulations_used_this_month ?? 0;
 
@@ -924,6 +968,109 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     } catch (err: any) {
       this.logger.warn(`Failed to reset simulation usage: ${err.message}`);
       return null;
+    }
+  }
+
+  // ── Subscription lifecycle ───────────────────────────────────────────────────
+
+  /** Idempotency check: returns existing row if rc_event_id already processed. */
+  async getSubscriptionByEventId(rcEventId: string): Promise<SubscriptionRecord | null> {
+    if (!this.isConnected) return null;
+    try {
+      const rows = await this.query<SubscriptionRecord>(
+        `SELECT * FROM subscriptions WHERE rc_event_id = $1 LIMIT 1;`,
+        [rcEventId],
+      );
+      return rows[0] || null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Upsert a subscription row keyed on user_id + product_id.
+   * Also syncs users.is_pro for backward-compat reads.
+   */
+  async upsertSubscription(record: SubscriptionRecord): Promise<SubscriptionRecord | null> {
+    if (!this.isConnected) return record;
+    try {
+      const rows = await this.query<SubscriptionRecord>(
+        `INSERT INTO subscriptions (
+          id, user_id, rc_event_id, product_id, store, environment,
+          entitlement_id, period_type, status, purchased_at, expires_at,
+          will_renew, event_type, raw_event, updated_at
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,NOW())
+        ON CONFLICT (rc_event_id) DO UPDATE SET
+          status        = EXCLUDED.status,
+          expires_at    = EXCLUDED.expires_at,
+          will_renew    = EXCLUDED.will_renew,
+          event_type    = EXCLUDED.event_type,
+          raw_event     = EXCLUDED.raw_event,
+          updated_at    = NOW()
+        RETURNING *;`,
+        [
+          record.id,
+          record.user_id,
+          record.rc_event_id || null,
+          record.product_id || null,
+          record.store || null,
+          record.environment || null,
+          record.entitlement_id || null,
+          record.period_type || null,
+          record.status,
+          record.purchased_at || null,
+          record.expires_at || null,
+          record.will_renew ?? true,
+          record.event_type || null,
+          record.raw_event ? JSON.stringify(record.raw_event) : null,
+        ],
+      );
+      return rows[0] || record;
+    } catch (err: any) {
+      this.logger.warn(`Failed to upsert subscription: ${err.message}`);
+      return record;
+    }
+  }
+
+  /** Returns the most-recent non-expired subscription for a user. */
+  async getActiveSubscription(userId: string): Promise<SubscriptionRecord | null> {
+    if (!this.isConnected) return null;
+    try {
+      const rows = await this.query<SubscriptionRecord>(
+        `SELECT * FROM subscriptions
+         WHERE user_id = $1
+           AND status IN ('active', 'in_trial', 'cancelled', 'billing_issue')
+           AND (expires_at IS NULL OR expires_at > NOW())
+         ORDER BY updated_at DESC
+         LIMIT 1;`,
+        [userId],
+      );
+      return rows[0] || null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * True when the user has a live entitlement in the subscriptions table.
+   * This is the secure path — do not use users.is_pro for authorization.
+   */
+  async hasActiveEntitlement(userId: string, environment = 'PRODUCTION'): Promise<boolean> {
+    if (!this.isConnected) return false;
+    try {
+      const rows = await this.query<{ exists: boolean }>(
+        `SELECT EXISTS(
+           SELECT 1 FROM subscriptions
+           WHERE user_id = $1
+             AND status IN ('active', 'in_trial', 'cancelled', 'billing_issue')
+             AND (expires_at IS NULL OR expires_at > NOW())
+             AND (environment = $2 OR environment IS NULL)
+         ) AS exists;`,
+        [userId, environment],
+      );
+      return rows[0]?.exists ?? false;
+    } catch {
+      return false;
     }
   }
 }
