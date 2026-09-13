@@ -2,22 +2,40 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_constants.dart';
+import '../../core/services/revenue_cat_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
 import '../../providers/subscription_provider.dart';
-import '../../widgets/common/coming_soon_card.dart';
 import '../../widgets/common/solid_heavy_button.dart';
 
 /// High-Converting RevenueCat Creator Pro Paywall BottomSheet
 class CreatorProPaywallSheet extends StatefulWidget {
   const CreatorProPaywallSheet({super.key});
 
+  /// Show the custom paywall bottom sheet directly.
   static Future<void> show(BuildContext context) {
-    return ComingSoonCard.showLimitReached(context);
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => ChangeNotifierProvider.value(
+        value: context.read<SubscriptionProvider>(),
+        child: const CreatorProPaywallSheet(),
+      ),
+    );
   }
 
-  static Future<void> present(BuildContext context) {
-    return context.read<SubscriptionProvider>().presentPaywall(context);
+  /// Try the native RevenueCat paywall UI first; fall back to [show] when the
+  /// SDK is in mock mode or no live offering is configured yet.
+  static Future<void> present(BuildContext context) async {
+    final rcService = RevenueCatService();
+    final hasLive = await rcService.hasValidLiveOffering();
+    if (!context.mounted) return;
+    if (hasLive) {
+      await rcService.presentPaywall();
+    } else {
+      await CreatorProPaywallSheet.show(context);
+    }
   }
 
   @override

@@ -3,6 +3,8 @@ import 'package:flutter/physics.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
+import 'package:purchases_ui_flutter/purchases_ui_flutter.dart';
+import 'package:shipathon_hackathon/core/services/revenue_cat_service.dart';
 import '../core/theme/app_colors.dart';
 import '../core/theme/app_typography.dart';
 import '../providers/subscription_provider.dart';
@@ -41,10 +43,24 @@ class _MainNavigationShellState extends State<MainNavigationShell>
     super.dispose();
   }
 
-  void _switchTab(int index) {
+  void _switchTab(int index) async{
     if (index == 3) {
       HapticFeedback.lightImpact();
-      ComingSoonCard.showProShowcaseModal(context);
+      // ComingSoonCard.showProShowcaseModal(context);
+      final paywallResult =await RevenueCatService().presentPaywall();
+      if (paywallResult == null) {
+        // Handle the case where the paywall is dismissed or fails
+        // You can show a message or take any other action here
+        // For example, you could show an error message or retry the operation
+        // Disply a simple message for now
+        if(mounted){
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Paywall dismissed or failed.'),
+            ),
+          );
+        }
+      }
       return;
     }
     if (_currentIndex != index) {
@@ -153,7 +169,8 @@ class _MainNavigationShellState extends State<MainNavigationShell>
             ),
             child: LayoutBuilder(
               builder: (context, constraints) {
-                final tabWidth = constraints.maxWidth / 4;
+                final tabCount = subProvider.isPro ? 3 : 4;
+                final tabWidth = constraints.maxWidth / tabCount;
 
                 return Stack(
                   alignment: Alignment.centerLeft,
@@ -162,7 +179,7 @@ class _MainNavigationShellState extends State<MainNavigationShell>
                     AnimatedBuilder(
                       animation: _pillController,
                       builder: (context, _) {
-                        final pillLeft = _pillController.value.clamp(0.0, 3.0) * tabWidth;
+                        final pillLeft = _pillController.value.clamp(0.0, (tabCount - 1).toDouble()) * tabWidth;
                         return Positioned(
                           left: pillLeft,
                           width: tabWidth,
@@ -222,16 +239,15 @@ class _MainNavigationShellState extends State<MainNavigationShell>
                             label: 'Channel',
                           ),
                         ),
-                        Expanded(
-                          child: _buildNavItem(
-                            index: 3,
-                            icon: subProvider.isPro
-                                ? Icons.verified_rounded
-                                : Icons.workspace_premium_rounded,
-                            label: subProvider.isPro ? 'Pro Active' : 'Go Pro',
-                            isProTab: true,
+                        if (!subProvider.isPro)
+                          Expanded(
+                            child: _buildNavItem(
+                              index: 3,
+                              icon: Icons.workspace_premium_rounded,
+                              label: 'Go Pro',
+                              isProTab: true,
+                            ),
                           ),
-                        ),
                       ],
                     ),
                   ],

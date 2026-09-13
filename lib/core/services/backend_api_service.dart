@@ -546,6 +546,21 @@ class BackendApiService {
     }
   }
 
+  /// POST /api/v1/user/subscription
+  /// Persists the user's Pro status to the server after a successful purchase
+  /// or restore. Fire-and-forget: never throws — a network failure here should
+  /// not surface to the user since the RevenueCat webhook is the authoritative
+  /// source of truth on the server side.
+  Future<void> updateSubscriptionStatus({required bool isPro}) async {
+    if (_authToken == null || _authToken!.isEmpty) return;
+    try {
+      await _dio.post(ApiEndpoints.userSubscription, data: {'isPro': isPro});
+      debugPrint('[BackendApiService] ✅ Subscription status synced to server: isPro=$isPro');
+    } catch (e) {
+      debugPrint('[BackendApiService] ⚠️ updateSubscriptionStatus failed (non-fatal): $e');
+    }
+  }
+
   /// Helper to generate resilient mock user
   UserProfile _generateMockUser({
     String? id,

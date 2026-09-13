@@ -1,12 +1,14 @@
+import 'dart:async' show unawaited;
 import 'dart:developer' show log;
 import 'package:flutter/material.dart';
 import '../core/constants/app_constants.dart';
+import '../core/services/backend_api_service.dart';
 import '../core/services/revenue_cat_service.dart';
 import '../models/subscription_state.dart';
-import '../widgets/common/coming_soon_card.dart';
 
 class SubscriptionProvider extends ChangeNotifier {
   final RevenueCatService _revenueCatService = RevenueCatService();
+  final BackendApiService _backendApiService = BackendApiService();
   SubscriptionState _state = SubscriptionState.initialFree();
   bool _isPurchasing = false;
 
@@ -93,6 +95,7 @@ class SubscriptionProvider extends ChangeNotifier {
           ),
           trialEndsAt: trialEndsAt,
         );
+        unawaited(_backendApiService.updateSubscriptionStatus(isPro: true));
       }
       _isPurchasing = false;
       notifyListeners();
@@ -112,6 +115,7 @@ class SubscriptionProvider extends ChangeNotifier {
     final success = await _revenueCatService.restorePurchases();
     if (success) {
       _state = _state.copyWith(isPro: true);
+      unawaited(_backendApiService.updateSubscriptionStatus(isPro: true));
     }
     _isPurchasing = false;
     notifyListeners();
@@ -133,11 +137,13 @@ class SubscriptionProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Shows the Limit Reached / Pro Subscriptions Coming Soon dialog
+  /// Present the paywall. Delegates to RevenueCatService for the native UI;
+  /// callers that need the custom-sheet fallback should use
+  /// CreatorProPaywallSheet.present(context) directly.
   Future<void> presentPaywall(BuildContext context) async {
-    log('[SubscriptionProvider] Presenting Limit Reached Coming Soon dialog...');
-    if (context.mounted) {
-      await ComingSoonCard.showLimitReached(context);
-    }
+    log('[SubscriptionProvider] Presenting paywall...');
+    if (!context.mounted) return;
+    final hasLive = await _revenueCatService.hasValidLiveOffering();
+    if (hasLive) await _revenueCatService.presentPaywall();
   }
 }

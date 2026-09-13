@@ -33,4 +33,5 @@ class ApiEndpoints {
 
   // Subscriptions & RevenueCat
   static const String subscriptionsStatus = '/subscriptions/status';
+  static const String userSubscription = '/user/subscription';
 }

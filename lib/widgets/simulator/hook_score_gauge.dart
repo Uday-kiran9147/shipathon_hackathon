@@ -241,12 +241,14 @@ class _HookScoreGaugeState extends State<HookScoreGauge>
                               color: Colors.white.withValues(alpha: 0.25),
                             ),
                             SizedBox(width: 6.w),
-                            Text(
-                              widget.tier.multiplierLabel,
-                              style: AppTypography.labelSmall.copyWith(
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 10.5.sp,
+                            Flexible(
+                              child: Text(
+                                widget.tier.multiplierLabel,
+                                style: AppTypography.labelSmall.copyWith(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 10.5.sp,
+                                ),
                               ),
                             ),
                           ],
