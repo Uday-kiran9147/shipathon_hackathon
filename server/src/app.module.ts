@@ -8,6 +8,7 @@ import { BriefingModule } from './modules/briefing/briefing.module';
 import { SimulatorModule } from './modules/simulator/simulator.module';
 import { VectorModule } from './modules/vector/vector.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { WebhooksModule } from './modules/webhooks/webhooks.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { AuthModule } from './modules/auth/auth.module';
     DatabaseModule,
     HealthModule,
     AuthModule,
+    WebhooksModule,
     YouTubeModule,
     BriefingModule,
     SimulatorModule,
