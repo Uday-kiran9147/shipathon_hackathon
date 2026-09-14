@@ -8,8 +8,8 @@ import '../../providers/auth_provider.dart';
 import '../../providers/channel_provider.dart';
 import '../../providers/subscription_provider.dart';
 import '../../screens/history/history_screen.dart';
+import '../../screens/paywall/creator_pro_paywall_sheet.dart';
 import '../channel/channel_switcher_modal.dart';
-import 'coming_soon_card.dart';
 
 /// Prevue Curated Studio Custom App Bar
 /// Features razor-sharp branding, tactile spring-physics pills, live intelligence status,
@@ -273,7 +273,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
             padding: EdgeInsets.only(right: showHistoryButton ? 6.w : 14.w),
             child: _TactilePill(
               onTap: () {
-                ComingSoonCard.showProShowcaseModal(context);
+                CreatorProPaywallSheet.present(context);
               },
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
