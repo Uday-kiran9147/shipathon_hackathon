@@ -68,39 +68,12 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           // Prevue Logo Mark with spring tactile feedback
           _TactilePill(
             onTap: onLogoPressed ?? () => ChannelSwitcherModal.show(context),
-            child: Container(
-              width: 36.w,
-              height: 36.w,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10.r),
-                border: Border.all(
-                  color: AppColors.primary.withValues(alpha: 0.2),
-                  width: 1.2,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFFFF0022).withValues(alpha: 0.22),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(9.r),
-                child: Image.asset(
-                  'assets/images/prevue_logo_v6.png',
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    color: const Color(0xFFFF0022),
-                    child: Center(
-                      child: Icon(
-                        Icons.play_arrow_rounded,
-                        color: Colors.white,
-                        size: 20.sp,
-                      ),
-                    ),
-                  ),
-                ),
+            child: Center(
+              child: Image.asset(
+                'assets/images/prevue_logo_v6.png',
+                width: 42.w,
+                height: 42.w,
+                fit: BoxFit.contain,
               ),
             ),
           ),
@@ -180,10 +153,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                 decoration: BoxDecoration(
                   color: AppColors.surface,
                   borderRadius: BorderRadius.circular(100.r),
-                  border: Border.all(
-                    color: AppColors.borderLight,
-                    width: 1.2,
-                  ),
+                  border: Border.all(color: AppColors.borderLight, width: 1.2),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.04),
@@ -326,23 +296,22 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           Padding(
             padding: EdgeInsets.only(right: 14.w),
             child: _TactilePill(
-              onTap: onHistoryPressed ?? () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => const HistoryScreen(),
-                  ),
-                );
-              },
+              onTap:
+                  onHistoryPressed ??
+                  () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const HistoryScreen(),
+                      ),
+                    );
+                  },
               child: Container(
                 width: 32.w,
                 height: 32.w,
                 decoration: BoxDecoration(
                   color: AppColors.surface,
                   shape: BoxShape.circle,
-                  border: Border.all(
-                    color: AppColors.borderLight,
-                    width: 1.2,
-                  ),
+                  border: Border.all(color: AppColors.borderLight, width: 1.2),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.04),
@@ -368,15 +337,51 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 }
 
+/// Draws the Prevue chart icon (screen outline + line graph + arrow)
+class _PrevueChartIconPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final s = size.width / 24;
+    final paint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.8 * s
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    final rect = RRect.fromLTRBR(
+      2.5 * s,
+      4.5 * s,
+      21.5 * s,
+      18.5 * s,
+      Radius.circular(2.5 * s),
+    );
+    canvas.drawRRect(rect, paint);
+
+    final graphPath = Path()
+      ..moveTo(5 * s, 15 * s)
+      ..lineTo(9.5 * s, 10.5 * s)
+      ..lineTo(12.5 * s, 13 * s)
+      ..lineTo(18.5 * s, 7 * s);
+    canvas.drawPath(graphPath, paint);
+
+    final arrowPath = Path()
+      ..moveTo(15.5 * s, 7 * s)
+      ..lineTo(18.5 * s, 7 * s)
+      ..lineTo(18.5 * s, 10 * s);
+    canvas.drawPath(arrowPath, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
 /// Spring-physics interactive pill / button wrapper with haptic feedback
 class _TactilePill extends StatefulWidget {
   final Widget child;
   final VoidCallback? onTap;
 
-  const _TactilePill({
-    required this.child,
-    this.onTap,
-  });
+  const _TactilePill({required this.child, this.onTap});
 
   @override
   State<_TactilePill> createState() => _TactilePillState();

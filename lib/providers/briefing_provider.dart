@@ -12,6 +12,7 @@ class BriefingProvider extends ChangeNotifier {
   BriefingFilter _currentFilter = BriefingFilter.all;
   bool _isLoading = false;
   bool _isGeneratingFresh = false;
+  String? _loadedForHandle;
 
   BriefingProvider() {
     _blueprints = [];
@@ -68,6 +69,7 @@ class BriefingProvider extends ChangeNotifier {
 
     try {
       _blueprints = await _backendApiService.generateBriefing(channel);
+      _loadedForHandle = channel.handle;
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -77,6 +79,7 @@ class BriefingProvider extends ChangeNotifier {
   /// Explicitly clear all active blueprints
   void clearBlueprints() {
     _blueprints = [];
+    _loadedForHandle = null;
     notifyListeners();
   }
 
@@ -88,9 +91,13 @@ class BriefingProvider extends ChangeNotifier {
   Future<void> loadPersistedBriefing(ChannelGraph channel) async {
     if (!channel.isConfigured) {
       _blueprints = [];
+      _loadedForHandle = null;
       notifyListeners();
       return;
     }
+
+    // Already loaded for this channel — skip the network round-trip on tab re-entries
+    if (_loadedForHandle == channel.handle && _blueprints.isNotEmpty) return;
 
     _isLoading = true;
     notifyListeners();
@@ -109,6 +116,7 @@ class BriefingProvider extends ChangeNotifier {
           .whereType<Map<String, dynamic>>()
           .map((b) => DailyBlueprint.fromJson(b))
           .toList();
+      _loadedForHandle = channel.handle;
     } catch (e) {
       debugPrint('[BriefingProvider] Could not load persisted briefing: $e');
       _blueprints = [];
@@ -131,6 +139,7 @@ class BriefingProvider extends ChangeNotifier {
 
     try {
       _blueprints = await _backendApiService.generateBriefing(channel);
+      _loadedForHandle = channel.handle;
     } finally {
       _isLoading = false;
       notifyListeners();

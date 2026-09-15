@@ -39,7 +39,19 @@ class BlueprintCard extends StatelessWidget {
       );
     }
 
-    final cardContent = Padding(
+    final cardContent = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // 3px rainbow gradient top bar
+        Container(
+          height: 3,
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFFE31414), Color(0xFF7C3AED), Color(0xFF2563EB)],
+            ),
+          ),
+        ),
+        Padding(
       padding: EdgeInsets.all(16.w),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -346,7 +358,7 @@ class BlueprintCard extends StatelessWidget {
               ],
             ),
           ),
-          SizedBox(height: 12.h),
+          SizedBox(height: 10.h),
 
           // Thumbnail Concept Split-Box
           ThumbnailConceptBox(
@@ -403,19 +415,25 @@ class BlueprintCard extends StatelessWidget {
           ),
         ],
       ),
+    ),
+      ],
     );
 
     if (isHero) {
       return GestureDetector(
         onTap: openDetails,
-        child: ShimmerBorder(borderRadius: 18.r, child: cardContent),
+        child: ShimmerBorder(
+          borderRadius: 20.r,
+          child: ClipRRect(borderRadius: BorderRadius.circular(20.r), child: cardContent),
+        ),
       );
     }
 
     return TactileCard(
       padding: EdgeInsets.zero,
+      borderRadius: 20.r,
       onTap: openDetails,
-      child: cardContent,
+      child: ClipRRect(borderRadius: BorderRadius.circular(20.r), child: cardContent),
     );
   }
 }

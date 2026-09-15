@@ -185,9 +185,9 @@ class _DailyBriefingScreenState extends State<DailyBriefingScreen> {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
       decoration: BoxDecoration(
-        color: AppColors.primarySubtle,
+        color: const Color(0xFFFFEDED),
         borderRadius: BorderRadius.circular(14.r),
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+        border: Border.all(color: const Color(0xFFFFC9C9)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
