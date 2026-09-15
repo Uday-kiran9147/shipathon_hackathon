@@ -19,7 +19,7 @@ class AppConstants {
       : 'goog_mock_prevue_google_key';
 
   // RevenueCat Configuration
-  static const String entitlementPro = 'prevue_pro';
+  static const String entitlementPro = 'pro';
   static const String offeringDefault = 'default';
   static const String packageMonthly = 'creator_pro_monthly';
   static const String packageAnnual = 'creator_pro_annual';
