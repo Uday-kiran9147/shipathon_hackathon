@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
-import '../network/api_endpoints.dart';
+import 'dart:developer' show log;import '../network/api_endpoints.dart';
 import '../../models/user_profile.dart';
 import '../../models/channel_graph.dart';
 import '../../models/daily_blueprint.dart';
@@ -40,25 +39,25 @@ class BackendApiService {
           if (_authToken != null && _authToken!.isNotEmpty) {
             options.headers['Authorization'] = 'Bearer $_authToken';
           }
-          debugPrint('🌐 [HTTP Request] ${options.method} -> ${options.uri}');
+          log('🌐 [HTTP Request] ${options.method} -> ${options.uri}');
           if (options.data != null) {
-            debugPrint('📦 [HTTP Payload] ${options.data}');
+            log('📦 [HTTP Payload] ${options.data}');
           }
           return handler.next(options);
         },
         onResponse: (response, handler) {
-          debugPrint(
+          log(
             '🟢 [HTTP Response] ${response.statusCode} <- ${response.requestOptions.path}',
           );
-          debugPrint('📄 [HTTP Response Body] ${response.data}');
+          log('📄 [HTTP Response Body] ${response.data}');
           return handler.next(response);
         },
         onError: (DioException e, handler) {
-          debugPrint(
+          log(
             '🔴 [HTTP Error] ${e.type} -> ${e.message} (status: ${e.response?.statusCode})',
           );
           if (e.response?.data != null) {
-            debugPrint('⚠️ [HTTP Error Body] ${e.response?.data}');
+            log('⚠️ [HTTP Error Body] ${e.response?.data}');
           }
           return handler.next(e);
         },
@@ -125,7 +124,7 @@ class BackendApiService {
         : '@${initialHandle.trim()}';
 
     if (_mockMode) {
-      debugPrint(
+      log(
         '[BackendApiService] Running in explicit mock mode for register',
       );
       return _generateMockUser(
@@ -136,7 +135,7 @@ class BackendApiService {
     }
 
     try {
-      debugPrint(
+      log(
         '[BackendApiService] 🚀 Sending POST ${ApiEndpoints.baseUrl}${ApiEndpoints.authRegister}',
       );
       final response = await _dio.post(
@@ -151,17 +150,17 @@ class BackendApiService {
       final data = response.data as Map<String, dynamic>;
       final user = UserProfile.fromJson(data['user'] as Map<String, dynamic>);
       setAuthToken(data['token'] as String?);
-      debugPrint(
+      log(
         '[BackendApiService] ✅ User created in PostgreSQL: ${user.email} (ID: ${user.id})',
       );
       return user;
     } on DioException catch (e) {
       if (e.response != null && e.response!.statusCode != null && e.response!.statusCode! >= 400) {
         final errorMsg = _extractErrorMessage(e, 'Registration failed.');
-        debugPrint('[BackendApiService] 🔴 Live register error ${e.response?.statusCode}: $errorMsg');
+        log('[BackendApiService] 🔴 Live register error ${e.response?.statusCode}: $errorMsg');
         throw Exception(errorMsg);
       }
-      debugPrint(
+      log(
         '[BackendApiService] ⚠️ Live register network error ($e), falling back to offline profile',
       );
       return _generateMockUser(
@@ -171,7 +170,7 @@ class BackendApiService {
       );
     } catch (e) {
       if (e is Exception) rethrow;
-      debugPrint(
+      log(
         '[BackendApiService] ⚠️ Live register fallback for: $e',
       );
       return _generateMockUser(
@@ -188,7 +187,7 @@ class BackendApiService {
     required String password,
   }) async {
     if (_mockMode) {
-      debugPrint('[BackendApiService] Running in explicit mock mode for login');
+      log('[BackendApiService] Running in explicit mock mode for login');
       return _generateMockUser(
         email: email,
         displayName: 'Creator',
@@ -197,7 +196,7 @@ class BackendApiService {
     }
 
     try {
-      debugPrint(
+      log(
         '[BackendApiService] 🚀 Sending POST ${ApiEndpoints.baseUrl}${ApiEndpoints.authLogin}',
       );
       final response = await _dio.post(
@@ -207,17 +206,17 @@ class BackendApiService {
       final data = response.data as Map<String, dynamic>;
       final user = UserProfile.fromJson(data['user'] as Map<String, dynamic>);
       setAuthToken(data['token'] as String?);
-      debugPrint(
+      log(
         '[BackendApiService] ✅ User logged in from PostgreSQL: ${user.email} (ID: ${user.id})',
       );
       return user;
     } on DioException catch (e) {
       if (e.response != null && e.response!.statusCode != null && e.response!.statusCode! >= 400) {
         final errorMsg = _extractErrorMessage(e, 'Invalid email or password.');
-        debugPrint('[BackendApiService] 🔴 Live login error ${e.response?.statusCode}: $errorMsg');
+        log('[BackendApiService] 🔴 Live login error ${e.response?.statusCode}: $errorMsg');
         throw Exception(errorMsg);
       }
-      debugPrint(
+      log(
         '[BackendApiService] ⚠️ Live login network error ($e), falling back to offline profile',
       );
       return _generateMockUser(
@@ -227,7 +226,7 @@ class BackendApiService {
       );
     } catch (e) {
       if (e is Exception) rethrow;
-      debugPrint(
+      log(
         '[BackendApiService] ⚠️ Live login fallback for: $e',
       );
       return _generateMockUser(
@@ -261,7 +260,7 @@ class BackendApiService {
     }
 
     try {
-      debugPrint(
+      log(
         '[BackendApiService] 🚀 Sending POST ${ApiEndpoints.baseUrl}${ApiEndpoints.authGoogle}',
       );
       final response = await _dio.post(
@@ -274,17 +273,17 @@ class BackendApiService {
       final data = response.data as Map<String, dynamic>;
       final user = UserProfile.fromJson(data['user'] as Map<String, dynamic>);
       setAuthToken(data['token'] as String?);
-      debugPrint(
+      log(
         '[BackendApiService] ✅ Google user authenticated in PostgreSQL: ${user.email}',
       );
       return user;
     } on DioException catch (e) {
       if (e.response != null && e.response!.statusCode != null && e.response!.statusCode! >= 400) {
         final errorMsg = _extractErrorMessage(e, 'Google authentication failed.');
-        debugPrint('[BackendApiService] 🔴 Live Google auth error ${e.response?.statusCode}: $errorMsg');
+        log('[BackendApiService] 🔴 Live Google auth error ${e.response?.statusCode}: $errorMsg');
         throw Exception(errorMsg);
       }
-      debugPrint(
+      log(
         '[BackendApiService] ⚠️ Live Google auth network error ($e), using local profile',
       );
       return _generateMockUser(
@@ -318,14 +317,14 @@ class BackendApiService {
     }
 
     try {
-      debugPrint(
+      log(
         '[BackendApiService] 🔍 Checking user existence in PostgreSQL: ${ApiEndpoints.baseUrl}${ApiEndpoints.userProfile}',
       );
       final response = await _dio.get(ApiEndpoints.userProfile);
       final data = response.data as Map<String, dynamic>;
       if (data['user'] != null) {
         final user = UserProfile.fromJson(data['user'] as Map<String, dynamic>);
-        debugPrint(
+        log(
           '[BackendApiService] ✅ User verified in PostgreSQL database: ${user.email} (ID: ${user.id})',
         );
         return user;
@@ -334,17 +333,17 @@ class BackendApiService {
     } on DioException catch (e) {
       if (e.response != null &&
           (e.response!.statusCode == 401 || e.response!.statusCode == 404)) {
-        debugPrint(
+        log(
           '[BackendApiService] ❌ User does not exist or token revoked in PostgreSQL (Status: ${e.response?.statusCode})',
         );
         throw Exception('User account not found in database.');
       }
-      debugPrint(
+      log(
         '[BackendApiService] ⚠️ fetchUserProfile network error ($e), retaining offline cache',
       );
       return null;
     } catch (e) {
-      debugPrint('[BackendApiService] ⚠️ fetchUserProfile error: $e');
+      log('[BackendApiService] ⚠️ fetchUserProfile error: $e');
       return null;
     }
   }
@@ -370,18 +369,18 @@ class BackendApiService {
     if (!currentChannels.contains(cleanHandle)) {
       final updated = List<String>.from(currentChannels)..add(cleanHandle);
       try {
-        debugPrint(
+        log(
           '[BackendApiService] 🚀 Sending POST ${ApiEndpoints.baseUrl}${ApiEndpoints.userChannels}',
         );
         await _dio.post(
           ApiEndpoints.userChannels,
           data: {'handle': cleanHandle, 'isPro': isPro},
         );
-        debugPrint(
+        log(
           '[BackendApiService] ✅ Channel added to PostgreSQL: $cleanHandle',
         );
       } catch (e) {
-        debugPrint(
+        log(
           '[BackendApiService] ⚠️ Live addChannel failed ($e), updated in local state',
         );
       }
@@ -400,7 +399,7 @@ class BackendApiService {
         : '@${handle.trim()}';
 
     try {
-      debugPrint(
+      log(
         '[BackendApiService] 🚀 Sending POST ${ApiEndpoints.baseUrl}${ApiEndpoints.channelSync}',
       );
       final response = await _dio.post(
@@ -411,7 +410,7 @@ class BackendApiService {
         final data = response.data as Map<String, dynamic>;
         if (data['channel'] is Map<String, dynamic>) {
           final channelJson = data['channel'] as Map<String, dynamic>;
-          debugPrint(
+          log(
             '[BackendApiService] ✅ Channel Graph synced from backend: $cleanHandle',
           );
           return ChannelGraph.fromJson(channelJson);
@@ -421,7 +420,7 @@ class BackendApiService {
     } on DioException catch (e) {
       final errorMsg =
           _extractErrorMessage(e, 'Failed to sync channel from YouTube API.');
-      debugPrint('[BackendApiService] 🔴 syncChannel error: $errorMsg');
+      log('[BackendApiService] 🔴 syncChannel error: $errorMsg');
       throw Exception(errorMsg);
     } catch (e) {
       if (e is Exception) rethrow;
@@ -434,7 +433,7 @@ class BackendApiService {
   /// (Gemini blueprint synthesis with algorithmic fallback) and returns
   /// the generated blueprints.
   Future<List<DailyBlueprint>> generateBriefing(ChannelGraph channel) async {
-    debugPrint(
+    log(
       '[BackendApiService] 🚀 Sending POST ${ApiEndpoints.baseUrl}${ApiEndpoints.briefingsGenerate}',
     );
     final response = await _dio.post(
@@ -443,7 +442,7 @@ class BackendApiService {
     );
     final data = response.data as Map<String, dynamic>;
     final rawBlueprints = data['blueprints'] as List<dynamic>? ?? [];
-    debugPrint(
+    log(
       '[BackendApiService] ✅ Briefing generated from backend: ${rawBlueprints.length} blueprints',
     );
     return rawBlueprints
@@ -462,7 +461,7 @@ class BackendApiService {
       final rawBriefings = data['briefings'] as List<dynamic>? ?? [];
       return rawBriefings.cast<Map<String, dynamic>>();
     } catch (e) {
-      debugPrint('[BackendApiService] ⚠️ getBriefingHistory failed ($e)');
+      log('[BackendApiService] ⚠️ getBriefingHistory failed ($e)');
       return [];
     }
   }
@@ -477,7 +476,7 @@ class BackendApiService {
       final rawSimulations = data['simulations'] as List<dynamic>? ?? [];
       return rawSimulations.cast<Map<String, dynamic>>();
     } catch (e) {
-      debugPrint('[BackendApiService] ⚠️ getSimulationHistory failed ($e)');
+      log('[BackendApiService] ⚠️ getSimulationHistory failed ($e)');
       return [];
     }
   }
@@ -492,7 +491,7 @@ class BackendApiService {
     if (_mockMode) return null;
 
     try {
-      debugPrint(
+      log(
         '[BackendApiService] 🚀 Sending POST ${ApiEndpoints.baseUrl}${ApiEndpoints.simulatorRun}',
       );
       final response = await _dio.post(
@@ -524,7 +523,7 @@ class BackendApiService {
         },
       );
       final data = response.data as Map<String, dynamic>;
-      debugPrint('[BackendApiService] ✅ Simulation ran on backend PostgreSQL');
+      log('[BackendApiService] ✅ Simulation ran on backend PostgreSQL');
       return data;
     } on DioException catch (e) {
       if (e.response != null && e.response!.statusCode == 403) {
@@ -532,16 +531,16 @@ class BackendApiService {
         final errorMsg = (data is Map && data['message'] != null)
             ? data['message'].toString()
             : 'Free simulation limit reached (3/3). Unlock Creator Pro for unlimited pre-flight simulations.';
-        debugPrint('[BackendApiService] 🚫 Pro required 403: $errorMsg');
+        log('[BackendApiService] 🚫 Pro required 403: $errorMsg');
         throw Exception(errorMsg);
       }
-      debugPrint('[BackendApiService] ⚠️ runSimulationOnBackend network fallback ($e)');
+      log('[BackendApiService] ⚠️ runSimulationOnBackend network fallback ($e)');
       return null;
     } catch (e) {
       if (e is Exception && e.toString().contains('Free simulation limit')) {
         rethrow;
       }
-      debugPrint('[BackendApiService] ⚠️ runSimulationOnBackend error ($e)');
+      log('[BackendApiService] ⚠️ runSimulationOnBackend error ($e)');
       return null;
     }
   }
@@ -555,9 +554,9 @@ class BackendApiService {
     if (_authToken == null || _authToken!.isEmpty) return;
     try {
       await _dio.post(ApiEndpoints.userSubscription, data: {'isPro': isPro});
-      debugPrint('[BackendApiService] ✅ Subscription status synced to server: isPro=$isPro');
+      log('[BackendApiService] ✅ Subscription status synced to server: isPro=$isPro');
     } catch (e) {
-      debugPrint('[BackendApiService] ⚠️ updateSubscriptionStatus failed (non-fatal): $e');
+      log('[BackendApiService] ⚠️ updateSubscriptionStatus failed (non-fatal): $e');
     }
   }
 

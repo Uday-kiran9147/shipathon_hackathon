@@ -337,44 +337,6 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 }
 
-/// Draws the Prevue chart icon (screen outline + line graph + arrow)
-class _PrevueChartIconPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final s = size.width / 24;
-    final paint = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.8 * s
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-
-    final rect = RRect.fromLTRBR(
-      2.5 * s,
-      4.5 * s,
-      21.5 * s,
-      18.5 * s,
-      Radius.circular(2.5 * s),
-    );
-    canvas.drawRRect(rect, paint);
-
-    final graphPath = Path()
-      ..moveTo(5 * s, 15 * s)
-      ..lineTo(9.5 * s, 10.5 * s)
-      ..lineTo(12.5 * s, 13 * s)
-      ..lineTo(18.5 * s, 7 * s);
-    canvas.drawPath(graphPath, paint);
-
-    final arrowPath = Path()
-      ..moveTo(15.5 * s, 7 * s)
-      ..lineTo(18.5 * s, 7 * s)
-      ..lineTo(18.5 * s, 10 * s);
-    canvas.drawPath(arrowPath, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
 
 /// Spring-physics interactive pill / button wrapper with haptic feedback
 class _TactilePill extends StatefulWidget {

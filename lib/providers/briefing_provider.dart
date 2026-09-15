@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import '../core/services/backend_api_service.dart';
 import '../models/channel_graph.dart';
 import '../models/daily_blueprint.dart';
-
+import 'dart:developer' show log;
 enum BriefingFilter { all, longForm, short, saved }
 
 class BriefingProvider extends ChangeNotifier {
@@ -118,7 +118,7 @@ class BriefingProvider extends ChangeNotifier {
           .toList();
       _loadedForHandle = channel.handle;
     } catch (e) {
-      debugPrint('[BriefingProvider] Could not load persisted briefing: $e');
+      log('[BriefingProvider] Could not load persisted briefing: $e');
       _blueprints = [];
     } finally {
       _isLoading = false;

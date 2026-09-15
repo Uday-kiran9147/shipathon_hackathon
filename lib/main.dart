@@ -1,3 +1,5 @@
+import 'dart:developer' show log;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -21,15 +23,15 @@ void main() async {
   try {
     await dotenv.load(fileName: '.env');
   } catch (e) {
-    debugPrint('[Environment] .env not found or failed to load: $e');
+    log('[Environment] .env not found or failed to load: $e');
   }
   // Pre-load persisted session before booting widget tree
   UserProfile? initialUser;
   try {
     initialUser = await AuthService().initialize();
-    debugPrint('[Main] Initial user preloaded: ${initialUser?.email}');
+    log('[Main] Initial user preloaded: ${initialUser?.email}');
   } catch (e) {
-    debugPrint('[Main] Could not pre-load initial user: $e');
+    log('[Main] Could not pre-load initial user: $e');
   }
 
   RevenueCatService revenueCatService = RevenueCatService();

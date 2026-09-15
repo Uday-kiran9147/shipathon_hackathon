@@ -4,7 +4,7 @@ import 'package:flutter/services.dart' show PlatformException;
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:purchases_ui_flutter/purchases_ui_flutter.dart';
 import '../constants/app_constants.dart';
-
+import 'dart:developer' show log;
 /// RevenueCat SDK wrapper.
 ///
 /// Dual-mode:
@@ -27,13 +27,13 @@ class RevenueCatService {
     _mockMode = forceMock;
 
     if (_mockMode) {
-      debugPrint('[RevenueCat] Mock mode active');
+      log('[RevenueCat] Mock mode active');
       _isInitialized = true;
       return;
     }
 
     if (kIsWeb || !(Platform.isIOS || Platform.isAndroid || Platform.isMacOS)) {
-      debugPrint('[RevenueCat] Non-mobile platform → mock mode');
+      log('[RevenueCat] Non-mobile platform → mock mode');
       _mockMode = true;
       _isInitialized = true;
       return;
@@ -47,7 +47,7 @@ class RevenueCatService {
               : AppConstants.revenueCatApiKeyGoogle);
 
       if (_isPlaceholderKey(apiKey)) {
-        debugPrint('[RevenueCat] Placeholder key detected → mock mode');
+        log('[RevenueCat] Placeholder key detected → mock mode');
         _mockMode = true;
         _isInitialized = true;
         return;
@@ -56,9 +56,9 @@ class RevenueCatService {
       await Purchases.setLogLevel(LogLevel.debug);
       await Purchases.configure(PurchasesConfiguration(apiKey));
       _isInitialized = true;
-      debugPrint('[RevenueCat] Configured with live API key');
+      log('[RevenueCat] Configured with live API key');
     } catch (e) {
-      debugPrint('[RevenueCat] Init failed → mock mode: $e');
+      log('[RevenueCat] Init failed → mock mode: $e');
       _mockMode = true;
       _isInitialized = true;
     }
@@ -78,7 +78,7 @@ class RevenueCatService {
     try {
       return await Purchases.getCustomerInfo();
     } catch (e) {
-      debugPrint('[RevenueCat] getCustomerInfo failed: $e');
+      log('[RevenueCat] getCustomerInfo failed: $e');
       return null;
     }
   }
@@ -107,7 +107,7 @@ class RevenueCatService {
       final info = await Purchases.getCustomerInfo();
       return info.entitlements.active.containsKey(AppConstants.entitlementPro);
     } catch (e) {
-      debugPrint('[RevenueCat] checkProEntitlement error: $e');
+      log('[RevenueCat] checkProEntitlement error: $e');
       return false;
     }
   }
@@ -122,15 +122,15 @@ class RevenueCatService {
     } on PlatformException catch (e) {
       final code = PurchasesErrorHelper.getErrorCode(e);
       if (code == PurchasesErrorCode.configurationError) {
-        debugPrint('[RevenueCat] No products attached to offering yet (ConfigurationError)');
+        log('[RevenueCat] No products attached to offering yet (ConfigurationError)');
       } else if (code == PurchasesErrorCode.storeProblemError) {
-        debugPrint('[RevenueCat] Store unavailable (BILLING_UNAVAILABLE)');
+        log('[RevenueCat] Store unavailable (BILLING_UNAVAILABLE)');
       } else {
-        debugPrint('[RevenueCat] getOfferings error: $e');
+        log('[RevenueCat] getOfferings error: $e');
       }
       return null;
     } catch (e) {
-      debugPrint('[RevenueCat] getOfferings error: $e');
+      log('[RevenueCat] getOfferings error: $e');
       return null;
     }
   }
@@ -166,7 +166,7 @@ class RevenueCatService {
       final offerings = await getOfferings();
       final pkg = _resolvePackageForPlan(offerings, isAnnual);
       if (pkg == null) {
-        debugPrint('[RevenueCat] No package found for isAnnual=$isAnnual');
+        log('[RevenueCat] No package found for isAnnual=$isAnnual');
         return false;
       }
       final result = await Purchases.purchase(PurchaseParams.package(pkg));
@@ -175,21 +175,21 @@ class RevenueCatService {
     } on PlatformException catch (e) {
       final code = PurchasesErrorHelper.getErrorCode(e);
       if (code == PurchasesErrorCode.purchaseCancelledError) {
-        debugPrint('[RevenueCat] Purchase cancelled by user');
+        log('[RevenueCat] Purchase cancelled by user');
         return false;
       }
       if (code == PurchasesErrorCode.storeProblemError) {
-        debugPrint('[RevenueCat] Store unavailable');
+        log('[RevenueCat] Store unavailable');
         return false;
       }
-      debugPrint('[RevenueCat] Purchase error ($code): $e');
+      log('[RevenueCat] Purchase error ($code): $e');
       return false;
     } catch (e) {
       if (e.toString().contains('MissingPluginException')) {
-        debugPrint('[RevenueCat] Purchase plugin unavailable');
+        log('[RevenueCat] Purchase plugin unavailable');
         return false;
       }
-      debugPrint('[RevenueCat] Purchase error: $e');
+      log('[RevenueCat] Purchase error: $e');
       return false;
     }
   }
@@ -207,10 +207,10 @@ class RevenueCatService {
       return info.entitlements.active.containsKey(AppConstants.entitlementPro);
     } on PlatformException catch (e) {
       final code = PurchasesErrorHelper.getErrorCode(e);
-      debugPrint('[RevenueCat] Restore failed ($code): $e');
+      log('[RevenueCat] Restore failed ($code): $e');
       return false;
     } catch (e) {
-      debugPrint('[RevenueCat] Restore error: $e');
+      log('[RevenueCat] Restore error: $e');
       return false;
     }
   }
@@ -222,9 +222,9 @@ class RevenueCatService {
     if (_mockMode) return;
     try {
       await Purchases.logIn(appUserId);
-      debugPrint('[RevenueCat] Logged in: $appUserId');
+      log('[RevenueCat] Logged in: $appUserId');
     } catch (e) {
-      debugPrint('[RevenueCat] logIn error: $e');
+      log('[RevenueCat] logIn error: $e');
     }
   }
 
@@ -234,7 +234,7 @@ class RevenueCatService {
     try {
       await Purchases.logOut();
     } catch (e) {
-      debugPrint('[RevenueCat] logOut error: $e');
+      log('[RevenueCat] logOut error: $e');
     }
   }
 
@@ -260,7 +260,7 @@ class RevenueCatService {
       }
       if (custom.isNotEmpty) await Purchases.setAttributes(custom);
     } catch (e) {
-      debugPrint('[RevenueCat] setUserAttributes error: $e');
+      log('[RevenueCat] setUserAttributes error: $e');
     }
   }
 
@@ -286,7 +286,7 @@ class RevenueCatService {
       }
       return await RevenueCatUI.presentPaywall(displayCloseButton: true);
     } catch (e) {
-      debugPrint('[RevenueCat] presentPaywall error: $e');
+      log('[RevenueCat] presentPaywall error: $e');
       return null;
     }
   }
@@ -300,7 +300,7 @@ class RevenueCatService {
         displayCloseButton: true,
       );
     } catch (e) {
-      debugPrint('[RevenueCat] presentPaywallIfNeeded error: $e');
+      log('[RevenueCat] presentPaywallIfNeeded error: $e');
       return null;
     }
   }

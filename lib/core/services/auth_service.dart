@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
+import 'dart:developer' show log;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/user_profile.dart';
 import 'backend_api_service.dart';
@@ -57,7 +57,7 @@ class AuthService {
           }
         } catch (dbError) {
           // If server explicitly confirmed user was deleted or revoked (401/404)
-          debugPrint(
+          log(
             '[AuthService] ❌ User verification in DB failed ($dbError), signing out stale session',
           );
           await signOut();
@@ -66,14 +66,14 @@ class AuthService {
 
         if (_currentUser != null) {
           await _syncWithRevenueCat(_currentUser!);
-          debugPrint(
+          log(
             '[AuthService] Restored persisted session for: ${_currentUser!.email} (Active: ${_currentUser!.activeChannelHandle})',
           );
         }
         return _currentUser;
       }
     } catch (e) {
-      debugPrint('[AuthService] ⚠️ Error restoring user session, clearing corrupted cache: $e');
+      log('[AuthService] ⚠️ Error restoring user session, clearing corrupted cache: $e');
       try {
         final prefs = await SharedPreferences.getInstance();
         await prefs.remove(_prefUserKey);
@@ -89,7 +89,7 @@ class AuthService {
     _currentUser = user;
     await _persistUser(user);
     await _syncWithRevenueCat(user);
-    debugPrint(
+    log(
       '[AuthService] Signed in with Google: ${user.email} (ID: ${user.id})',
     );
     return user;
@@ -118,7 +118,7 @@ class AuthService {
     _currentUser = user;
     await _persistUser(user);
     await _syncWithRevenueCat(user);
-    debugPrint('[AuthService] Signed in with Email: ${user.email}');
+    log('[AuthService] Signed in with Email: ${user.email}');
     return user;
   }
 
@@ -164,7 +164,7 @@ class AuthService {
     _currentUser = user;
     await _persistUser(user);
     await _syncWithRevenueCat(user);
-    debugPrint(
+    log(
       '[AuthService] Registered user: ${user.email} with channel ${user.activeChannelHandle}',
     );
     return user;
@@ -177,7 +177,7 @@ class AuthService {
     _apiService.setAuthToken(demoProfile.authToken);
     await _persistUser(demoProfile);
     await _syncWithRevenueCat(demoProfile);
-    debugPrint(
+    log(
       '[AuthService] Switched to Demo Account: ${demoProfile.displayName}',
     );
     return demoProfile;
@@ -194,9 +194,9 @@ class AuthService {
       await prefs.remove(_prefUserKey);
       await prefs.remove(_prefTokenKey);
     } catch (e) {
-      debugPrint('[AuthService] Error clearing persisted session: $e');
+      log('[AuthService] Error clearing persisted session: $e');
     }
-    debugPrint('[AuthService] User signed out');
+    log('[AuthService] User signed out');
   }
 
   /// Add a new connected YouTube channel
@@ -277,11 +277,11 @@ class AuthService {
       if (user.authToken != null && user.authToken!.isNotEmpty) {
         await prefs.setString(_prefTokenKey, user.authToken!);
       }
-      debugPrint(
+      log(
         '[AuthService] 💾 Persisted user session to local storage for: ${user.email}',
       );
     } catch (e) {
-      debugPrint('[AuthService] ❌ Could not persist user session: $e');
+      log('[AuthService] ❌ Could not persist user session: $e');
     }
   }
 
@@ -296,7 +296,7 @@ class AuthService {
         channelCount: user.connectedChannels.length,
       );
     } catch (e) {
-      debugPrint('[AuthService] ⚠️ RevenueCat sync non-fatal error: $e');
+      log('[AuthService] ⚠️ RevenueCat sync non-fatal error: $e');
     }
   }
 }

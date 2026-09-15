@@ -11,9 +11,7 @@ class _SubscriptionUserStub {
 
   const _SubscriptionUserStub({
     required this.isPro,
-    this.simulationsUsedThisMonth = 0,
-    this.freeSimulationsLimit = 3,
-  });
+  }) : freeSimulationsLimit = 3, simulationsUsedThisMonth = 0;
 }
 
 void main() {

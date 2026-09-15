@@ -79,7 +79,7 @@ class SubscriptionProvider extends ChangeNotifier {
         notifyListeners();
       }
     } catch (e) {
-      debugPrint('[SubscriptionProvider] refreshFromRevenueCat error: $e');
+      log('[SubscriptionProvider] refreshFromRevenueCat error: $e');
       if (_state.status == SubscriptionStatus.unknown) {
         _state = SubscriptionState.initialFree();
         notifyListeners();
@@ -179,7 +179,7 @@ class SubscriptionProvider extends ChangeNotifier {
       }
       return success;
     } catch (e) {
-      debugPrint('[SubscriptionProvider] purchasePackage error: $e');
+      log('[SubscriptionProvider] purchasePackage error: $e');
       return false;
     } finally {
       _isPurchasing = false;
@@ -203,7 +203,7 @@ class SubscriptionProvider extends ChangeNotifier {
       }
       return success;
     } catch (e) {
-      debugPrint('[SubscriptionProvider] restorePurchases error: $e');
+      log('[SubscriptionProvider] restorePurchases error: $e');
       return false;
     } finally {
       _isPurchasing = false;

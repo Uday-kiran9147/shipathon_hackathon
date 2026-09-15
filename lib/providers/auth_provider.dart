@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../core/services/auth_service.dart';
 import '../models/user_profile.dart';
-
+import 'dart:developer' show log;
 /// Authentication and Workspace State Provider for Prevue
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -32,7 +32,7 @@ class AuthProvider extends ChangeNotifier {
     try {
       _user = await _authService.initialize();
     } catch (e) {
-      debugPrint('[AuthProvider] Error initializing auth session: $e');
+      log('[AuthProvider] Error initializing auth session: $e');
     } finally {
       _isInitialized = true;
       notifyListeners();

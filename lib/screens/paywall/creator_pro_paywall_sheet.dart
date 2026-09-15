@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
-import 'package:purchases_flutter/purchases_flutter.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/services/revenue_cat_service.dart';
 import '../../core/theme/app_colors.dart';
