@@ -109,9 +109,11 @@ class SubscriptionProvider extends ChangeNotifier {
     _state = _state.copyWith(
       simulationsUsedThisMonth: simulationsUsedThisMonth,
       freeSimulationsLimit: freeSimulationsLimit ?? _state.freeSimulationsLimit,
-      status: (isPro == true && !_state.hasAccess)
+      status: isPro == null
+        ? null
+        : isPro
           ? SubscriptionStatus.active
-          : null,
+          : SubscriptionStatus.free,
     );
     notifyListeners();
   }
@@ -125,21 +127,13 @@ class SubscriptionProvider extends ChangeNotifier {
     final int limit = user.freeSimulationsLimit as int? ??
         AppConstants.freeSimulationsPerMonth;
 
-    // Only update the simulation counters; keep RC-derived subscription status
-    // when we already have it — the profile is a stale hint, not authoritative.
-    if (_state.status == SubscriptionStatus.unknown ||
-        _state.status == SubscriptionStatus.free) {
-      _state = _state.copyWith(
-        status: isPro ? SubscriptionStatus.active : SubscriptionStatus.free,
-        simulationsUsedThisMonth: used,
-        freeSimulationsLimit: limit,
-      );
-    } else {
-      _state = _state.copyWith(
-        simulationsUsedThisMonth: used,
-        freeSimulationsLimit: limit,
-      );
-    }
+    // Replace the previous account's local state before RevenueCat refreshes.
+    // RevenueCat remains authoritative once its CustomerInfo arrives.
+    _state = _state.copyWith(
+      status: isPro ? SubscriptionStatus.active : SubscriptionStatus.free,
+      simulationsUsedThisMonth: used,
+      freeSimulationsLimit: limit,
+    );
     notifyListeners();
   }
 

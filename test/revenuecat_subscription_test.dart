@@ -4,6 +4,18 @@ import 'package:shipathon_hackathon/core/services/revenue_cat_service.dart';
 import 'package:shipathon_hackathon/models/subscription_state.dart';
 import 'package:shipathon_hackathon/providers/subscription_provider.dart';
 
+class _SubscriptionUserStub {
+  final bool isPro;
+  final int simulationsUsedThisMonth;
+  final int freeSimulationsLimit;
+
+  const _SubscriptionUserStub({
+    required this.isPro,
+    this.simulationsUsedThisMonth = 0,
+    this.freeSimulationsLimit = 3,
+  });
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -218,6 +230,31 @@ void main() {
 
       // Additional simulations are allowed
       expect(provider.recordSimulationAttempt(), isTrue);
+    });
+
+    test('backend downgrade clears local Pro access', () async {
+      final provider = SubscriptionProvider();
+      await Future.delayed(const Duration(milliseconds: 100));
+      await provider.purchasePackage(isAnnual: true);
+
+      provider.updateSimulationUsage(
+        simulationsUsedThisMonth: 3,
+        isPro: false,
+      );
+
+      expect(provider.isPro, isFalse);
+      expect(provider.canSimulate, isFalse);
+    });
+
+    test('syncing a free account clears the previous Pro account state', () async {
+      final provider = SubscriptionProvider();
+      await Future.delayed(const Duration(milliseconds: 100));
+      await provider.purchasePackage(isAnnual: true);
+
+      provider.syncWithUser(const _SubscriptionUserStub(isPro: false));
+
+      expect(provider.isPro, isFalse);
+      expect(provider.status, SubscriptionStatus.free);
     });
 
     test('freeTrialDays constant is 3', () {

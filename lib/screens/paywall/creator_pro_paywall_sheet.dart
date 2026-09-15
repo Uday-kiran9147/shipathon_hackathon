@@ -13,14 +13,7 @@ import '../subscription/subscription_management_screen.dart';
 import 'cancel_subscription_sheet.dart';
 import 'subscription_success_sheet.dart';
 
-/// Paywall sheet — free → Pro conversion.
-///
-/// Priorities:
-/// 1. Native RevenueCat paywall when a live offering with packages exists.
-/// 2. Custom sheet (this widget) otherwise (mock/demo/no packages yet).
-///
-/// Prices come from [Package.storeProduct.priceString] when available,
-/// falling back to the [AppConstants] display strings.
+
 class CreatorProPaywallSheet extends StatefulWidget {
   const CreatorProPaywallSheet({super.key});
 
@@ -37,12 +30,6 @@ class CreatorProPaywallSheet extends StatefulWidget {
     );
   }
 
-  /// Entry point for the PRO badge tap.
-  ///
-  /// - Already subscribed → custom sheet (already-subscribed view with manage/cancel).
-  /// - Not subscribed, live RC offering → native RC paywall; success sheet only if
-  ///   the user went from free → Pro during this session.
-  /// - Not subscribed, no live offering → custom paywall sheet.
   static Future<void> present(BuildContext context) async {
     final sub = context.read<SubscriptionProvider>();
     // Already Pro → show the manage/cancel sheet, never the purchase paywall.
@@ -56,7 +43,7 @@ class CreatorProPaywallSheet extends StatefulWidget {
     if (!context.mounted) return;
 
     if (hasLive) {
-      await rc.presentPaywall();
+      await sub.presentPaywall(context);
       if (!context.mounted) return;
       // Only show the success sheet if the purchase actually happened.
       await sub.refreshFromRevenueCat();
@@ -75,66 +62,10 @@ class CreatorProPaywallSheet extends StatefulWidget {
 
 class _CreatorProPaywallSheetState extends State<CreatorProPaywallSheet> {
   bool _isAnnual = true;
-  Package? _annualPkg;
-  Package? _monthlyPkg;
-  bool _loadingOfferings = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadOfferings();
-  }
-
-  Future<void> _loadOfferings() async {
-    final offerings = await RevenueCatService().getOfferings();
-    if (!mounted) return;
-    setState(() {
-      _annualPkg = _findPackage(offerings, annual: true);
-      _monthlyPkg = _findPackage(offerings, annual: false);
-      _loadingOfferings = false;
-    });
-  }
-
-  Package? _findPackage(Offerings? offerings, {required bool annual}) {
-    if (offerings == null) return null;
-    final current = offerings.current;
-    final ids = annual
-        ? ['annual', r'$rc_annual', AppConstants.packageAnnual, 'creator_pro_annual', 'sub_annual']
-        : ['monthly', r'$rc_monthly', AppConstants.packageMonthly, 'creator_pro_monthly', 'sub_monthly'];
-
-    if (annual && current?.annual != null) return current!.annual;
-    if (!annual && current?.monthly != null) return current!.monthly;
-
-    for (final offering in offerings.all.values) {
-      for (final pkg in offering.availablePackages) {
-        if (ids.contains(pkg.identifier) ||
-            ids.contains(pkg.packageType.name) ||
-            ids.contains(pkg.storeProduct.identifier)) {
-          return pkg;
-        }
-      }
-    }
-    return null;
-  }
-
-  String get _annualPrice =>
-      _annualPkg?.storeProduct.priceString ?? AppConstants.priceAnnual;
-  String get _monthlyPrice =>
-      _monthlyPkg?.storeProduct.priceString ?? AppConstants.priceMonthly;
-
-  String get _annualPerMonth {
-    final annual = _annualPkg?.storeProduct.price;
-    if (annual != null) {
-      final pm = annual / 12;
-      return '\$${pm.toStringAsFixed(2)}/mo';
-    }
-    return '${AppConstants.priceAnnualMonthlyEquivalent}/mo';
-  }
 
   @override
   Widget build(BuildContext context) {
     final sub = context.watch<SubscriptionProvider>();
-    final alreadyPro = sub.isPro;
 
     return Container(
       constraints: BoxConstraints(maxHeight: 0.92.sh),
@@ -158,23 +89,115 @@ class _CreatorProPaywallSheetState extends State<CreatorProPaywallSheet> {
             Flexible(
               child: SingleChildScrollView(
                 padding: EdgeInsets.symmetric(horizontal: 20.w),
-                child: alreadyPro
+                child: sub.isPro
                     ? _AlreadySubscribedBody(state: sub.state)
                     : _PurchaseBody(
                         isAnnual: _isAnnual,
-                        onToggle: (v) => setState(() => _isAnnual = v),
-                        annualPrice: _annualPrice,
-                        monthlyPrice: _monthlyPrice,
-                        annualPerMonth: _annualPerMonth,
-                        annualSavings: AppConstants.annualSavingsPercentage,
-                        loadingOfferings: _loadingOfferings,
-                        subProvider: sub,
+                        onPlanChanged: (value) =>
+                            setState(() => _isAnnual = value),
                       ),
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _PurchaseBody extends StatelessWidget {
+  final bool isAnnual;
+  final ValueChanged<bool> onPlanChanged;
+
+  const _PurchaseBody({
+    required this.isAnnual,
+    required this.onPlanChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final sub = context.watch<SubscriptionProvider>();
+
+    return Column(
+      children: [
+        SizedBox(height: 8.h),
+        _LogoBadge(),
+        SizedBox(height: 16.h),
+        Text(
+          'Unlock Creator Pro',
+          textAlign: TextAlign.center,
+          style: AppTypography.displayMedium.copyWith(
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.5,
+          ),
+        ),
+        SizedBox(height: 8.h),
+        Text(
+          'Unlimited simulations and advanced creator intelligence.',
+          textAlign: TextAlign.center,
+          style: AppTypography.bodyMedium.copyWith(
+            color: AppColors.textSecondary,
+          ),
+        ),
+        SizedBox(height: 20.h),
+        SegmentedButton<bool>(
+          segments: const [
+            ButtonSegment<bool>(value: true, label: Text('Annual')),
+            ButtonSegment<bool>(value: false, label: Text('Monthly')),
+          ],
+          selected: {isAnnual},
+          onSelectionChanged: (selection) => onPlanChanged(selection.first),
+        ),
+        SizedBox(height: 16.h),
+        Text(
+          isAnnual ? AppConstants.priceAnnual : AppConstants.priceMonthly,
+          style: AppTypography.titleLarge.copyWith(fontWeight: FontWeight.w800),
+        ),
+        SizedBox(height: 16.h),
+        SolidHeavyButton(
+          label: isAnnual ? 'Start Annual Plan' : 'Start Monthly Plan',
+          height: 52.h,
+          fontSize: 15.sp,
+          isLoading: sub.isPurchasing,
+          onPressed: sub.isPurchasing
+              ? null
+              : () async {
+                  final success = await sub.purchasePackage(isAnnual: isAnnual);
+                  if (!context.mounted) return;
+                  if (success) {
+                    Navigator.pop(context);
+                    await SubscriptionSuccessSheet.show(context);
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Purchase could not be completed.'),
+                      ),
+                    );
+                  }
+                },
+        ),
+        SizedBox(height: 8.h),
+        TextButton(
+          onPressed: sub.isPurchasing
+              ? null
+              : () async {
+                  final success = await sub.restorePurchases();
+                  if (!context.mounted) return;
+                  if (success) {
+                    Navigator.pop(context);
+                    await SubscriptionSuccessSheet.show(context);
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('No active subscription found.'),
+                      ),
+                    );
+                  }
+                },
+          child: const Text('Restore Purchases'),
+        ),
+        SizedBox(height: 12.h),
+      ],
     );
   }
 }
@@ -396,295 +419,4 @@ class _RenewalRow extends StatelessWidget {
         '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
         'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
       ][m];
-}
-
-// ─── Purchase state ──────────────────────────────────────────────────────────
-
-class _PurchaseBody extends StatelessWidget {
-  final bool isAnnual;
-  final void Function(bool) onToggle;
-  final String annualPrice;
-  final String monthlyPrice;
-  final String annualPerMonth;
-  final String annualSavings;
-  final bool loadingOfferings;
-  final SubscriptionProvider subProvider;
-
-  const _PurchaseBody({
-    required this.isAnnual,
-    required this.onToggle,
-    required this.annualPrice,
-    required this.monthlyPrice,
-    required this.annualPerMonth,
-    required this.annualSavings,
-    required this.loadingOfferings,
-    required this.subProvider,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        SizedBox(height: 8.h),
-        _LogoBadge(),
-        SizedBox(height: 12.h),
-        Text('Unlock Creator Pro',
-            style: AppTypography.displayMedium.copyWith(
-                fontWeight: FontWeight.w800, letterSpacing: -0.5)),
-        SizedBox(height: 4.h),
-        Text(
-          'Stop wasting 15 hours on flop videos. Simulate retention curves before hitting record.',
-          textAlign: TextAlign.center,
-          style: AppTypography.bodyMedium
-              .copyWith(color: AppColors.textSecondary),
-        ),
-        SizedBox(height: 20.h),
-        _FeatureItem(
-          icon: Icons.all_inclusive_rounded,
-          title: 'Unlimited Pre-Flight Simulations',
-          subtitle: 'Stress-test all weekly long-form & Shorts scripts.',
-        ),
-        _FeatureItem(
-          icon: Icons.hub_rounded,
-          title: 'Multi-Channel Workspace',
-          subtitle: 'Seamlessly switch between all your YouTube channels.',
-        ),
-        _FeatureItem(
-          icon: Icons.timeline_rounded,
-          title: '30-Second Retention Hazard Timeline',
-          subtitle: 'Pinpoint exact drop-off moments before recording.',
-        ),
-        _FeatureItem(
-          icon: Icons.auto_fix_high_rounded,
-          title: '3 Prescriptive AI Fixes & Re-Hooker',
-          subtitle: '1-Click intro cuts and contrast hooks to lift score.',
-        ),
-        _FeatureItem(
-          icon: Icons.trending_up_rounded,
-          title: 'Channel Outlier Predictor (3.0× Views)',
-          subtitle: 'Benchmark against your historical audience graph.',
-        ),
-        SizedBox(height: 20.h),
-        _PricingToggle(
-          isAnnual: isAnnual,
-          onToggle: onToggle,
-          annualPrice: annualPrice,
-          monthlyPrice: monthlyPrice,
-          annualPerMonth: annualPerMonth,
-          annualSavings: annualSavings,
-          loading: loadingOfferings,
-        ),
-        SizedBox(height: 20.h),
-        SolidHeavyButton(
-          label: 'Start ${AppConstants.freeTrialLabel}',
-          height: 56.h,
-          fontSize: 16.sp,
-          isLoading: subProvider.isPurchasing,
-          loadingText: 'Activating Creator Pro…',
-          onPressed: () async {
-            final success =
-                await subProvider.purchasePackage(isAnnual: isAnnual);
-            if (!context.mounted) return;
-            if (success) {
-              Navigator.pop(context);
-              await SubscriptionSuccessSheet.show(context);
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                content: Text('Purchase was cancelled or could not be completed.'),
-              ));
-            }
-          },
-        ),
-        SizedBox(height: 12.h),
-        Center(
-          child: TextButton(
-            onPressed: () async {
-              final success = await subProvider.restorePurchases();
-              if (!context.mounted) return;
-              Navigator.pop(context);
-              if (success) {
-                await SubscriptionSuccessSheet.show(context);
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                  content: Text('No active subscription found to restore.'),
-                ));
-              }
-            },
-            child: Text('Restore Purchases',
-                style: AppTypography.labelSmall
-                    .copyWith(color: AppColors.textMuted)),
-          ),
-        ),
-        SizedBox(height: 10.h),
-      ],
-    );
-  }
-}
-
-class _PricingToggle extends StatelessWidget {
-  final bool isAnnual;
-  final void Function(bool) onToggle;
-  final String annualPrice;
-  final String monthlyPrice;
-  final String annualPerMonth;
-  final String annualSavings;
-  final bool loading;
-
-  const _PricingToggle({
-    required this.isAnnual,
-    required this.onToggle,
-    required this.annualPrice,
-    required this.monthlyPrice,
-    required this.annualPerMonth,
-    required this.annualSavings,
-    required this.loading,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    if (loading) {
-      return SizedBox(
-        height: 80.h,
-        child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-      );
-    }
-    return Row(
-      children: [
-        Expanded(child: _PlanCard(
-          label: 'ANNUAL',
-          price: annualPrice,
-          sub: '$annualPerMonth billed yearly',
-          badge: 'SAVE $annualSavings',
-          selected: isAnnual,
-          onTap: () => onToggle(true),
-        )),
-        SizedBox(width: 10.w),
-        Expanded(child: _PlanCard(
-          label: 'MONTHLY',
-          price: monthlyPrice,
-          sub: 'Billed monthly',
-          selected: !isAnnual,
-          onTap: () => onToggle(false),
-        )),
-      ],
-    );
-  }
-}
-
-class _PlanCard extends StatelessWidget {
-  final String label;
-  final String price;
-  final String sub;
-  final String? badge;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _PlanCard({
-    required this.label,
-    required this.price,
-    required this.sub,
-    this.badge,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: EdgeInsets.all(14.w),
-        decoration: BoxDecoration(
-          color: selected ? AppColors.primarySubtle : AppColors.canvas,
-          borderRadius: BorderRadius.circular(14.r),
-          border: Border.all(
-            color: selected ? AppColors.primary : AppColors.borderLight,
-            width: selected ? 2 : 1,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(label,
-                    style: AppTypography.labelSmall.copyWith(
-                        color: selected ? AppColors.primary : AppColors.textMuted,
-                        fontWeight: FontWeight.w800)),
-                if (badge != null)
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
-                    decoration: BoxDecoration(
-                      color: AppColors.outlierJade,
-                      borderRadius: BorderRadius.circular(100.r),
-                    ),
-                    child: Text(badge!,
-                        style: AppTypography.labelSmall.copyWith(
-                            color: Colors.white,
-                            fontSize: 8.5.sp,
-                            fontWeight: FontWeight.w800)),
-                  ),
-              ],
-            ),
-            SizedBox(height: 6.h),
-            Text(price,
-                style: AppTypography.titleLarge
-                    .copyWith(fontWeight: FontWeight.w800)),
-            Text(sub,
-                style: AppTypography.bodySmall
-                    .copyWith(fontSize: 11.sp, color: AppColors.textMuted)),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _FeatureItem extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-
-  const _FeatureItem({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 14.h),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: EdgeInsets.all(8.w),
-            decoration: const BoxDecoration(
-                color: AppColors.outlierJadeSubtle, shape: BoxShape.circle),
-            child: Icon(icon, size: 18.sp, color: AppColors.outlierJade),
-          ),
-          SizedBox(width: 12.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title,
-                    style: AppTypography.titleMedium.copyWith(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 14.5.sp,
-                        color: AppColors.textInk)),
-                SizedBox(height: 2.h),
-                Text(subtitle,
-                    style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.textSecondary, fontSize: 12.5.sp)),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

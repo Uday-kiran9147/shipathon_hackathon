@@ -180,15 +180,14 @@ class RevenueCatService {
       }
       if (code == PurchasesErrorCode.storeProblemError) {
         debugPrint('[RevenueCat] Store unavailable');
-        _mockMode = true; // non-mobile host
-        return true;
+        return false;
       }
       debugPrint('[RevenueCat] Purchase error ($code): $e');
       return false;
     } catch (e) {
       if (e.toString().contains('MissingPluginException')) {
-        _mockMode = true;
-        return true;
+        debugPrint('[RevenueCat] Purchase plugin unavailable');
+        return false;
       }
       debugPrint('[RevenueCat] Purchase error: $e');
       return false;

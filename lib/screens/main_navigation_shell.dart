@@ -3,8 +3,6 @@ import 'package:flutter/physics.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
-import 'package:purchases_ui_flutter/purchases_ui_flutter.dart';
-import 'package:shipathon_hackathon/core/services/revenue_cat_service.dart';
 import '../core/theme/app_colors.dart';
 import '../core/theme/app_typography.dart';
 import '../providers/subscription_provider.dart';
@@ -12,6 +10,7 @@ import '../widgets/common/coming_soon_card.dart';
 import '../widgets/common/custom_app_bar.dart';
 import 'briefing/daily_briefing_screen.dart';
 import 'channel/channel_graph_screen.dart';
+import 'paywall/creator_pro_paywall_sheet.dart';
 import 'simulator/preflight_simulator_screen.dart';
 
 /// Main Navigation Shell — spring-physics pill indicator, smooth screen transitions
@@ -46,21 +45,7 @@ class _MainNavigationShellState extends State<MainNavigationShell>
   void _switchTab(int index) async{
     if (index == 3) {
       HapticFeedback.lightImpact();
-      // ComingSoonCard.showProShowcaseModal(context);
-      final paywallResult =await RevenueCatService().presentPaywall();
-      if (paywallResult == null) {
-        // Handle the case where the paywall is dismissed or fails
-        // You can show a message or take any other action here
-        // For example, you could show an error message or retry the operation
-        // Disply a simple message for now
-        if(mounted){
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Paywall dismissed or failed.'),
-            ),
-          );
-        }
-      }
+      await CreatorProPaywallSheet.present(context);
       return;
     }
     if (_currentIndex != index) {

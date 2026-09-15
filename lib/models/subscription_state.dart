@@ -194,13 +194,17 @@ class SubscriptionState {
     DateTime? purchasedAt,
     bool? willRenew,
     DateTime? trialEndsAt,
-    // ignored — kept for source compat with callers that pass these
     bool? isPro,
     String? activePackageId,
     DateTime? renewalDate,
   }) {
     return SubscriptionState(
-      status: status ?? this.status,
+      status: status ??
+          (isPro == null
+              ? this.status
+              : isPro
+                  ? SubscriptionStatus.active
+                  : SubscriptionStatus.free),
       simulationsUsedThisMonth:
           simulationsUsedThisMonth ?? this.simulationsUsedThisMonth,
       freeSimulationsLimit: freeSimulationsLimit ?? this.freeSimulationsLimit,
