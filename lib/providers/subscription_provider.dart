@@ -119,22 +119,37 @@ class SubscriptionProvider extends ChangeNotifier {
   }
 
   /// Sync initial state from a locally-cached UserProfile on boot,
-  /// before RevenueCat responds.
-  void syncWithUser(dynamic user) {
+  /// then log the user into RevenueCat and fetch authoritative state.
+  ///
+  /// The local profile is only used as a placeholder until RC responds —
+  /// it must never override an already-confirmed RC subscription state.
+  Future<void> syncWithUser(dynamic user) async {
     if (user == null) return;
     final bool isPro = user.isPro as bool? ?? false;
     final int used = user.simulationsUsedThisMonth as int? ?? 0;
     final int limit = user.freeSimulationsLimit as int? ??
         AppConstants.freeSimulationsPerMonth;
 
-    // Replace the previous account's local state before RevenueCat refreshes.
-    // RevenueCat remains authoritative once its CustomerInfo arrives.
-    _state = _state.copyWith(
-      status: isPro ? SubscriptionStatus.active : SubscriptionStatus.free,
-      simulationsUsedThisMonth: used,
-      freeSimulationsLimit: limit,
-    );
-    notifyListeners();
+    // Only apply local state if RC hasn't confirmed the user as Pro yet.
+    // This prevents stale backend data from overwriting a live RC entitlement.
+    if (!_state.hasAccess) {
+      _state = _state.copyWith(
+        status: isPro ? SubscriptionStatus.active : SubscriptionStatus.free,
+        simulationsUsedThisMonth: used,
+        freeSimulationsLimit: limit,
+      );
+      notifyListeners();
+    }
+
+    // Identify this user in RevenueCat so purchases are tied to their account
+    // and can be restored after reinstall or across devices.
+    final String? userId = user.id as String?;
+    if (userId != null && userId.isNotEmpty && !userId.startsWith('guest_')) {
+      await _rc.logIn(userId);
+    }
+
+    // Always fetch authoritative state from RC after establishing user identity.
+    await refreshFromRevenueCat();
   }
 
   // ── Purchase ───────────────────────────────────────────────────────────────
