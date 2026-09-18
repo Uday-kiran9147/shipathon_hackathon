@@ -6,6 +6,6 @@ export const ENV = {
   DATABASE_URL: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/prevue_db',
   YOUTUBE_API_KEY: process.env.YOUTUBE_API_KEY || '',
   GEMINI_API_KEY: process.env.GEMINI_API_KEY || '',
-  GEMINI_MODEL: process.env.GEMINI_MODEL || 'gemini-3.7-flash',
+  GEMINI_MODEL: process.env.GEMINI_MODEL || 'gemini-3.6-flash',
   REVENUECAT_SECRET_KEY: process.env.REVENUECAT_SECRET_KEY || '',
 };

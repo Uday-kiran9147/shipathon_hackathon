@@ -58,7 +58,7 @@ export class SimulatorService {
 
   constructor(private readonly configService: ConfigService) {
     this.apiKey = this.configService.get<string>('geminiApiKey', '');
-    this.model = this.configService.get<string>('geminiModel', 'gemini-2.0-flash');
+    this.model = this.configService.get<string>('geminiModel', 'gemini-3.6-flash');
   }
 
   async evaluateScript(input: EvaluateSimulationDto): Promise<SimulationResultPayload> {
@@ -83,23 +83,17 @@ export class SimulatorService {
     nicheProfile: NicheProfile,
   ): Promise<SimulationResultPayload> {
     const prompt = this.buildEvalPrompt(input, nicheProfile);
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent?key=${this.apiKey}`;
-
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.4,
-          topP: 0.9,
-          maxOutputTokens: 4096,
-          responseMimeType: 'application/json',
-        },
-      }),
+    const body = JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: {
+        temperature: 0.4,
+        topP: 0.9,
+        maxOutputTokens: 4096,
+        responseMimeType: 'application/json',
+      },
     });
 
-    const data = await res.json();
+    const data = await this.fetchGeminiWithRetry(body);
     const rawJson = data.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!rawJson) throw new Error('Empty Gemini response');
 
@@ -509,6 +503,39 @@ RULES:
   }
 
   // ─── Utilities ─────────────────────────────────────────────────────────────
+
+  /// Gemini's flash models intermittently return 503 UNAVAILABLE / 429
+  /// RESOURCE_EXHAUSTED under transient load spikes. Retrying the same
+  /// overloaded model back-to-back often just hits the same congestion, so
+  /// on a transient failure we rotate to secondary models before giving up
+  /// to the static algorithmic fallback. gemini-flash-lite-latest runs on a
+  /// separate, typically less-congested capacity pool from the full flash
+  /// tier, so it's the last, most-likely-to-succeed model tried.
+  private async fetchGeminiWithRetry(body: string): Promise<any> {
+    const models = [...new Set([this.model, 'gemini-flash-latest', 'gemini-flash-lite-latest'])];
+    let lastError: Error = new Error('Gemini request failed');
+    for (const model of models) {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${this.apiKey}`;
+      let isTransient = false;
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body,
+          signal: AbortSignal.timeout(12000),
+        });
+        const data = await res.json();
+        if (res.ok) return data;
+        isTransient = res.status === 503 || res.status === 429;
+        lastError = new Error(`Gemini API error ${res.status} (${model}): ${JSON.stringify(data.error || data)}`);
+      } catch (e: any) {
+        isTransient = true; // network errors / timeouts are also worth trying the next model
+        lastError = e;
+      }
+      if (!isTransient) throw lastError;
+    }
+    throw lastError;
+  }
 
   private splitSentences(text: string): string[] {
     return text

@@ -7,11 +7,32 @@ export class VectorService {
   private readonly logger = new Logger(VectorService.name);
   private readonly geminiApiKey: string;
 
+  // Free-tier embedContent quota is ~100 requests/minute. Channel sync fires
+  // one embedding call per video plus one per comment concurrently
+  // (youtube.controller.ts's ingestVideoAndCommentEmbeddings), which can
+  // easily be 100+ calls the instant a sync completes. This queue serializes
+  // every embedding call app-wide and spaces them ~700ms apart (~85/min,
+  // safely under quota) so bursts degrade to the deterministic fallback
+  // gracefully instead of the whole burst failing at once.
+  private embeddingQueueTail: Promise<void> = Promise.resolve();
+  private lastEmbeddingCallAt = 0;
+  private readonly minEmbeddingIntervalMs = 700;
+
   constructor(
     private configService: ConfigService,
     private databaseService: DatabaseService,
   ) {
     this.geminiApiKey = this.configService.get<string>('geminiApiKey', '');
+  }
+
+  private throttleEmbeddingCall(): Promise<void> {
+    const scheduled = this.embeddingQueueTail.then(async () => {
+      const wait = Math.max(0, this.lastEmbeddingCallAt + this.minEmbeddingIntervalMs - Date.now());
+      if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+      this.lastEmbeddingCallAt = Date.now();
+    });
+    this.embeddingQueueTail = scheduled.catch(() => {});
+    return scheduled;
   }
 
   async generateEmbedding(text: string): Promise<number[]> {
@@ -20,17 +41,28 @@ export class VectorService {
     }
 
     try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${this.geminiApiKey}`;
+      await this.throttleEmbeddingCall();
+      // text-embedding-004 was retired; gemini-embedding-001 is the current
+      // model. It defaults to 3072-dim output, so outputDimensionality trims
+      // it (via MRL truncation) to 768 to match the existing vector(768)
+      // pgvector columns without a schema migration.
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=${this.geminiApiKey}`;
       const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'models/text-embedding-004',
+          model: 'models/gemini-embedding-001',
           content: { parts: [{ text }] },
+          outputDimensionality: 768,
         }),
+        signal: AbortSignal.timeout(15000),
       });
 
       const data = await res.json();
+      if (!res.ok) {
+        this.logger.warn(`Gemini embedding API error ${res.status}: ${JSON.stringify(data.error || data)}`);
+        return this.generateDeterministicPseudoEmbedding(text);
+      }
       if (data.embedding && data.embedding.values) {
         return data.embedding.values;
       }

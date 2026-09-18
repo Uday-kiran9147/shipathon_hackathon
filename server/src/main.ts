@@ -61,7 +61,7 @@ async function bootstrap() {
 
   const port = configService.get<number>('PORT', 3000);
   const nodeEnv = configService.get<string>('NODE_ENV', 'production');
-  const geminiModel = configService.get<string>('GEMINI_MODEL', 'gemini-3.7-flash');
+  const geminiModel = configService.get<string>('GEMINI_MODEL', 'gemini-3.6-flash');
   await app.listen(port, '0.0.0.0');
 
   console.log(`=======================================================`);

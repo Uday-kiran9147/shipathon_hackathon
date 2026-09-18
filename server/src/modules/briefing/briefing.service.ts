@@ -33,7 +33,7 @@ export class BriefingService {
     private readonly vectorService: VectorService,
   ) {
     this.apiKey = this.configService.get<string>('geminiApiKey', '');
-    this.model = this.configService.get<string>('geminiModel', 'gemini-3.7-flash');
+    this.model = this.configService.get<string>('geminiModel', 'gemini-3.6-flash');
   }
 
   async generateDailyBriefing(
@@ -50,23 +50,17 @@ export class BriefingService {
 
     try {
       const prompt = this.buildContextualPrompt(channel, vectorOutliers);
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent?key=${this.apiKey}`;
-
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.7,
-            topP: 0.95,
-            maxOutputTokens: 8192,
-            responseMimeType: 'application/json',
-          },
-        }),
+      const body = JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: 0.7,
+          topP: 0.95,
+          maxOutputTokens: 8192,
+          responseMimeType: 'application/json',
+        },
       });
 
-      const data = await res.json();
+      const data = await this.fetchGeminiWithRetry(body);
       const rawJson = data.candidates?.[0]?.content?.parts?.[0]?.text;
       if (rawJson) {
         const parsed = this.parseJsonResponse(rawJson);
@@ -79,6 +73,42 @@ export class BriefingService {
       this.logger.warn(`Gemini generation fallback: ${e.message}`);
       return this.generateAlgorithmicBlueprints(channel, vectorOutliers);
     }
+  }
+
+  /// Gemini's flash models intermittently return 503 UNAVAILABLE / 429
+  /// RESOURCE_EXHAUSTED under transient load spikes. Retrying the same
+  /// overloaded model back-to-back often just hits the same congestion, so
+  /// on a transient failure we rotate to a secondary model before giving up
+  /// to the static algorithmic fallback. gemini-flash-lite-latest runs on a
+  /// separate, typically less-congested capacity pool, so it's tried second.
+  /// Briefing's payload (8192 tokens, 4 blueprints built from a real channel's
+  /// full video/comment history) can legitimately take 15-20s to generate, so
+  /// each attempt gets a generous timeout rather than spreading a fixed
+  /// budget thin across many rushed model attempts.
+  private async fetchGeminiWithRetry(body: string): Promise<any> {
+    const models = [...new Set([this.model, 'gemini-flash-lite-latest'])];
+    let lastError: Error = new Error('Gemini request failed');
+    for (const model of models) {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${this.apiKey}`;
+      let isTransient = false;
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body,
+          signal: AbortSignal.timeout(19000),
+        });
+        const data = await res.json();
+        if (res.ok) return data;
+        isTransient = res.status === 503 || res.status === 429;
+        lastError = new Error(`Gemini API error ${res.status} (${model}): ${JSON.stringify(data.error || data)}`);
+      } catch (e: any) {
+        isTransient = true;
+        lastError = e;
+      }
+      if (!isTransient) throw lastError;
+    }
+    throw lastError;
   }
 
   /// Find semantically-similar historical outlier videos via pgvector so the

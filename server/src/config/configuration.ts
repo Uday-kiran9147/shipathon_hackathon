@@ -11,8 +11,8 @@ export default () => ({
     process.env.YOUTUBE_API_KEY || process.env.YOUTUBE_DATA_API_KEY || '',
   geminiApiKey: process.env.GEMINI_API_KEY || '',
   GEMINI_API_KEY: process.env.GEMINI_API_KEY || '',
-  geminiModel: process.env.GEMINI_MODEL || 'gemini-3.7-flash',
-  GEMINI_MODEL: process.env.GEMINI_MODEL || 'gemini-3.7-flash',
+  geminiModel: process.env.GEMINI_MODEL || 'gemini-3.6-flash',
+  GEMINI_MODEL: process.env.GEMINI_MODEL || 'gemini-3.6-flash',
   revenueCatSecretKey: process.env.REVENUECAT_SECRET_KEY || '',
   REVENUECAT_SECRET_KEY: process.env.REVENUECAT_SECRET_KEY || '',
 });
